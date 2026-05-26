@@ -151,7 +151,6 @@
       font-size: 22px;
 }
 
-
       .btnPrimario, .btnSec { width: 90%; }
 
       .tituloBanner { font-size: 20px; }
@@ -161,8 +160,10 @@
         width: 100%;
       }
     
+    
     #bannerSemanas {
       height: 240px;
+      min-height: 240px; /* ✅ ESSA LINHA NOVA */
       background-image: url('https://i.imgur.com/sGBGmb4.jpeg');
       background-size: cover;
       background-position: center;
@@ -172,7 +173,8 @@
       color: white;
       font-size: 32px;
       text-shadow: 2px 2px 6px black;
-}
+      }
+
 
   </style>
 </head>
