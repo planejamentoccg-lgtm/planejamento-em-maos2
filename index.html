@@ -362,6 +362,8 @@ async function abrirSemanas() {
     if (d.Atividade) html += '<p>' + d.Atividade + '</p>';
     if (d.Inicio) html += '<p>Início: ' + d.Inicio + '</p>';
     if (d.Termino) html += '<p>Término: ' + d.Termino + '</p>';
+    if (d.Tendencia) html += '<p>Tendência: ' + d.Tendencia + '</p>';
+    if (d.Projeto) html += '<p>Projeto: ' + d.Projeto + '</p>'
 
     html += '<div class="linhaImagens">';
     if (d.Imagem1) html += '<img src="' + d.Imagem1 + '">';
