@@ -24,16 +24,24 @@
       border-bottom: 1px solid #ddd;
     }
 
-    #topo img { height: 50px; }
+    #topo img {
+      height: 50px;
+    }
+
+    #topo h2 {
+      margin-left: 15px;
+      color: #2c3e50;
+    }
 
     #banner {
-      height: 200px;
+      height: 220px;
       background-size: cover;
+      background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 28px;
+      font-size: 30px;
     }
 
     #lista button {
@@ -41,6 +49,11 @@
       width: 300px;
       margin: 10px auto;
       padding: 12px;
+      background: #1f6e8c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
     .bloco {
@@ -50,14 +63,22 @@
 
     img {
       max-width: 90%;
-      border-radius: 8px;
       margin: 10px 0;
+      border-radius: 8px;
     }
+
+    button {
+      margin: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -65,6 +86,7 @@
   <button onclick="login()">Entrar</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -83,7 +105,9 @@
     <div id="conteudo"></div>
 
     <button onclick="voltar()">Voltar</button>
+
   </div>
+
 </div>
 
 <!-- ✅ FIREBASE CORRETO -->
@@ -105,7 +129,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-// 🔒 LOGIN COM SEGURANÇA
+// 🔒 LOGIN COM BLOQUEIO POR DISPOSITIVO
 async function login() {
 
   const email = document.getElementById("email").value;
@@ -122,8 +146,12 @@ async function login() {
     const snap = await ref.get();
 
     if (!snap.exists) {
+
+      // primeiro acesso
       await ref.set({ device });
+
     } else {
+
       if (snap.data().device !== device) {
         alert("🚫 Este usuário já está vinculado a outro dispositivo");
         await auth.signOut();
@@ -136,7 +164,7 @@ async function login() {
 
     carregar();
 
-  } catch(e) {
+  } catch (e) {
     alert(e.message);
   }
 }
@@ -164,7 +192,7 @@ async function carregar() {
 }
 
 
-// ✅ SEÇÕES DINÂMICAS
+// ✅ SEÇÃO DINÂMICA
 function secao(s, nome) {
 
   if (!s) return "";
@@ -174,14 +202,17 @@ function secao(s, nome) {
   if (s["Data Prevista"]) html += `<p>${s["Data Prevista"]}</p>`;
   if (s.Total) html += `<p>Total: ${s.Total}</p>`;
   if (s["Avanço"]) html += `<p>Avanço: ${s["Avanço"]}</p>`;
+  if (s.Situacao) html += `<p>${s.Situacao}</p>`;
 
-  if (s.Imagem1) html += `<img src="${s.Imagem src="${s.Imagem2s.Imagem3) html += `<img src="${s.Imagem3} += "</div>";
+  if (s.Imagem1) html += `<img src="${s.Imagemm3) html += `<img src="${s;
+
+  html += "</div>";
 
   return html;
 }
 
 
-// ✅ DETALHE
+// ✅ ABRIR DETALHE
 function abrir(data) {
 
   document.getElementById("lista").style.display = "none";
@@ -195,7 +226,6 @@ function abrir(data) {
   document.getElementById("conteudo").innerHTML =
     secao(data.LadoSul, "LADO SUL") +
     secao(data.LadoOeste, "LADO OESTE");
-
 }
 
 
