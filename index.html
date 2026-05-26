@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ FONTE -->
+  <!-- ✅ FONTE CORRETA -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -37,7 +37,7 @@
 
     /* ✅ HOME */
     #bannerHome {
-      height: 250px;
+      height: 240px;
       background-image: url('https://i.imgur.com/vxGq4Vb.jpeg');
       background-size: cover;
       background-position: center;
@@ -58,10 +58,6 @@
       font-size: 26px;
     }
 
-    #botoes {
-      margin-top: 20px;
-    }
-
     .btnPrimario {
       width: 300px;
       margin: 10px auto;
@@ -70,8 +66,8 @@
       background: white;
       color: #1f6e8c;
       border-radius: 6px;
-      cursor: pointer;
       display: block;
+      cursor: pointer;
     }
 
     .btnSec {
@@ -85,14 +81,14 @@
 
     /* ✅ DETALHE */
     #banner {
-      height: 220px;
+      height: 240px;
       background-size: cover;
       background-position: center;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 28px;
+      font-size: 30px;
       text-shadow: 2px 2px 6px black;
     }
 
@@ -113,6 +109,7 @@
     .situacao {
       color: #2ecc71;
       font-weight: bold;
+      font-size: 18px;
     }
 
     img {
@@ -124,7 +121,7 @@
     /* ✅ RESPONSIVO */
     @media (max-width: 768px) {
       #bannerHome { height: 160px; }
-      #banner { height: 150px; font-size: 20px; }
+      #banner { height: 160px; font-size: 22px; }
       .btnPrimario, .btnSec { width: 90%; }
     }
 
@@ -133,6 +130,7 @@
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -140,12 +138,12 @@
   <button onclick="login()">Entrar</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
 
   <div id="detalhe" style="display:none;">
-
     <div id="topo">
       <img src="https://i.imgur.com/iZ8gr1i.png">
       <h2>Planejamento em Mãos</h2>
@@ -156,7 +154,6 @@
     <div id="conteudo"></div>
 
     <button onclick="voltar()">Voltar</button>
-
   </div>
 
 </div>
@@ -198,14 +195,18 @@ async function login() {
 }
 
 
-// ✅ HOME NOVA
+// ✅ HOME BONITA (SEM QUEBRAR NADA)
 async function carregar() {
 
   const lista = document.getElementById("lista");
 
   lista.innerHTML = `
     <div id="topo">
-      <img src="https://i.imgur.com/iZ8gr1idiv id="bannerHome">
+      <img src="https://i.imgur.com/iZ8gr1i.png">
+      <h2>Planejamento em Mãos</h2>
+    </div>
+
+    <div id="bannerHome">
       <div class="overlay">
         <h1>Consórcio Construtor Gávea</h1>
         <p>Planejamento em Mãos</p>
@@ -225,7 +226,6 @@ async function carregar() {
   const snap = await db.collection("Frentes").get();
 
   snap.forEach(doc => {
-
     const data = doc.data();
 
     const btn = document.createElement("button");
@@ -238,7 +238,7 @@ async function carregar() {
 }
 
 
-// ✅ BLOCO DETALHE
+// ✅ SUA FUNÇÃO ORIGINAL (COM IMAGENS)
 function criarBloco(s, titulo) {
 
   if (!s) return "";
@@ -249,9 +249,27 @@ function criarBloco(s, titulo) {
   if (s["Data Prevista"]) html += '<p>' + s["Data Prevista"] + '</p>';
   if (s.Total) html += '<p><b>Total:</b> ' + s.Total + '</p>';
   if (s["Avanço"]) html += '<p><b>Avanço:</b> ' + s["Avanço"] + '</p>';
+
   if (s.Situacao) html += '<p class="situacao">' + s.Situacao + '</p>';
 
+  if (s.Inicio) html += '<p>' + s.Inicio + '</p>';
+  if (s.Previsto) html += '<p>' + s.Previsto + '</p>';
+  if (s.Realizado) html += '<p>' + s.Realizado + '</p>';
+
+  if (s.Grafico && s.Grafico.startsWith("http"))
+    html += '<img src="' + s.Grafico + '">';
+
+  if (s.Imagem1 && s.Imagem1.startsWith("http"))
+    html += '<img src="' + s.Imagem1 + '">';
+
+  if (s.Imagem2 && s.Imagem2.startsWith("http"))
+    html += '<img src="' + s.Imagem2 + '">';
+
+  if (s.Imagem3 && s.Imagem3.startsWith("http"))
+    html += '<img src="' + s.Imagem3 + '">';
+
   html += '</div>';
+
   return html;
 }
 
