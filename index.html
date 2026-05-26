@@ -5,13 +5,8 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ FONTE LATO (CORRETO AGORA) -->
+  <!-- ✅ FONTE CORRETA -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-
-  <!-- ✅ FIREBASE (CORRETO) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
     body {
@@ -24,28 +19,21 @@
     #topo {
       display: flex;
       align-items: center;
-      background: white;
+      background: #fff;
       padding: 10px 20px;
       border-bottom: 1px solid #ddd;
     }
 
-    #topo img {
-      height: 50px;
-    }
-
-    #topo h2 {
-      margin-left: 10px;
-    }
+    #topo img { height: 50px; }
 
     #banner {
       height: 200px;
       background-size: cover;
-      background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 26px;
+      font-size: 28px;
     }
 
     #lista button {
@@ -53,7 +41,6 @@
       width: 300px;
       margin: 10px auto;
       padding: 12px;
-      cursor: pointer;
     }
 
     .bloco {
@@ -63,20 +50,14 @@
 
     img {
       max-width: 90%;
-      margin: 10px 0;
       border-radius: 8px;
-    }
-
-    button {
-      margin: 20px;
-      padding: 10px 20px;
+      margin: 10px 0;
     }
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -84,7 +65,6 @@
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -103,10 +83,13 @@
     <div id="conteudo"></div>
 
     <button onclick="voltar()">Voltar</button>
-
   </div>
-
 </div>
+
+<!-- ✅ FIREBASE CORRETO -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
 
@@ -122,7 +105,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-// 🔒 LOGIN COM BLOQUEIO POR DISPOSITIVO
+// 🔒 LOGIN COM SEGURANÇA
 async function login() {
 
   const email = document.getElementById("email").value;
@@ -139,18 +122,11 @@ async function login() {
     const snap = await ref.get();
 
     if (!snap.exists) {
-
-      // primeiro acesso
       await ref.set({ device });
-
     } else {
-
       if (snap.data().device !== device) {
-
         alert("🚫 Este usuário já está vinculado a outro dispositivo");
-
         await auth.signOut();
-
         return;
       }
     }
@@ -188,7 +164,7 @@ async function carregar() {
 }
 
 
-// ✅ CRIAR SEÇÕES (SEM undefined)
+// ✅ SEÇÕES DINÂMICAS
 function secao(s, nome) {
 
   if (!s) return "";
@@ -198,15 +174,14 @@ function secao(s, nome) {
   if (s["Data Prevista"]) html += `<p>${s["Data Prevista"]}</p>`;
   if (s.Total) html += `<p>Total: ${s.Total}</p>`;
   if (s["Avanço"]) html += `<p>Avanço: ${s["Avanço"]}</p>`;
-  if (s.Situacao) html += `<p>${s.Situacao}</p>`;
 
-  if (s.Imagem1) html += `<img src="${s.Imagem1";
+  if (s.Imagem1) html += `<img src="${s.Imagem src="${s.Imagem2s.Imagem3) html += `<img src="${s.Imagem3} += "</div>";
 
   return html;
 }
 
 
-// ✅ ABRIR DETALHE
+// ✅ DETALHE
 function abrir(data) {
 
   document.getElementById("lista").style.display = "none";
@@ -226,10 +201,8 @@ function abrir(data) {
 
 // ✅ VOLTAR
 function voltar() {
-
   document.getElementById("lista").style.display = "block";
   document.getElementById("detalhe").style.display = "none";
-
 }
 
 </script>
