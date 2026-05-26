@@ -5,20 +5,26 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- ✅ LATO CORRETO -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ FIREBASE CORRETO -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
     body {
       margin: 0;
       font-family: 'Lato', sans-serif;
-      text-align: center;
       background: #f4f6f8;
+      text-align: center;
     }
 
     #topo {
       display: flex;
       align-items: center;
-      background: #fff;
+      background: white;
       padding: 10px 20px;
     }
 
@@ -33,6 +39,7 @@
     #banner {
       height: 200px;
       background-size: cover;
+      background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -40,12 +47,21 @@
       font-size: 28px;
     }
 
+    #lista button {
+      display: block;
+      width: 300px;
+      margin: 10px auto;
+      padding: 10px;
+    }
+
     .bloco {
       padding: 20px;
+      border-bottom: 1px solid #ddd;
     }
 
     img {
       max-width: 90%;
+      margin: 10px 0;
       border-radius: 8px;
     }
   </style>
@@ -53,7 +69,128 @@
 
 <body>
 
-<h1>✅ SISTEMA FUNCIONANDO</h1>
+<div id="login">
+  <h2>Login</h2>
+  <input id="email" type="email"><br><br>
+  <input id="senha" type="password"><br><br>
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="app" style="display:none;">
+  <div id="lista"></div>
+
+  <div id="detalhe" style="display:none;">
+    <div id="topo">
+      <img src="https://i.imgur.com/iZ8gr1i.png">
+      <h2>Planejamento em Mãos</h2>
+    </div>
+
+    <div id="banner">
+      <span id="titulo"></span>
+    </div>
+
+    <div id="conteudo"></div>
+
+    <button onclick="voltar()">Voltar</button>
+  </div>
+</div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDabKVmo13MIUbtVx2O0lSJMuUT7X1DE-k",
+  authDomain: "cortex-planejamento.firebaseapp.com",
+  projectId: "cortex-planejamento"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+
+// LOGIN
+async function login() {
+
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+
+  try {
+    await auth.signInWithEmailAndPassword(email, senha);
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+
+    carregar();
+
+  } catch(e) {
+    alert(e.message);
+  }
+}
+
+
+// CARREGAR FRENTES
+async function carregar() {
+
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "<h2>Frentes</h2>";
+
+  const snap = await db.collection("Frentes").get();
+
+  snap.forEach(doc => {
+    const data = doc.data();
+
+    const btn = document.createElement("button");
+    btn.innerText = data.Nome;
+    btn.onclick = () => abrir(data);
+
+    lista.appendChild(btn);
+  });
+}
+
+
+// CRIAR SEÇÃO DINÂMICA
+function secao(s, nome) {
+
+  if (!s) return "";
+
+  let html = `<div class="bloco"><h3>${nome}</h3>`;
+
+  if (s["Data Prevista"]) html += `<p>${s["Data Prevista"]}</p>`;
+  if (s.Total) html += `<p>Total: ${s.Total}</p>`;
+  if (s["Avanço"]) html += `<p>Avanço: ${s["Avanço"]}</p>`;
+  if (s.Situacao) html += `<p>${s.Situacao}</p>`;
+
+  if (s.Imagem1) html += `<img src="${s.Im/div>";
+
+  return html;
+}
+
+
+// ABRIR DETALHE
+function abrir(data) {
+
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("detalhe").style.display = "block";
+
+  document.getElementById("titulo").innerText = data.Nome;
+
+  document.getElementById("banner").style.backgroundImage =
+    "url('" + data.Imagem + "')";
+
+  document.getElementById("conteudo").innerHTML =
+    secao(data.LadoSul, "LADO SUL") +
+    secao(data.LadoOeste, "LADO OESTE");
+}
+
+
+// VOLTAR
+function voltar() {
+  document.getElementById("lista").style.display = "block";
+  document.getElementById("detalhe").style.display = "none";
+}
+
+</script>
 
 </body>
 </html>
