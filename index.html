@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ FONTE CORRETA -->
+  <!-- ✅ FONTE -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -28,7 +28,6 @@
 
     #topo img {
       height: 45px;
-      width: auto;
     }
 
     #topo h2 {
@@ -55,15 +54,12 @@
       color: white;
     }
 
-    /* ✅ NOVO: TEXTO RESPONSIVO DO BANNER */
     .tituloBanner {
       font-size: 32px;
-      margin: 0;
     }
 
     .subtituloBanner {
       font-size: 16px;
-      margin-top: 5px;
     }
 
     .tituloHome {
@@ -80,8 +76,8 @@
       background: white;
       color: #1f6e8c;
       border-radius: 6px;
-      display: block;
       cursor: pointer;
+      display: block;
     }
 
     .btnSec {
@@ -117,13 +113,11 @@
     .tituloBloco {
       color: #1f6e8c;
       font-weight: bold;
-      margin-bottom: 10px;
     }
 
     .situacao {
       color: #2ecc71;
       font-weight: bold;
-      font-size: 18px;
     }
 
     img {
@@ -132,7 +126,18 @@
       margin: 10px 0;
     }
 
-    /* ✅ RESPONSIVO */
+    /* ✅ IMAGENS LADO A LADO */
+    .linhaImagens {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .linhaImagens img {
+      width: 45%;
+    }
+
     @media (max-width: 768px) {
 
       #bannerHome { height: 160px; }
@@ -140,13 +145,11 @@
 
       .btnPrimario, .btnSec { width: 90%; }
 
-      /* ✅ NOVO: AJUSTE DO TEXTO NO CELULAR */
-      .tituloBanner {
-        font-size: 20px;
-      }
+      .tituloBanner { font-size: 20px; }
+      .subtituloBanner { font-size: 12px; }
 
-      .subtituloBanner {
-        font-size: 12px;
+      .linhaImagens img {
+        width: 100%;
       }
     }
 
@@ -155,7 +158,6 @@
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -163,7 +165,6 @@
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -175,10 +176,25 @@
     </div>
 
     <div id="banner"><span id="titulo"></span></div>
-
     <div id="conteudo"></div>
 
     <button onclick="voltar()">Voltar</button>
+  </div>
+
+  <!-- ✅ NOVA TELA -->
+  <div id="semanas" style="display:none;">
+    <div id="topo">
+      <img src="https://i.imgur.com/iZ8gr1i.png">
+      <h2>Planejamento em Mãos</h2>
+    </div>
+
+    <div id="banner">
+      <h1>Próximas Semanas</h1>
+    </div>
+
+    <div id="conteudoSemanas"></div>
+
+    <button onclick="voltarHome()">Voltar</button>
   </div>
 
 </div>
@@ -220,7 +236,7 @@ async function login() {
 }
 
 
-// ✅ HOME (COM AJUSTE DO TEXTO)
+// ✅ HOME
 async function carregar() {
 
   const lista = document.getElementById("lista");
@@ -239,11 +255,10 @@ async function carregar() {
     </div>
 
     <h2 class="tituloHome">Frentes de Serviço em Andamento</h2>
-
     <div id="botoes"></div>
 
     <h2 class="tituloHome">Próximas Semanas</h2>
-    <button class="btnSec">Ver Mais</button>
+    <button class="btnSec" onclick="abrirSemanas()">Ver Mais</button>
   `;
 
   const botoes = document.getElementById("botoes");
@@ -263,7 +278,7 @@ async function carregar() {
 }
 
 
-// ✅ BLOCO ORIGINAL (NÃO MEXIDO)
+// ✅ BLOCO (INTACTO)
 function criarBloco(s, titulo) {
 
   if (!s) return "";
@@ -299,7 +314,7 @@ function criarBloco(s, titulo) {
 }
 
 
-// ✅ DETALHE (INTACTO)
+// ✅ DETALHE
 function abrir(data) {
 
   document.getElementById("lista").style.display = "none";
@@ -322,10 +337,49 @@ function abrir(data) {
 }
 
 
+// ✅ NOVA FUNÇÃO
+async function abrirSemanas() {
+
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("semanas").style.display = "block";
+
+  const container = document.getElementById("conteudoSemanas");
+  container.innerHTML = "";
+
+  const snap = await db.collection("ProximasSemanas").get();
+
+  snap.forEach(doc => {
+
+    const d = doc.data();
+
+    let html = '<div class="bloco">';
+    html += '<h3>' + d.Nome + '</h3>';
+
+    if (d.Atividade) html += '<p>' + d.Atividade + '</p>';
+    if (d.Inicio) html += '<p>Início: ' + d.Inicio + '</p>';
+    if (d.Termino) html += '<p>Término: ' + d.Termino + '</p>';
+
+    html += '<div class="linhaImagens">';
+    if (d.Imagem1) html += '<img src="' + d.Imagem1 + '">';
+    if (d.Imagem2) html += '<img src="' + d.Imagem2 + '">';
+    html += '</div>';
+
+    html += '</div>';
+
+    container.innerHTML += html;
+  });
+}
+
+
 // ✅ VOLTAR
 function voltar() {
   document.getElementById("lista").style.display = "block";
   document.getElementById("detalhe").style.display = "none";
+}
+
+function voltarHome() {
+  document.getElementById("semanas").style.display = "none";
+  document.getElementById("lista").style.display = "block";
 }
 
 </script>
