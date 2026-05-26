@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
+<!DOCTYPE html><!DOCTYPE html<head>
   <title>Planejamento em Mãos</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +17,7 @@
     #topo {
       display: flex;
       align-items: center;
-      background: #fff;
+      background: white;
       padding: 10px 20px;
       border-bottom: 1px solid #ddd;
     }
@@ -52,15 +50,21 @@
       color: white;
       border: none;
       border-radius: 5px;
+      cursor: pointer;
     }
 
     .bloco {
       padding: 25px;
+      border-bottom: 1px solid #ddd;
     }
 
-    .titulo {
-      font-size: 22px;
+    .tituloAzul {
       color: #1f6e8c;
+      font-size: 22px;
+    }
+
+    .tituloVerde {
+      color: #2ecc71;
       font-weight: bold;
     }
 
@@ -79,6 +83,7 @@
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -86,6 +91,7 @@
   <button onclick="login()">Entrar</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -106,8 +112,10 @@
     <button onclick="voltar()">Voltar</button>
 
   </div>
+
 </div>
 
+<!-- ✅ FIREBASE CORRETO -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -126,17 +134,18 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-// ✅ LOGIN COM SEGURANÇA
+// 🔒 LOGIN COM BLOQUEIO
 async function login() {
 
-  const email = email.value;
-  const senha = senha.value;
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
 
   try {
+
     const cred = await auth.signInWithEmailAndPassword(email, senha);
     const user = cred.user;
 
-    const device = navigator.userAgent + screen.width;
+    const device = navigator.userAgent + screen.width + screen.height;
 
     const ref = db.collection("users_devices").doc(user.uid);
     const snap = await ref.get();
@@ -144,13 +153,15 @@ async function login() {
     if (!snap.exists) {
       await ref.set({ device });
     } else if (snap.data().device !== device) {
-      alert("🚫 Já vinculado a outro dispositivo");
+
+      alert("🚫 Este usuário já está vinculado a outro dispositivo");
+
       await auth.signOut();
       return;
     }
 
-    login.style.display = "none";
-    app.style.display = "block";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
 
     carregar();
 
@@ -160,56 +171,67 @@ async function login() {
 }
 
 
-// ✅ LISTAR
+// ✅ LISTAR FRENTES
 async function carregar() {
 
+  const lista = document.getElementById("lista");
   lista.innerHTML = "<h2>Frentes</h2>";
 
   const snap = await db.collection("Frentes").get();
 
   snap.forEach(doc => {
+
     const data = doc.data();
 
     const btn = document.createElement("button");
     btn.innerText = data.Nome;
-    btn.onclick = () => abrir(data);
+    btn.onclick = function() { abrir(data); };
 
     lista.appendChild(btn);
+
   });
 }
 
 
-// ✅ SEÇÃO COMPLETA (COM IMAGENS)
-function secao(s, titulo) {
+// ✅ SEÇÃO SEGURA (sem erro de sintaxe)
+function secao(s, nome) {
 
   if (!s) return "";
 
-  return `
-    <div class="bloco">
+  let html = "";
 
-      <div class="titulo">${titulo}</div>
+  html += '<div class="bloco">';
+  html += '<h3 class="tituloAzul">' + nome + '</h3>';
 
-      ${s["Data Prevista"] ? `<p>${s["Data Prevista"]}</p>` : ""}
-      ${s.Total ? `<p>Total: ${s.Total}</p>` : ""}
-      ${s["Avanço"] ? `<p>Avanço: ${s["Avanço"]}</p>` : ""}
+  if (s["Data Prevista"]) html += '<p>' + s["Data Prevista"] + '</p>';
+  if (s.Total) html += '<p>Total: ' + s.Total + '</p>';
+  if (s["Avanço"]) html += '<p>Avanço: ' + s["Avanço"] + '</p>';
 
-      ${s.Situacao ? `<p><b>${s.Situacao}</b></p>` : ""}
+  if (s.Situacao) html += '<p class="tituloVerde">' + s.Situacao + '</p>';
 
-      ${s.Grafico ? `<img src="${s.Grafico}{s.Imagem1     ${s.Imagem2 ? `<img src="${s.Imagem2}    ${s.Imagem3 ? `<img src="${s.Imagem3}   </div>
-  `;
+  if (s.Grafico) html += '<img src="' + s.Grafico + '">';
+  if (s.Imagem1) html += '<img src="' + s.Imagem1 + '">';
+  if (s.Imagem2) html += '<img src="' + s.Imagem2 + '">';
+  if (s.Imagem3) html += '<img src="' + s.Imagem3 + '">';
+
+  html += '</div>';
+
+  return html;
 }
 
 
-// ✅ DETALHE
+// ✅ ABRIR DETALHE
 function abrir(data) {
 
-  lista.style.display = "none";
-  detalhe.style.display = "block";
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("detalhe").style.display = "block";
 
-  titulo.innerText = data.Nome;
-  banner.style.backgroundImage = `url('${data.Imagem}')`;
+  document.getElementById("titulo").innerText = data.Nome;
 
-  conteudo.innerHTML =
+  document.getElementById("banner").style.backgroundImage =
+    "url('" + data.Imagem + "')";
+
+  document.getElementById("conteudo").innerHTML =
     secao(data.LadoSul, "LADO SUL") +
     secao(data.LadoOeste, "LADO OESTE");
 }
@@ -217,11 +239,15 @@ function abrir(data) {
 
 // ✅ VOLTAR
 function voltar() {
-  lista.style.display = "block";
-  detalhe.style.display = "none";
+
+  document.getElementById("lista").style.display = "block";
+  document.getElementById("detalhe").style.display = "none";
+
 }
 
 </script>
 
 </body>
 </html>
+``
+<html>
