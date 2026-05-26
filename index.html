@@ -17,6 +17,7 @@
       text-align: center;
     }
 
+    /* ✅ TOPO */
     #topo {
       display: flex;
       align-items: center;
@@ -27,12 +28,16 @@
 
     #topo img {
       height: 50px;
+      width: auto;
+      object-fit: contain;
     }
 
     #topo h2 {
       margin-left: 15px;
+      font-size: 20px;
     }
 
+    /* ✅ BANNER */
     #banner {
       height: 240px;
       background-size: cover;
@@ -41,10 +46,11 @@
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 32px;
+      font-size: 30px;
       text-shadow: 2px 2px 6px black;
     }
 
+    /* ✅ BOTÕES */
     #lista button {
       width: 300px;
       margin: 10px auto;
@@ -52,26 +58,44 @@
       background: #1f6e8c;
       color: white;
       border: none;
-      border-radius: 5px;
-      display: block;
+      border-radius: 6px;
       cursor: pointer;
+      display: block;
     }
 
+    /* ✅ BLOCO ESTILO APP */
     .bloco {
-      padding: 25px;
-      border-bottom: 1px solid #ddd;
+      margin: 15px;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
+    /* ✅ TÍTULOS */
+    .tituloBloco {
+      font-size: 20px;
+      color: #1f6e8c;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .situacao {
+      color: #2ecc71;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    /* ✅ IMAGENS */
     img {
       width: 90%;
-      border-radius: 8px;
-      margin: 15px 0;
+      border-radius: 10px;
+      margin: 10px 0;
     }
 
     button {
       margin: 20px;
       padding: 10px 20px;
-      cursor: pointer;
     }
 
     /* ✅ RESPONSIVO */
@@ -93,7 +117,6 @@
       #topo h2 {
         font-size: 16px;
       }
-
     }
 
   </style>
@@ -133,7 +156,6 @@
 
 </div>
 
-<!-- ✅ FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -151,14 +173,13 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-// ✅ LOGIN COM BLOQUEIO
+// ✅ LOGIN
 async function login() {
 
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
   try {
-
     const cred = await auth.signInWithEmailAndPassword(email, senha);
     const user = cred.user;
 
@@ -170,7 +191,6 @@ async function login() {
     if (!snap.exists) {
       await ref.set({ device });
     } else if (snap.data().device !== device) {
-
       alert("🚫 Vinculado a outro dispositivo");
       await auth.signOut();
       return;
@@ -181,7 +201,7 @@ async function login() {
 
     carregar();
 
-  } catch (e) {
+  } catch(e) {
     alert(e.message);
   }
 }
@@ -201,9 +221,7 @@ async function carregar() {
 
     const btn = document.createElement("button");
     btn.innerText = data.Nome;
-    btn.onclick = function() {
-      abrir(data);
-    };
+    btn.onclick = () => abrir(data);
 
     lista.appendChild(btn);
 
@@ -211,38 +229,35 @@ async function carregar() {
 }
 
 
-// ✅ CRIAR BLOCO COMPLETO
+// ✅ BLOCO COMPLETO
 function criarBloco(s, titulo) {
 
   if (!s) return "";
 
   let html = '<div class="bloco">';
-  html += '<h3>' + titulo + '</h3>';
+  html += '<div class="tituloBloco">' + titulo + '</div>';
 
   if (s["Data Prevista"]) html += '<p>' + s["Data Prevista"] + '</p>';
-  if (s.Total) html += '<p>Total: ' + s.Total + '</p>';
-  if (s["Avanço"]) html += '<p>Avanço: ' + s["Avanço"] + '</p>';
-  if (s.Situacao) html += '<p><b>' + s.Situacao + '</b></p>';
+  if (s.Total) html += '<p><b>Total:</b> ' + s.Total + '</p>';
+  if (s["Avanço"]) html += '<p><b>Avanço:</b> ' + s["Avanço"] + '</p>';
+
+  if (s.Situacao) html += '<p class="situacao">' + s.Situacao + '</p>';
 
   if (s.Inicio) html += '<p>' + s.Inicio + '</p>';
   if (s.Previsto) html += '<p>' + s.Previsto + '</p>';
   if (s.Realizado) html += '<p>' + s.Realizado + '</p>';
 
-  if (s.Grafico && s.Grafico.startsWith("http")) {
+  if (s.Grafico && s.Grafico.startsWith("http"))
     html += '<img src="' + s.Grafico + '">';
-  }
 
-  if (s.Imagem1 && s.Imagem1.startsWith("http")) {
+  if (s.Imagem1 && s.Imagem1.startsWith("http"))
     html += '<img src="' + s.Imagem1 + '">';
-  }
 
-  if (s.Imagem2 && s.Imagem2.startsWith("http")) {
+  if (s.Imagem2 && s.Imagem2.startsWith("http"))
     html += '<img src="' + s.Imagem2 + '">';
-  }
 
-  if (s.Imagem3 && s.Imagem3.startsWith("http")) {
+  if (s.Imagem3 && s.Imagem3.startsWith("http"))
     html += '<img src="' + s.Imagem3 + '">';
-  }
 
   html += '</div>';
 
@@ -250,7 +265,7 @@ function criarBloco(s, titulo) {
 }
 
 
-// ✅ ABRIR DETALHE (FUNCIONA COM OU SEM LADOS)
+// ✅ DETALHE
 function abrir(data) {
 
   document.getElementById("lista").style.display = "none";
@@ -262,11 +277,9 @@ function abrir(data) {
 
   let html = "";
 
-  // ✅ Com lados
   html += criarBloco(data.LadoSul, "LADO SUL");
   html += criarBloco(data.LadoOeste, "LADO OESTE");
 
-  // ✅ Sem lados
   if (!data.LadoSul && !data.LadoOeste) {
     html += criarBloco(data, "DADOS GERAIS");
   }
