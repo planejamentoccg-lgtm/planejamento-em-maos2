@@ -1,4 +1,6 @@
-<!DOCTYPE html><!DOCTYPE html<head>
+<!DOCTYPE html>
+<html>
+<head>
   <title>Planejamento em Mãos</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 
   <style>
+
     body {
       margin: 0;
       font-family: 'Lato', sans-serif;
@@ -24,25 +27,21 @@
 
     #topo img { height: 50px; }
 
-    #topo h2 {
-      margin-left: 15px;
-      color: #2c3e50;
-    }
+    #topo h2 { margin-left: 15px; }
 
     #banner {
       height: 240px;
       background-size: cover;
       background-position: center;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       color: white;
-      font-size: 34px;
+      font-size: 32px;
       text-shadow: 2px 2px 6px black;
     }
 
     #lista button {
-      display: block;
       width: 300px;
       margin: 10px auto;
       padding: 12px;
@@ -50,7 +49,7 @@
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
+      display: block;
     }
 
     .bloco {
@@ -58,32 +57,39 @@
       border-bottom: 1px solid #ddd;
     }
 
-    .tituloAzul {
-      color: #1f6e8c;
-      font-size: 22px;
-    }
-
-    .tituloVerde {
-      color: #2ecc71;
-      font-weight: bold;
-    }
-
     img {
-      max-width: 90%;
-      margin: 15px 0;
+      width: 90%;
       border-radius: 8px;
+      margin: 10px 0;
     }
 
-    button {
-      margin: 20px;
-      padding: 10px 20px;
+    /* ✅ RESPONSIVO */
+    @media (max-width: 768px) {
+
+      #banner {
+        height: 160px;
+        font-size: 22px;
+      }
+
+      #lista button {
+        width: 90%;
+      }
+
+      #topo img {
+        height: 40px;
+      }
+
+      #topo h2 {
+        font-size: 16px;
+      }
+
     }
+
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -91,7 +97,6 @@
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -103,9 +108,7 @@
       <h2>Planejamento em Mãos</h2>
     </div>
 
-    <div id="banner">
-      <span id="titulo"></span>
-    </div>
+    <div id="banner"><span id="titulo"></span></div>
 
     <div id="conteudo"></div>
 
@@ -115,7 +118,6 @@
 
 </div>
 
-<!-- ✅ FIREBASE CORRETO -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -133,19 +135,16 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-
-// 🔒 LOGIN COM BLOQUEIO
 async function login() {
 
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
   try {
-
     const cred = await auth.signInWithEmailAndPassword(email, senha);
     const user = cred.user;
 
-    const device = navigator.userAgent + screen.width + screen.height;
+    const device = navigator.userAgent;
 
     const ref = db.collection("users_devices").doc(user.uid);
     const snap = await ref.get();
@@ -153,28 +152,25 @@ async function login() {
     if (!snap.exists) {
       await ref.set({ device });
     } else if (snap.data().device !== device) {
-
-      alert("🚫 Este usuário já está vinculado a outro dispositivo");
-
+      alert("🚫 Vinculado a outro dispositivo");
       await auth.signOut();
       return;
     }
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").style.display = "block";
+    login.style.display = "none";
+    app.style.display = "block";
 
     carregar();
 
-  } catch(e) {
+  } catch (e) {
     alert(e.message);
   }
 }
 
 
-// ✅ LISTAR FRENTES
+// ✅ LISTA
 async function carregar() {
 
-  const lista = document.getElementById("lista");
   lista.innerHTML = "<h2>Frentes</h2>";
 
   const snap = await db.collection("Frentes").get();
@@ -185,34 +181,41 @@ async function carregar() {
 
     const btn = document.createElement("button");
     btn.innerText = data.Nome;
-    btn.onclick = function() { abrir(data); };
+    btn.onclick = () => abrir(data);
 
     lista.appendChild(btn);
-
   });
 }
 
 
-// ✅ SEÇÃO SEGURA (sem erro de sintaxe)
-function secao(s, nome) {
+// ✅ FUNÇÃO COMPLETA
+function criarBloco(s, titulo) {
 
   if (!s) return "";
 
-  let html = "";
-
-  html += '<div class="bloco">';
-  html += '<h3 class="tituloAzul">' + nome + '</h3>';
+  let html = '<div class="bloco">';
+  html += '<h3>' + titulo + '</h3>';
 
   if (s["Data Prevista"]) html += '<p>' + s["Data Prevista"] + '</p>';
   if (s.Total) html += '<p>Total: ' + s.Total + '</p>';
   if (s["Avanço"]) html += '<p>Avanço: ' + s["Avanço"] + '</p>';
+  if (s.Situacao) html += '<p><b>' + s.Situacao + '</b></p>';
 
-  if (s.Situacao) html += '<p class="tituloVerde">' + s.Situacao + '</p>';
+  if (s.Inicio) html += '<p>' + s.Inicio + '</p>';
+  if (s.Previsto) html += '<p>' + s.Previsto + '</p>';
+  if (s.Realizado) html += '<p>' + s.Realizado + '</p>';
 
-  if (s.Grafico) html += '<img src="' + s.Grafico + '">';
-  if (s.Imagem1) html += '<img src="' + s.Imagem1 + '">';
-  if (s.Imagem2) html += '<img src="' + s.Imagem2 + '">';
-  if (s.Imagem3) html += '<img src="' + s.Imagem3 + '">';
+  if (s.Grafico && s.Grafico.startsWith("http"))
+    html += '<img src="' + s.Grafico + '">';
+
+  if (s.Imagem1 && s.Imagem1.startsWith("http"))
+    html += '<img src="' + s.Imagem1 + '">';
+
+  if (s.Imagem2 && s.Imagem2.startsWith("http"))
+    html += '<img src="' + s.Imagem2 + '">';
+
+  if (s.Imagem3 && s.Imagem3.startsWith("http"))
+    html += '<img src="' + s.Imagem3 + '">';
 
   html += '</div>';
 
@@ -220,34 +223,37 @@ function secao(s, nome) {
 }
 
 
-// ✅ ABRIR DETALHE
+// ✅ DETALHE INTELIGENTE
 function abrir(data) {
 
-  document.getElementById("lista").style.display = "none";
-  document.getElementById("detalhe").style.display = "block";
+  lista.style.display = "none";
+  detalhe.style.display = "block";
 
-  document.getElementById("titulo").innerText = data.Nome;
+  titulo.innerText = data.Nome;
+  banner.style.backgroundImage = `url('${data.Imagem}')`;
 
-  document.getElementById("banner").style.backgroundImage =
-    "url('" + data.Imagem + "')";
+  let html = "";
 
-  document.getElementById("conteudo").innerHTML =
-    secao(data.LadoSul, "LADO SUL") +
-    secao(data.LadoOeste, "LADO OESTE");
+  // ✅ CASO TENHA LADOS
+  html += criarBloco(data.LadoSul, "LADO SUL");
+  html += criarBloco(data.LadoOeste, "LADO OESTE");
+
+  // ✅ CASO NÃO TENHA LADOS (tipo Carioca)
+  if (!data.LadoSul && !data.LadoOeste) {
+    html += criarBloco(data, "DADOS GERAIS");
+  }
+
+  conteudo.innerHTML = html;
 }
 
 
 // ✅ VOLTAR
 function voltar() {
-
-  document.getElementById("lista").style.display = "block";
-  document.getElementById("detalhe").style.display = "none";
-
+  lista.style.display = "block";
+  detalhe.style.display = "none";
 }
 
 </script>
 
 </body>
 </html>
-``
-<html>
