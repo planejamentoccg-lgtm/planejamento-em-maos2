@@ -21,27 +21,18 @@
       align-items: center;
       background: #fff;
       padding: 10px 20px;
-      border-bottom: 1px solid #ddd;
     }
 
-    #topo img {
-      height: 50px;
-    }
-
-    #topo h2 {
-      margin-left: 15px;
-      color: #2c3e50;
-    }
+    #topo img { height: 50px; }
 
     #banner {
-      height: 220px;
+      height: 200px;
       background-size: cover;
-      background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 30px;
+      font-size: 28px;
     }
 
     #lista button {
@@ -53,7 +44,6 @@
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
     }
 
     .bloco {
@@ -66,19 +56,11 @@
       margin: 10px 0;
       border-radius: 8px;
     }
-
-    button {
-      margin: 20px;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="email" type="email"><br><br>
@@ -86,7 +68,6 @@
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
@@ -117,7 +98,6 @@
 
 <script>
 
-// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDabKVmo13MIUbtVx2O0lSJMuUT7X1DE-k",
   authDomain: "cortex-planejamento.firebaseapp.com",
@@ -130,7 +110,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-// 🔒 LOGIN COM BLOQUEIO
+// 🔒 LOGIN
 async function login() {
 
   const email = document.getElementById("email").value;
@@ -139,26 +119,6 @@ async function login() {
   try {
 
     const cred = await auth.signInWithEmailAndPassword(email, senha);
-    const user = cred.user;
-
-    const device = navigator.userAgent + screen.width + screen.height;
-
-    const ref = db.collection("users_devices").doc(user.uid);
-    const snap = await ref.get();
-
-    if (!snap.exists) {
-
-      // primeiro acesso
-      await ref.set({ device });
-
-    } else {
-
-      if (snap.data().device !== device) {
-        alert("🚫 Este usuário já está vinculado a outro dispositivo");
-        await auth.signOut();
-        return;
-      }
-    }
 
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -171,7 +131,7 @@ async function login() {
 }
 
 
-// ✅ LISTAR FRENTES
+// ✅ LISTAR
 async function carregar() {
 
   const lista = document.getElementById("lista");
@@ -193,7 +153,7 @@ async function carregar() {
 }
 
 
-// ✅ SEÇÃO DINÂMICA
+// ✅ SEÇÕES
 function secao(s, nome) {
 
   if (!s) return "";
@@ -203,9 +163,8 @@ function secao(s, nome) {
   if (s["Data Prevista"]) html += `<p>${s["Data Prevista"]}</p>`;
   if (s.Total) html += `<p>Total: ${s.Total}</p>`;
   if (s["Avanço"]) html += `<p>Avanço: ${s["Avanço"]}</p>`;
-  if (s.Situacao) html += `<p>${s.Situacao}</p>`;
 
-  if (s.Imagem1) html += `<img src="${s.Imagem1}s.Imagem2}.Imagem3) html += `<img src="${s.Imagem3} += "</div>";
+  html += "</div>";
 
   return html;
 }
@@ -228,10 +187,8 @@ function abrir(data) {
 
 // ✅ VOLTAR
 function voltar() {
-
   lista.style.display = "block";
   detalhe.style.display = "none";
-
 }
 
 </script>
