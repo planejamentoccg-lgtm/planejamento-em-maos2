@@ -29,6 +29,7 @@
   background: white;
   padding: 12px 15px;
   border-bottom: 1px solid #eee;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -122,10 +123,6 @@
   color: #8bc34a;
   font-size: 28px;
   font-weight: bold;
-}
-
-.linhaFrente {
-  margin: 12px 0;
 }
 
 .metricas p {
@@ -476,14 +473,17 @@
   display: flex;
   align-items: center;
   padding: 15px;
-  margin: 10px 0;
+  margin: 12px 0;
   background: white;
   border: 1px solid #f0f0f0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   border-radius: 16px;
   cursor: pointer;
+  transition: 0.2s;
 }
-
+.linhaFrente:hover {
+  transform: translateY(-2px);
+}
 .iconeFrente {
   width: 40px;
   height: 40px;
