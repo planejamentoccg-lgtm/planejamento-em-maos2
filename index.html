@@ -25,6 +25,7 @@
 #topo {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   background: white;
   padding: 12px 15px;
   border-bottom: 1px solid #eee;
@@ -531,14 +532,9 @@ async function carregar() {
   const lista = document.getElementById("lista");
 
 lista.innerHTML = `
-<div id="topo">
+  <div id="topo">
 
-  <div class="logoArea">
-  <img src="https://i.imgur.com/iZ8gr1i.png">
-</div>
-  </div>
-
-  <div class="divisor"></div>
+  <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
 
   <div class="nomeApp">
     Planejamento em Mãos
@@ -550,7 +546,6 @@ lista.innerHTML = `
   </div>
 
 </div>
-
 <div id="bannerHome">
   <div class="overlay">
     <h1 class="tituloBanner">Consórcio Construtor Gávea</h1>
