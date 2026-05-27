@@ -37,7 +37,8 @@
   margin: 0;
 }
 
-#botoes {#boto max-width: 700px;
+#botoes {
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -641,41 +642,41 @@ lista.innerHTML = `
 
   const snap = await db.collection("Frentes").get();
 
-  snap.forEach(doc => {
-    const data = doc.data();
+snap.forEach(doc => {
 
-    const card = document.createElement("div");
-    card.className = "linhaFrente";
+  const data = doc.data();
 
-let progresso = data.Percentual || 0;
+  const card = document.createElement("div");
+  card.className = "linhaFrente";
 
-card.innerHTML = `card.innerHTML =2910/2910791.png">
-  </div>
+  let progresso = data.Percentual || 0;
 
-  <div class="infoFrente">
-
-    <div class="topoFrente">
-      <span class="nomeFrente">${data.Nome}</span>
-      <span class="percentual">${progresso}%</span>
-      <span class="seta">›</span>
+  card.innerHTML = `
+    <div class="iconeFrente">
+      <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
     </div>
 
-    <div class="barra">
-      <div class="barraPreenchida" style="width:${progresso}%"></div>
+    <div class="infoFrente">
+
+      <div class="topoFrente">
+        <span class="nomeFrente">${data.Nome}</span>
+        <span class="percentual">${progresso}%</span>
+        <span class="seta">›</span>
+      </div>
+
+      <div class="barra">
+        <div class="barraPreenchida" style="width:${progresso}%"></div>
+      </div>
+
     </div>
+  `;
 
-  </div>
-`;
-  <div class="iconeFrente">
-    <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
-  </div>
-`;
+  card.onclick = () => abrir(data);
 
-card.onclick = () => abrir(data);
+  botoes.appendChild(card);
 
-botoes.appendChild(card);
+});
 
-  });
   await verificarAtualizacoes();
   await carregarContadorNotif();
 }
