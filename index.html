@@ -474,10 +474,25 @@ async function carregar() {
   const lista = document.getElementById("lista");
 
   lista.innerHTML = `
-    <div id="topo">
-      <img src="https://i.imgur.com/iZ8gr1i.png">
-      <h2>Planejamento em Mãos</h2>
+  <div id="topo">
+    <img src="https://i.imgur.com/iZ8gr1i.png">
+    <h2>Planejamento em Mãos</h2>
+
+    <div style="margin-left:auto; position:relative; font-size:20px; cursor:pointer;">
+      🔔
+      <span id="contadorNotif" style="
+        position:absolute;
+        top:-5px;
+        right:-10px;
+        background:red;
+        color:white;
+        font-size:10px;
+        padding:3px 6px;
+        border-radius:50%;
+      ">0</span>
     </div>
+
+  </div>
 
     <div id="bannerHome">
       <div class="overlay">
