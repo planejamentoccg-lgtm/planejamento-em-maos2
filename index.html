@@ -567,7 +567,7 @@ async function abrirNotificacoes() {
       dataFormatada = dataObj.toLocaleString("pt-BR");
     }
 
-    const lida = n.lida ? "#dfe6e9" : "#ffffff";
+    const lida = n.lida ? "#ffffff" : "#bbdefb";
 
   container.innerHTML += `
   <div onclick="abrirNotificacao('${doc.id}', '${nomeFrente}')"
@@ -578,6 +578,7 @@ async function abrirNotificacoes() {
         cursor:pointer;
         background:${lida};
         transition: 0.3s;
+        border-left: ${n.lida ? "4px solid transparent" : "4px solid #1f6e8c"};
       ">
 
         <b>${nomeFrente}</b><br>
