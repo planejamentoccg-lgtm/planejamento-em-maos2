@@ -419,29 +419,7 @@
       <img src="https://i.imgur.com/iZ8gr1i.png">
       <h2>Planejamento em Mãos</h2>
     </div>
-<div id="app" style="display:none;">
-
-  <div id="lista"></div>
-
-  <div id="detalhe" style="display:none;">...</div>
-
-  <!-- ✅ TELA SEMANAS -->
-  <div id="semanas" style="display:none;">...</div>
-
-  <!-- ✅ NOVA TELA NOTIFICAÇÕES -->
-  <div id="notificacoes" style="display:none;">
-
-    <div id="topo">
-      <button onclick="voltarHome()" style="margin-right:10px;">←</button>
-      <h2>Notificações</h2>
-    </div>
-
-    <div id="listaNotificacoes"></div>
-
-  </div>
-
-</div>
-    <div id="bannerSemanas">
+  <div id="bannerSemanas">
       <h1>Próximas Semanas</h1>
     </div>
 
@@ -450,6 +428,16 @@
     <button onclick="voltarHome()">Voltar</button>
   </div>
 
+<!-- ✅ NOTIFICACOES -->
+<div id="notificacoes" style="display:none;">
+
+  <div id="topo">
+    <button onclick="voltarHome()" style="margin-right:10px;">←</button>
+    <h2>Notificações</h2>
+  </div>
+
+  <div id="listaNotificacoes"></div>
+    
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -499,7 +487,7 @@ async function carregar() {
     <img src="https://i.imgur.com/iZ8gr1i.png">
     <h2>Planejamento em Mãos</h2>
 
-   <div onclick="toggleNotificacoes()" style="margin-left:auto; position:relative; cursor:pointer;">
+   <div onclick="abrirNotificacoes()" style="margin-left:auto; position:relative; cursor:pointer;">
 
   <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png"
        style="width:22px; height:22px;">
@@ -551,6 +539,38 @@ async function carregar() {
   await carregarContadorNotif();
 }
 
+async function abrirNotificacoes() {
+
+  // ✅ esconder home
+  document.getElementById("lista").style.display = "none";
+
+  // ✅ mostrar notificações
+  document.getElementById("notificacoes").style.display = "block";
+
+  const container = document.getElementById("listaNotificacoes");
+  container.innerHTML = "";
+
+  const snap = await db.collection("Notificacoes")
+    .orderBy("data", "desc")
+    .get();
+
+  snap.forEach(doc => {
+    const n = doc.data();
+
+    container.innerHTML += `
+      <div style="
+        padding:12px;
+        border-bottom:1px solid #eee;
+        text-align:left;
+        cursor:pointer;
+      ">
+        <b>${n.frente}</b><br>
+        ${n.mensagem}
+      </div>
+    `;
+  });
+
+}
 
 // ✅ BLOCO (INTACTO)
 function criarBloco(s, titulo) {
