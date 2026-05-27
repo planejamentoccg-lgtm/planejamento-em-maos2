@@ -29,6 +29,11 @@
   background: white;
   padding: 12px 15px;
   border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  
 }
 #topo img {
   height: 32px;
@@ -160,22 +165,7 @@
 
 
     /* ✅ HOME */
-    #bannerHome {
-      height: 240px;
-      background-image: url('https://i.imgur.com/sGBGmb4.jpeg');
-      background-size: cover;
-      background-position: center;
-    }
-
-    .overlay {
-      background: rgba(0,0,0,0.5);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: white;
-    }
-
+   
     .tituloBanner {
       font-size: 32px;
     }
@@ -481,9 +471,10 @@
   align-items: center;
   padding: 15px;
   margin: 10px 0;
-  background: #f9fafb;
+  background: white;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   border-radius: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   cursor: pointer;
 }
 
