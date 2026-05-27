@@ -241,7 +241,7 @@
    #login {
       position: relative;
       height: 100vh;
-      overflow: hidden;
+      overflow: auto;
       }
 
   .fundoLogin {
@@ -257,7 +257,7 @@
 .cardLogin {
   position: relative;
   background: white;
-  width: calc(100% - 60px);
+  width: 350px;
   max-width: 90%;
   padding: 35px 30px;
   border-radius: 20px;
@@ -343,7 +343,12 @@
   color: #666;
 }
 
-
+@media (max-height: 500px) {
+  #login {
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+}
   </style>
 </head>
 
