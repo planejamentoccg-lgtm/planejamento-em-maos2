@@ -37,6 +37,9 @@
   margin: 0;
 }
 
+#botoes {#b  max-width: 700px;
+  margin: 0 auto;
+}
 
 /* ✅ LOGO + TEXTO */
 .logoArea {
@@ -418,19 +421,19 @@
     margin-top: 20px;
   }
 }
-.linhaFrente {.linhaFrente: flex;
+.linhaFrente {.linha  display: flex;
   align-items: center;
-  padding: 12px;
-  margin: 10px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 15px;
+  margin: 10px 0;
+  background: #f9fafb;
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   cursor: pointer;
 }
 
 .iconeFrente {
-  width: 45px;
-  height: 45px;
+  width: 24px;
+  height: 24px;
   background: #e8f5e9;
   border-radius: 50%;
   display: flex;
@@ -442,6 +445,7 @@
 
 .infoFrente {
   flex: 1;
+  text-align: left;
 }
 
 .topoFrente {
@@ -467,18 +471,19 @@
   color: #888;
 }
 
-.barra {
-  margin-top: 6px;
-  width: 100%;
-  height: 6px;
-  background: #eee;
-  border-radius: 10px;
+.barra {.barra: 10px;
 }
 
 .barraPreenchida {
   height: 100%;
   background: #7cb342;
   border-radius: 10px;
+  transition: width 0.5s ease;
+}
+  margin-top: 8px;
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
 }
   </style>
 </head>
@@ -638,11 +643,12 @@ lista.innerHTML = `
     const card = document.createElement("div");
     card.className = "linhaFrente";
 
-let progresso = parseInt(data.Realizado?.replace('%','')) || 0;
+let progresso = data.Percentual || 0;
 
 card.innerHTML = `
   <div class="iconeFrente">
-    🏗️
+  <div class="img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
+</div>
   </div>
 
   <div class="infoFrente">
