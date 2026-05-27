@@ -68,7 +68,60 @@
   font-weight: bold;
   color: #8bc34a;
 }
+.painel {
+  padding: 30px 20px;
+  text-align: left;
+  color: white;
 
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+.topoLista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-top: 20px;
+}
+
+.topoLista h3 {
+  font-size: 16px;
+  color: #1f2d3d;
+}
+
+.verMais {
+  font-size: 12px;
+  color: #7cb342;
+}
+.label {
+  font-size: 12px;
+  color: #8bc34a;
+  letter-spacing: 1px;
+}
+
+.painel h1 {
+  margin: 10px 0 20px;
+  font-size: 24px;
+}
+
+.metricas {
+  display: flex;
+  justify-content: space-between;
+}
+
+.metricas div {
+  text-align: center;
+}
+
+.metricas h2 {
+  margin: 0;
+  color: #8bc34a;
+}
+
+.metricas p {
+  margin-top: 5px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
 /* ✅ DIVISOR */
 .divisor {
   width: 1px;
@@ -532,9 +585,15 @@
 
   <div id="detalhe" style="display:none;">
     <div id="topo">
-      <img src="https://i.imgur.com/iZ8gr1i.png">
-      <h2>Planejamento em Mãos</h2>
-    </div>
+
+  <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+
+  <div class="notif" onclick="abrirNotificacoes()">
+    <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
+    <span id="contadorNotif">0</span>
+  </div>
+
+</div>
 
     <div id="banner"><span id="titulo"></span></div>
     <div id="conteudo"></div>
@@ -625,11 +684,25 @@ lista.innerHTML = `
   </div>
 
 </div>
-<div id="bannerHome">
-  <div class="overlay">
-    <h1 class="tituloBanner">Consórcio Construtor Gávea</h1>
-    <p class="subtituloBanner">Planejamento em Mãos</p>
+<div class="painel">
+
+  <span class="label">PLANEJAMENTO EM MÃOS</span>
+  <h1>Painel de Progresso</h1>
+
+  <div class="metricas">
+    
+    <div>
+      <h2 id="qtFrentes">0</h2>
+      <p>Frentes Ativas</p>
+    </div>
+
+    <div>
+      <h2>2026</h2>
+      <p>Em Curso</p>
+    </div>
+
   </div>
+
 </div>
 
 <h2 class="tituloHome">Frentes de Serviço em Andamento</h2>
@@ -677,7 +750,7 @@ snap.forEach(doc => {
   botoes.appendChild(card);
 
 });
-
+  document.getElementById("qtFrentes").innerText = snap.size;
   await verificarAtualizacoes();
   await carregarContadorNotif();
 }
