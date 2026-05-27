@@ -37,9 +37,9 @@
   margin: 0;
 }
 
-#botoes {#b  max-width: 700px;
-  margin: 0 auto;
+#botoes {#b0 auto;
 }
+  max-width: 700px;
 
 /* ✅ LOGO + TEXTO */
 .logoArea {
@@ -421,7 +421,8 @@
     margin-top: 20px;
   }
 }
-.linhaFrente {.linha  display: flex;
+.linhaFrente {
+  display: flex;
   align-items: center;
   padding: 15px;
   margin: 10px 0;
@@ -432,15 +433,19 @@
 }
 
 .iconeFrente {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   background: #e8f5e9;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   margin-right: 12px;
+}
+
+.iconeFrente img {
+  width: 22px;
+  height: 22px;
 }
 
 .infoFrente {
@@ -457,7 +462,6 @@
   flex: 1;
   font-size: 15px;
   color: #1f2d3d;
-  text-align: left;
 }
 
 .percentual {
@@ -471,7 +475,12 @@
   color: #888;
 }
 
-.barra {.barra: 10px;
+.barra {
+  margin-top: 8px;
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 10px;
 }
 
 .barraPreenchida {
@@ -479,11 +488,6 @@
   background: #7cb342;
   border-radius: 10px;
   transition: width 0.5s ease;
-}
-  margin-top: 8px;
-  width: 100%;
-  height: 8px;
-  background: #e0e0e0;
 }
   </style>
 </head>
@@ -645,13 +649,7 @@ lista.innerHTML = `
 
 let progresso = data.Percentual || 0;
 
-card.innerHTML = `
-  <div class="iconeFrente">
-  <div class="img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
-</div>
-  </div>
-
-  <div class="infoFrente">
+card.innerHTML = `card.innerHTML =div class="infoFrente">
 
     <div class="topoFrente">
       <span class="nomeFrente">${data.Nome}</span>
@@ -663,6 +661,10 @@ card.innerHTML = `
       <div class="barraPreenchida" style="width:${progresso}%"></div>
     </div>
 
+  </div>
+`;
+  <div class="iconeFrente">
+    <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
   </div>
 `;
 
