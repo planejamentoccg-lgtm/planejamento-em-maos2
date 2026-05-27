@@ -163,13 +163,32 @@
         width: 100%;
       }
      .cardLogin {
-        width: 90%;
-        padding: 18px 15px;
+        width: 92%;
+        max-width: 320px;
+        padding: 16px 12px;
         top: 0;
         transform: none;
-        margin-top: 15px;
-    }
-      
+        margin-top: 10px;
+      }
+      .logoLogin {
+        width: 55px;
+        margin-bottom: 5px;
+      }
+
+      .cardLogin input {
+        padding: 8px;
+        margin: 6px 0;
+        font-size: 12px;
+      }
+
+      .cardLogin button {
+        padding: 9px;
+        font-size: 12px;
+      }
+
+      .tituloLogin {
+        margin-bottom: 10px;
+      }
       .textosTitulo h1 {
         font-size: 16px;
       }
@@ -182,14 +201,18 @@
         width: 22px;
         height: 22px;
       }
+      
       #login {
         height: auto;
+        min-height: 100vh;
         padding: 20px 0;
-      }
-
-    .cardLogin {
-      transform: none;
-      top: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+}   
+      .fundoLogin {
+        height: 100%;
+        min-height: 100vh;
       }
     }
     
@@ -232,6 +255,7 @@
   position: relative;
   background: white;
   width: 350px;
+  max-width: 90%;
   padding: 35px 30px;
   border-radius: 20px;
   margin: auto;
