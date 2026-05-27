@@ -640,26 +640,37 @@ function voltarHome() {
  async function verificarAtualizacoes() {
 
   const snap = await db.collection("Frentes").get();
-  const agora = new Date();
 
-  snap.forEach(doc => {
+  for (const doc of snap.docs) {
+
     const data = doc.data();
 
-    if (!data.ultimaAtualizacao) return;
+    if (!data.ultimaAtualizacao) continue;
 
     const atualizacao = data.ultimaAtualizacao.toDate();
-    const diffMin = (agora - atualizacao) / (1000 * 60);
 
-    if (diffMin < 60) {
-      // 🔔 cria notificação no banco
-      db.collection("Notificacoes").add({
+    let ultimaNotif = data.ultimaNotificada
+      ? data.ultimaNotificada.toDate()
+      : new Date(0);
+
+    // ✅ só cria se a frente foi atualizada DEPOIS da última notificação
+    if (atualizacao > ultimaNotif) {
+
+      await db.collection("Notificacoes").add({
         mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
+        frente: data.Nome,
         data: new Date().toISOString(),
         lida: false
       });
-    }
-  });
 
+      // ✅ atualiza o controle para não duplicar
+      await db.collection("Frentes").doc(doc.id).update({
+        ultimaNotificada: data.ultimaAtualizacao
+      });
+
+    }
+
+  }
 }
 async function carregarContadorNotif() {
 
