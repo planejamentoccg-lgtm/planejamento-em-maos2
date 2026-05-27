@@ -21,28 +21,77 @@
     }
 
     /* ✅ TOPO */
-    #topo {
-      display: flex;
-      align-items: center;
-      background: white;
-      padding: 10px 20px;
-      border-bottom: 1px solid #ddd;
-    }
+  
+#topo {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
 
-    
-    #topo img {
-      height: 45px;
-      width: auto;
-      object-fit: contain;
-    }
+/* ✅ LOGO + TEXTO */
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.logoArea img {
+  height: 38px;
+}
 
-    #topo h2 {
-      margin-left: 10px;
-      font-size: 14px;
-      font-weight: 400;
-      color: #555;
-    }
+.txtLogo {
+  line-height: 1.1;
+}
+
+.linha1 {
+  font-size: 11px;
+  color: #666;
+}
+
+.linha2 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #8bc34a;
+}
+
+/* ✅ DIVISOR */
+.divisor {
+  width: 1px;
+  height: 30px;
+  background: #ddd;
+  margin: 0 10px;
+}
+
+/* ✅ NOME DO APP */
+.nomeApp {
+  font-size: 13px;
+  color: #555;
+  flex: 1;
+}
+
+/* ✅ SININHO */
+.notif {
+  position: relative;
+  cursor: pointer;
+}
+
+.notif img {
+  width: 22px;
+}
+
+#contadorNotif {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: #8bc34a;
+  color: white;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 50%;
+}
+
 
     /* ✅ HOME */
     #bannerHome {
@@ -481,44 +530,44 @@ async function carregar() {
 
   const lista = document.getElementById("lista");
 
-  lista.innerHTML = `
-  <div id="topo">
+lista.innerHTML = `lista.innerHTML =="topo">
+
+  <div class="logoArea">
     <img src="https://i.imgur.com/iZ8gr1i.png">
-    <h2>Planejamento em Mãos</h2>
+    
+    <div class="txtLogo">
+      <div class="linha1">Consórcio Construtor</div>
+      <div class="linha2">Gávea</div>
+    </div>
+  </div>
 
-   <div onclick="abrirNotificacoes()" style="margin-left:auto; position:relative; cursor:pointer;">
+  <div class="divisor"></div>
 
-  <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png"
-       style="width:22px; height:22px;">
+  <div class="nomeApp">
+    Planejamento em Mãos
+  </div>
 
-  <span id="contadorNotif" style="
-    position:absolute;
-    top:-5px;
-    right:-10px;
-    background:red;
-    color:white;
-    font-size:10px;
-    padding:3px 6px;
-    border-radius:50%;
-  ">0</span>
+  <div class="notif" onclick="abrirNotificacoes()">
+    <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
+    <span id="contadorNotif">0</span>
+  </div>
 
 </div>
 
+<div id="bannerHome">
+  <div class="overlay">
+    <h1 class="tituloBanner">Consórcio Construtor Gávea</h1>
+    <p class="subtituloBanner">Planejamento em Mãos</p>
   </div>
+</div>
 
-    <div id="bannerHome">
-      <div class="overlay">
-        <h1 class="tituloBanner">Consórcio Construtor Gávea</h1>
-        <p class="subtituloBanner">Planejamento em Mãos</p>
-      </div>
-    </div>
+<h2 class="tituloHome">Frentes de Serviço em Andamento</h2>
+<div id="botoes"></div>
 
-    <h2 class="tituloHome">Frentes de Serviço em Andamento</h2>
-    <div id="botoes"></div>
+<h2 class="tituloHome">Próximas Semanas</h2>
+<button class="btnSec" onclick="abrirSemanas()">Ver Mais</button>
+`;
 
-    <h2 class="tituloHome">Próximas Semanas</h2>
-    <button class="btnSec" onclick="abrirSemanas()">Ver Mais</button>
-  `;
 
   const botoes = document.getElementById("botoes");
 
