@@ -567,20 +567,21 @@ async function abrirNotificacoes() {
       dataFormatada = dataObj.toLocaleString("pt-BR");
     }
 
-    const lida = n.lida ? "#ffffff" : "#bbdefb";
+    const user = auth.currentUser.email;
+    const lida = (n.lidaPor && n.lidaPor.includes(user));
+    const corFundo = lida ? "#ffffff" : "#e3f2fd";
 
-  container.innerHTML += `
+container.innerHTML += `
   <div onclick="abrirNotificacao('${doc.id}', '${nomeFrente}')"
        style="
         padding:12px;
         border-bottom:1px solid #eee;
         text-align:left;
         cursor:pointer;
-        background:${lida};
+        background:${corFundo};
         transition: 0.3s;
-        border-left: ${n.lida ? "4px solid transparent" : "4px solid #1f6e8c"};
+        border-left: ${lida ? "4px solid transparent" : "4px solid #1f6e8c"};
       ">
-
         <b>${nomeFrente}</b><br>
         A frente de serviço foi atualizada<br>
         <small style="color:#888;">${dataFormatada}</small>
@@ -699,26 +700,33 @@ function voltarHome() {
 }
 async function abrirNotificacao(idNotif, nomeFrente) {
 
-  // ✅ marca como lida
-  await db.collection("Notificacoes").doc(idNotif).update({
-    lida: true
+  const user = auth.currentUser.email;
+
+  const ref = db.collection("Notificacoes").doc(idNotif);
+
+  const docSnap = await ref.get();
+  const dados = docSnap.data();
+
+  let lista = dados.lidaPor || [];
+
+  if (!lista.includes(user)) {
+    lista.push(user);
+  }
+
+  await ref.update({
+    lidaPor: lista
   });
 
-  // ✅ atualiza contador do sino
   await carregarContadorNotif();
 
-  // ✅ busca a frente
   const snap = await db.collection("Frentes")
     .where("Nome", "==", nomeFrente)
     .get();
 
   if (!snap.empty) {
-
     const data = snap.docs[0].data();
 
-    // ✅ troca de tela
     document.getElementById("notificacoes").style.display = "none";
-
     abrir(data);
   }
 }
@@ -745,8 +753,8 @@ async function abrirNotificacao(idNotif, nomeFrente) {
         mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
         frente: data.Nome,
         data: new Date().toISOString(),
-        lida: false
-      });
+        lidaPor: []
+    });
 
       // ✅ atualiza o controle para não duplicar
       await db.collection("Frentes").doc(doc.id).update({
@@ -759,11 +767,20 @@ async function abrirNotificacao(idNotif, nomeFrente) {
 }
 async function carregarContadorNotif() {
 
-  const snap = await db.collection("Notificacoes")
-    .where("lida", "==", false)
-    .get();
+  const user = auth.currentUser.email;
+  const snap = await db.collection("Notificacoes").get();
 
-  document.getElementById("contadorNotif").innerText = snap.size;
+  let naoLidas = 0;
+
+  snap.forEach(doc => {
+    const n = doc.data();
+
+    if (!n.lidaPor || !n.lidaPor.includes(user)) {
+      naoLidas++;
+    }
+  });
+
+  document.getElementById("contadorNotif").innerText = naoLidas;
 }
 </script>
 
