@@ -37,9 +37,9 @@
   margin: 0;
 }
 
-#botoes {#b0 auto;
+#botoes {#boto max-width: 700px;
+  margin: 0 auto;
 }
-  max-width: 700px;
 
 /* ✅ LOGO + TEXTO */
 .logoArea {
@@ -649,7 +649,11 @@ lista.innerHTML = `
 
 let progresso = data.Percentual || 0;
 
-card.innerHTML = `card.innerHTML =div class="infoFrente">
+card.innerHTML = `card.innerHTML =div class="iconeFrente">
+    <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png">
+  </div>
+
+  <div class="infoFrente">
 
     <div class="topoFrente">
       <span class="nomeFrente">${data.Nome}</span>
@@ -660,7 +664,7 @@ card.innerHTML = `card.innerHTML =div class="infoFrente">
     <div class="barra">
       <div class="barraPreenchida" style="width:${progresso}%"></div>
     </div>
-
+    
   </div>
 `;
   <div class="iconeFrente">
