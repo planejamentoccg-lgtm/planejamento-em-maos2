@@ -178,11 +178,68 @@
       text-shadow: 2px 2px 6px black;
       }
 
-    #bannerSemanas h1 {
+   #bannerSemanas h1 {
       font-size: 28px;
       margin: 0;
       }
 
+   #login {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      }
+
+  .fundoLogin {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://i.imgur.com/ahjjb87.png');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.6);
+}
+
+.cardLogin {
+  position: relative;
+  background: white;
+  width: 350px;
+  padding: 30px;
+  border-radius: 15px;
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.logoLogin {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+.cardLogin h1 {
+  font-size: 22px;
+  color: #1f6e8c;
+}
+
+.cardLogin input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.cardLogin button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #8bc34a;
+  color: white;
+  font-size: 16px;
+}
+.cardLogin button:hover {.cardLogin  background: #7cb342;
+}
 
   </style>
 </head>
