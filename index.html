@@ -567,13 +567,19 @@ async function abrirNotificacoes() {
       dataFormatada = dataObj.toLocaleString("pt-BR");
     }
 
-    container.innerHTML += `
-      <div style="
+    const lida = n.lida ? "#dfe6e9" : "#ffffff";
+
+  container.innerHTML += `
+  <div onclick="abrirNotificacao('${doc.id}', '${nomeFrente}')"
+       style="
         padding:12px;
         border-bottom:1px solid #eee;
         text-align:left;
         cursor:pointer;
+        background:${lida};
+        transition: 0.3s;
       ">
+
         <b>${nomeFrente}</b><br>
         A frente de serviço foi atualizada<br>
         <small style="color:#888;">${dataFormatada}</small>
@@ -690,7 +696,31 @@ function voltarHome() {
   document.getElementById("semanas").style.display = "none";
   document.getElementById("notificacoes").style.display = "none";
 }
+async function abrirNotificacao(idNotif, nomeFrente) {
 
+  // ✅ marca como lida
+  await db.collection("Notificacoes").doc(idNotif).update({
+    lida: true
+  });
+
+  // ✅ atualiza contador do sino
+  await carregarContadorNotif();
+
+  // ✅ busca a frente
+  const snap = await db.collection("Frentes")
+    .where("Nome", "==", nomeFrente)
+    .get();
+
+  if (!snap.empty) {
+
+    const data = snap.docs[0].data();
+
+    // ✅ troca de tela
+    document.getElementById("notificacoes").style.display = "none";
+
+    abrir(data);
+  }
+}
  async function verificarAtualizacoes() {
 
   const snap = await db.collection("Frentes").get();
