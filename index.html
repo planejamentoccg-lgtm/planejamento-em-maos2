@@ -523,6 +523,7 @@ async function carregar() {
     botoes.appendChild(btn);
   });
   await verificarAtualizacoes();
+  await carregarContadorNotif();
 }
 
 
@@ -632,10 +633,9 @@ function voltarHome() {
   document.getElementById("lista").style.display = "block";
 }
 
-  async function verificarAtualizacoes() {
+ async function verificarAtualizacoes() {
 
   const snap = await db.collection("Frentes").get();
-
   const agora = new Date();
 
   snap.forEach(doc => {
@@ -644,14 +644,26 @@ function voltarHome() {
     if (!data.ultimaAtualizacao) return;
 
     const atualizacao = data.ultimaAtualizacao.toDate();
-
     const diffMin = (agora - atualizacao) / (1000 * 60);
 
     if (diffMin < 60) {
-      alert(`A frente de serviço ${data.Nome} foi atualizada`);
+      // 🔔 cria notificação no banco
+      db.collection("Notificacoes").add({
+        mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
+        data: new Date().toISOString(),
+        lida: false
+      });
     }
   });
 
+}
+async function carregarContadorNotif() {
+
+  const snap = await db.collection("Notificacoes")
+    .where("lida", "==", false)
+    .get();
+
+  document.getElementById("contadorNotif").innerText = snap.size;
 }
 </script>
 
