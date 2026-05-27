@@ -426,6 +426,7 @@
     <div id="conteudoSemanas"></div>
 
     <button onclick="voltarHome()">Voltar</button>
+    
   </div>
 
 <!-- ✅ NOTIFICACOES -->
@@ -673,9 +674,9 @@ function voltar() {
   document.getElementById("detalhe").style.display = "none";
 }
 
-function voltarHome() {
+function voltarHome().getElementById("lista").style.display = "block";
   document.getElementById("semanas").style.display = "none";
-  document.getElementById("lista").style.display = "block";
+  document.getElementById("notificacoes").style.display = "none";
 }
 
  async function verificarAtualizacoes() {
