@@ -542,10 +542,10 @@ async function carregar() {
 
 async function abrirNotificacoes() {
 
-  // ✅ esconder home
+  // esconder home
   document.getElementById("lista").style.display = "none";
 
-  // ✅ mostrar notificações
+  // mostrar notificações
   document.getElementById("notificacoes").style.display = "block";
 
   const container = document.getElementById("listaNotificacoes");
@@ -558,6 +558,15 @@ async function abrirNotificacoes() {
   snap.forEach(doc => {
     const n = doc.data();
 
+    const nomeFrente = n.frente || "Sem nome";
+
+    let dataFormatada = "";
+
+    if (n.data) {
+      const dataObj = new Date(n.data);
+      dataFormatada = dataObj.toLocaleString("pt-BR");
+    }
+
     container.innerHTML += `
       <div style="
         padding:12px;
@@ -565,13 +574,15 @@ async function abrirNotificacoes() {
         text-align:left;
         cursor:pointer;
       ">
-        <b>${n.frente}</b><br>
-        ${n.mensagem}
+        <b>${nomeFrente}</b><br>
+        A frente de serviço foi atualizada<br>
+        <small style="color:#888;">${dataFormatada}</small>
       </div>
     `;
   });
 
 }
+
 
 // ✅ BLOCO (INTACTO)
 function criarBloco(s, titulo) {
