@@ -203,12 +203,16 @@
   position: relative;
   background: white;
   width: 350px;
-  padding: 30px;
-  border-radius: 15px;
+  padding: 35px 30px;
+  border-radius: 20px;
   margin: auto;
   top: 50%;
   transform: translateY(-50%);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* ✅ CENTRALIZA TUDO */
 }
 
 .logoLogin {
@@ -223,23 +227,29 @@
 
 .cardLogin input {
   width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 8px;
+  padding: 14px;
+  margin: 8px 0;
+  border-radius: 10px;
   border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .cardLogin button {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 8px;
-  background: #8bc34a;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #7cb342, #8bc34a);
   color: white;
   font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
 }
-.cardLogin button:hover {.cardLogin  background: #7cb342;
+.cardLogin button:hover {
+  background: #7cb342;
 }
+
 
   </style>
 </head>
