@@ -339,6 +339,9 @@
     padding-right: 0;
     justify-content: flex-start;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
     .itemPainel div {
       text-align: left;
@@ -358,7 +361,14 @@
     .painel {
       padding: 25px 15px;
   }
-
+    .itemPainel:nth-child(2n) {
+      justify-content: flex-end;
+      flex-direction: row-reverse;
+  }
+    .itemPainel:nth-child(2n) div {
+      text-align: right;
+  }
+      
       .cardLogin input {
         padding: 8px;
         margin: 6px 0;
