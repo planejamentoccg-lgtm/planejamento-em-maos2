@@ -308,14 +308,13 @@
       text-shadow: 2px 2px 6px black;
     }
 
-    .bloco {
-      margin: 15px;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
+.bloco {
+  margin: 15px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px; /* 👈 aumenta */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 👈 melhora */
+}
     .tituloBloco {
       color: #1f6e8c;
       font-weight: bold;
@@ -1371,10 +1370,10 @@ const prevReal = Math.min(Math.max(prev, percReal), 100);
 html += `
 <div class="bloco">
 
-  <h3 style="display:flex; align-items:center; gap:8px;">
-    <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" width="18">
-    PROGRESSO FÍSICO
-  </h3>
+<h3 style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+  <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" width="18">
+  PROGRESSO FÍSICO
+</h3>
 
   <div style="display:flex; align-items:center; gap:20px;">
 
@@ -1405,6 +1404,7 @@ html += `
         justify-content:center;
         font-weight:bold;
         color:#7cb342;
+        font-size:18px
       ">
         ${perc}%
       </div>
