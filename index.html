@@ -109,14 +109,8 @@
   font-size: 24px;
 }
 
-.metricas {
-  display: flex;
-  align-items: center
-  justify-content: space-between;
-}
-
 .metricas div {
-  text-align: center;
+  text-align: left;
 }
 
 .metricas h2 {
@@ -130,6 +124,48 @@
   margin-top: 5px;
   font-size: 12px;
   color: rgba(255,255,255,0.7);
+}
+    .metricas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.itemPainel {
+  display: flex;
+  align-items: center;
+  padding-right: 15px;
+  gap: 12px;
+  flex: 1;
+}
+
+/* ícone com fundo suave */
+.itemPainel img {
+  width: 16px;
+  height: 16px;
+  background: rgba(255,255,255,0.08);
+  padding: 8px;
+  border-radius: 50%;
+}
+
+/* número */
+.itemPainel h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #8bc34a;
+}
+
+/* texto */
+.itemPainel p {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* DIVISOR */
+.itemPainel:not(:last-child) {
+  border-right: 1px solid rgba(255,255,255,0.2);
+  padding-right: 15px;
 }
 /* ✅ DIVISOR */
 .divisor {
@@ -686,7 +722,7 @@ lista.innerHTML = `
   <div class="metricas">
 
     <div class="itemPainel">
-      <img src="https://cdn-icons-png.flaticon.com/512/484/484167.png">
+      <img src="https://i.imgur.com/CwjC8pK.png">
       <div>
         <h2 id="qtFrentes">0</h2>
         <p>Frentes Ativas</p>
@@ -694,7 +730,7 @@ lista.innerHTML = `
     </div>
 
     <div class="itemPainel">
-      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png">
+      <img src="https://i.imgur.com/BrnrLET.png">
       <div>
         <h2 id="noPrazo">0</h2>
         <p>No prazo</p>
@@ -702,7 +738,7 @@ lista.innerHTML = `
     </div>
 
     <div class="itemPainel">
-      <img src="https://cdn-icons-png.flaticon.com/512/1828/1828843.png">
+      <img src="https://i.imgur.com/CcaaD2T.png">
       <div>
         <h2 id="atrasadas">0</h2>
         <p>Atrasadas</p>
@@ -710,7 +746,7 @@ lista.innerHTML = `
     </div>
 
     <div class="itemPainel">
-      <img src="https://cdn-icons-png.flaticon.com/512/747/747310.png">
+      <img src="https://i.imgur.com/ExdFyYG.png">
       <div>
         <h2>2º Sem</h2>
         <p>2028</p>
