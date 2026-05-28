@@ -414,8 +414,10 @@
 }
 
 .detalhesSemana span {
-  display: block;
-  margin-top: 3px;
+  display: flex;           /* ✅ ESSENCIAL */
+  align-items: center;     /* ✅ centraliza vertical */
+  gap: 8px;                /* ✅ espaçamento bonito */
+  margin-top: 6px;
 }
     @media (max-width: 768px) {
 
@@ -710,7 +712,11 @@
   flex: 1;
   text-align: left;
 }
-
+.iconMini {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0; /* ✅ evita esmagar */
+}
 .topoFrente {
   display: flex;
   align-items: center;
@@ -1068,9 +1074,20 @@ async function carregar() {
           </div>
 
           <div class="detalhesSemana">
-          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/747/747310.png"> ${d.Inicio} - ${d.Termino}</span>
-          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"> Tendência: ${d.Tendencia}</span>
-          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/3844/3844224.png"> Projeto: ${d.Projeto}</span>
+            <span>
+              <img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/747/747310.png">
+              ${d.Inicio} - ${d.Termino}
+            </span>
+            
+            <span>
+              <img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png">
+              Tendência: ${d.Tendencia}
+            </span>
+            
+            <span>
+              <img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/3844/3844224.png">
+              Projeto: ${d.Projeto}
+            </span>
           </div>
 
         </div>
