@@ -84,11 +84,13 @@
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
 }
 .topoLista {
+  max-width: 700px;              /* ✅ igual aos cards */
+  width: calc(100% - 32px);      /* ✅ mesmo respiro */
+  margin: 20px auto 0 auto;      /* ✅ centraliza */
+  padding: 0;                    /* ✅ remove padding extra */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
-  margin-top: 20px;
 }
 
 .topoLista h3 {
@@ -417,6 +419,17 @@
   align-items: center;     /* ✅ centraliza vertical */
   gap: 8px;                /* ✅ espaçamento bonito */
   margin-top: 6px;
+}
+    /* ✅ desktop maior */
+@media (min-width: 769px) {
+  #topo img {
+    height: 42px;
+  }
+
+  #topo .notif img {
+    width: 20px;
+    height: 20px;
+  }
 }
     @media (max-width: 768px) {
 
