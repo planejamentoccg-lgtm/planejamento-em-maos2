@@ -814,12 +814,12 @@ lista.innerHTML = `
 <button class="btnSec" onclick="abrirSemanas()">Ver Mais</button>
 `;
 
-  const botoes = document.getElementById("botoes");
+const botoes = document.getElementById("botoes");
 
-  const snap = await db.collection("Frentes").get();
+const snap = await db.collection("Frentes").get();
 
-  let noPrazo = 0;
-  let atrasadas = 0;
+let noPrazo = 0;
+let atrasadas = 0;
 
 snap.forEach(doc => {
 
@@ -828,16 +828,21 @@ snap.forEach(doc => {
   const card = document.createElement("div");
   card.className = "linhaFrente";
 
+  // ✅ valores
   let progresso = data.Percentual || 0;
   let previsto = data.Percentualprevisto || 0;
 
-  
+  // ✅ status
+  let status = "ok";
+
   if (progresso < previsto) {
+    status = "atrasada";
     atrasadas++;
   } else {
     noPrazo++;
   }
 
+  // ✅ HTML do card
   card.innerHTML = `
     <div class="iconeFrente">
       <img src="https://cdn-icons-png.flaticon.com/128/2716/2716778.png">
@@ -847,12 +852,19 @@ snap.forEach(doc => {
 
       <div class="topoFrente">
         <span class="nomeFrente">${data.Nome}</span>
-        <span class="percentual">${progresso}%</span>
+
+        <span class="percentual"
+          style="color:${status === "atrasada" ? "#e53935" : "#7cb342"}">
+          ${progresso}%
+        </span>
+
         <span class="seta">›</span>
       </div>
 
       <div class="barra">
-        <div class="barraPreenchida" style="width:${progresso}%"></div>
+        <div class="barraPreenchida"
+          style="width:${progresso}%; background:${status === "atrasada" ? "#e53935" : "#7cb342"};">
+        </div>
       </div>
 
     </div>
@@ -863,13 +875,15 @@ snap.forEach(doc => {
   botoes.appendChild(card);
 
 });
-  document.getElementById("qtFrentes").innerText = snap.size;
-  document.getElementById("noPrazo").innerText = noPrazo;
-  document.getElementById("atrasadas").innerText = atrasadas;
-  await verificarAtualizacoes();
-  await carregarContadorNotif();
-}
 
+// ✅ fora do loop
+document.getElementById("qtFrentes").innerText = snap.size;
+document.getElementById("noPrazo").innerText = noPrazo;
+document.getElementById("atrasadas").innerText = atrasadas;
+
+await verificarAtualizacoes();
+await carregarContadorNotif();
+  
 async function abrirNotificacoes() {
 
   // esconder home
