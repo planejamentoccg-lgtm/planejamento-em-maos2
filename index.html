@@ -801,15 +801,20 @@
   <div id="lista"></div>
 
   <div id="detalhe" style="display:none;">
-    <div id="topo">
+<div id="topo">
+  <div style="display:flex; align-items:center; gap:10px;">
 
-  <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+    <span onclick="voltar()" style="cursor:pointer; font-size:20px;">
+      ←
+    </span>
+
+    <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+  </div>
 
   <div class="notif" onclick="abrirNotificacoes()">
     <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
     <span id="contadorNotif">0</span>
   </div>
-
 </div>
 
     <div id="banner"><span id="titulo"></span></div>
