@@ -1161,9 +1161,14 @@ function formatarData(dataStr) {
 
   if (!dataStr) return { dia: "-", mes: "-", diaSemana: "-" };
 
-  const data = new Date(dataStr);
+  // ✅ quebra DD-MM-YYYY
+  const partes = dataStr.split("-");
 
-  const dia = data.getDate();
+  const dia = parseInt(partes[0]);
+  const mesIndex = parseInt(partes[1]) - 1;
+  const ano = parseInt(partes[2]);
+
+  const data = new Date(ano, mesIndex, dia);
 
   const meses = ["JAN","FEV","MAR","ABR","MAI","JUN",
                  "JUL","AGO","SET","OUT","NOV","DEZ"];
@@ -1172,7 +1177,7 @@ function formatarData(dataStr) {
 
   return {
     dia: dia,
-    mes: meses[data.getMonth()],
+    mes: meses[mesIndex],
     diaSemana: dias[data.getDay()]
   };
 }
