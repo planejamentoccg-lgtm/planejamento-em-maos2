@@ -130,6 +130,41 @@
   align-items: center;
   justify-content: space-between;
 }
+.statusBadge {.statusBadge;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ✅ NO PRAZO */
+.status-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* ✅ ATRASADA */
+.status-atrasada {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* ✅ BOLINHA */
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-ok .statusDot {
+  background: #4caf50;
+}
+
+.status-atrasada .statusDot {
+  background: #e53935;
+}
 
 .itemPainel {
   display: flex;
@@ -858,7 +893,10 @@ snap.forEach(doc => {
           ${progresso}%
         </span>
 
-        <span class="seta">›</span>
+        <span class="statusBadge ${status === "atrasada" ? "status-atrasada" : "status-ok"}">
+          <span class="statusDot"></span>
+          ${status === "atrasada" ? "Em atraso" : "No prazo"}
+        </span>
       </div>
 
       <div class="barra">
