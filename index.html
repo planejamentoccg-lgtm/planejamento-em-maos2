@@ -818,6 +818,9 @@ lista.innerHTML = `
 
   const snap = await db.collection("Frentes").get();
 
+  let noPrazo = 0;
+  let atrasadas = 0;
+
 snap.forEach(doc => {
 
   const data = doc.data();
@@ -826,6 +829,13 @@ snap.forEach(doc => {
   card.className = "linhaFrente";
 
   let progresso = data.Percentual || 0;
+
+  
+  if (progresso < previsto) {
+    atrasadas++;
+  } else {
+    noPrazo++;
+  }
 
   card.innerHTML = `
     <div class="iconeFrente">
@@ -853,6 +863,8 @@ snap.forEach(doc => {
 
 });
   document.getElementById("qtFrentes").innerText = snap.size;
+  document.getElementById("noPrazo").innerText = noPrazo;
+  document.getElementById("atrasadas").innerText = atrasadas;
   await verificarAtualizacoes();
   await carregarContadorNotif();
 }
