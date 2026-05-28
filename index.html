@@ -184,13 +184,19 @@
 }
 
 /* ✅ SININHO */
+
 .notif {
-  position: relative;
-  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notif img {
-  width: 12px;
+  width: 16px;
+  height: 16px;
+  max-width: none;
 }
 
 #contadorNotif {
@@ -326,23 +332,21 @@
   .itemPainel:not(:last-child) {
     border-right: none;
   }
+  
   .metricas {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 15px;
-    justify-content: center;
+  }
+      
+  .itemPainel {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
   }
 
-  .itemPainel {
-    width: 46%;
-    border-right: none;
-    margin-right: 0;
-    padding-right: 0;
-    justify-content: flex-start;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
     .itemPainel div {
       text-align: left;
   }
@@ -353,22 +357,16 @@
   .itemPainel p {
       font-size: 11px;
   }
+  
   .itemPainel img {
-      width: 14px;
-      height: 14px;
-      padding: 6px;
+    width: 14px;
+    height: 14px;
+    padding: 6px;
   }
     .painel {
       padding: 25px 15px;
   }
-    .itemPainel:nth-child(2n) {
-      justify-content: flex-end;
-      flex-direction: row-reverse;
-  }
-    .itemPainel:nth-child(2n) div {
-      text-align: right;
-  }
-      
+        
       .cardLogin input {
         padding: 8px;
         margin: 6px 0;
