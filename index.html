@@ -131,7 +131,8 @@
   gap: 15px;
 }
 
-.statusBadge {.statusBadge;
+.statusBadge {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
@@ -336,6 +337,10 @@
 
     .linhaImagens img {
       width: 45%;
+    }
+    .html, body {
+    overflow-x: hidden;
+    max-width: 100%;
     }
 
     @media (max-width: 768px) {
