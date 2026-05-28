@@ -422,6 +422,31 @@
   margin-top: 6px;
 }
     /* ✅ desktop maior */
+    .menuDetalhe {
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  padding: 15px;
+  border-radius: 16px;
+  margin: -30px 16px 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.menuItem {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+}
+
+.menuItem img {
+  width: 24px;
+  margin-bottom: 5px;
+}
+
+.menuItem.ativo {
+  color: #7cb342;
+}
+``
 @media (min-width: 769px) {
   #topo img {
     height: 42px;
@@ -1183,9 +1208,38 @@ function abrir(data) {
   document.getElementById("detalhe").style.display = "block";
 
   document.getElementById("titulo").innerText = data.Nome;
-  document.getElementById("banner").style.backgroundImage =
-    "url('" + data.Imagem + "')";
-
+  document.getElementById("banner").innerHTML = `
+  <div style="
+    background-image: url('${data.Imagem}');
+    background-size: cover;
+    background-position: center;
+    height: 200px;
+    display:flex;
+    flex-direction:column;
+    justify-content:end;
+    padding:20px;
+    color:white;
+  ">
+    <h2 style="margin:0;">${data.Nome}</h2>
+    <span style="font-size:12px;">
+      Frente de Serviço > ${data.Nome}
+    </span>
+  </div>
+`;
+html += `
+<div class="menuDetalhe">
+  <div class="menuItem ativo">
+    <img src="https://cdn-icons-png.flaticon.com/128/1828/1828859.png">
+    <span>Visão Geral</span>
+  </div>
+  
+  <div class="menuItem">
+    <img src="https://cdn-icons-png.flaticon.com/128/2921/2921222.png">
+    <span>Desempenho</span>
+  </div>
+</div>
+`;
+``
   let html = "";
 
   html += criarBloco(data.LadoSul, "LADO SUL");
