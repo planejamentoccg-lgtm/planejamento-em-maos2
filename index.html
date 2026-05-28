@@ -1210,6 +1210,33 @@ function formatarData(dataStr) {
     diaSemana: dias[data.getDay()]
   };
 }
+ function abrirNotificacoes() {
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("detalhe").style.display = "none";
+  document.getElementById("semanas").style.display = "none";
+  document.getElementById("notificacoes").style.display = "block";
+
+  carregarNotificacoes();
+}
+ async function carregarNotificacoes() {
+
+  const container = document.getElementById("listaNotificacoes");
+  container.innerHTML = "";
+
+  const snap = await db.collection("Notificacoes").get();
+
+  snap.forEach(doc => {
+    const d = doc.data();
+
+    container.innerHTML += `
+      <div class="bloco">
+        ${d.mensagem}
+      </div>
+    `;
+  });
+
+  await carregarContadorNotif(); // ✅ mantém sincronizado
+}
 // ✅ DETALHE
 function abrir(data) {
 
