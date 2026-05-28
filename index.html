@@ -783,8 +783,29 @@ async function login() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
+  const dispositivoAtual = navigator.userAgent;
+
+  const ref = db.collection("Sessoes").doc(email);
+  const doc = await ref.get();
+
+  // ✅ verifica se já existe sessão
+  if (doc.exists) {
+    const dados = doc.data();
+
+    if (dados.dispositivo !== dispositivoAtual) {
+      alert("Este usuário já está logado em outro dispositivo.");
+      return;
+    }
+  }
+
   try {
     await auth.signInWithEmailAndPassword(email, senha);
+
+    // ✅ salva sessão
+    await db.collection("Sessoes").doc(email).set({
+      dispositivo: dispositivoAtual,
+      data: new Date()
+    });
 
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -794,6 +815,15 @@ async function login() {
   } catch(e) {
     alert(e.message);
   }
+}
+async function logout() {
+
+  const email = auth.currentUser.email;
+
+  await db.collection("Sessoes").doc(email).delete();
+  await auth.signOut();
+
+  location.reload();
 }
 
 // ✅ HOME
