@@ -1506,7 +1506,9 @@ async function carregarContadorNotif() {
     }
   });
 
-  document.getElementById("contadorNotif").innerText = naoLidas;
+  
+document.querySelectorAll("#contadorNotif").forEach(el => {
+  el.innerText = naoLidas;
 }
 </script>
 
