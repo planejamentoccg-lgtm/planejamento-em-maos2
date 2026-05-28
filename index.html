@@ -1362,7 +1362,8 @@ function abrir(data) {
 // ✅ PROGRESSO
 const perc = data.Percentual || 0;
 const prev = data.Percentualprevisto || 0;
-
+const restante = Math.max(0, prev - perc);
+                          
 // cálculo opcional de restante
 const percReal = Math.min(perc, 100);
 const prevReal = Math.min(Math.max(prev, percReal), 100);
@@ -1410,7 +1411,7 @@ html += `
       </div>
 
     </div>
-
+  </div>
     <!-- ✅ LEGENDA -->
     <div style="font-size:13px;">
 
@@ -1424,16 +1425,12 @@ html += `
         Previsto: ${data.Previsto || "-"}
       </div>
 
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="width:10px; height:10px; background:#e0e0e0; border-radius:50%;"></span>
-        const restante = Math.max(0, prev - perc)
-      </div>
-
-    </div>
-
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="width:10px; height:10px; background:#e0e0e0; border-radius:50%;"></span>
+     Restante: ${restante}
   </div>
+ </div>
 
-</div>
 `;
 
   // ✅ SITUAÇÃO
