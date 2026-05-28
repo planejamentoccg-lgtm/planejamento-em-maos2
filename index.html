@@ -385,7 +385,8 @@
 /* ✅ DIVISOR */
 .divisorSemana {
   width: 1px;
-  background: #eee;
+  background: #e5e7eb;
+  margin: 0 8px;
 }
 
 /* ✅ LADO DIREITO */
@@ -657,7 +658,12 @@
   color: #666;
 }
 
-
+.iconMini {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
 @media (max-height: 500px) {
   #login {
     align-items: flex-start;
@@ -1025,7 +1031,11 @@ async function carregar() {
   document.getElementById("atrasadas").innerText = atrasadas;
 
   // ✅ AGORA SIM: PRÓXIMAS SEMANAS (FORA DO LOOP)
-  lista.innerHTML += `<h2 class="tituloHome">Próximas Semanas</h2>`;
+  lista.innerHTML += `
+  <div class="topoLista">
+    <h3>Próximas Semanas</h3>
+  </div>
+`;
 
   const snapSemanas = await db.collection("ProximasSemanas")
   .orderBy("Inicio", "asc")
@@ -1058,9 +1068,9 @@ async function carregar() {
           </div>
 
           <div class="detalhesSemana">
-            <span>📅 ${d.Inicio} - ${d.Termino}</span>
-            <span>📈 Tendência: ${d.Tendencia}</span>
-            <span>📌 Projeto: ${d.Projeto}</span>
+          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/747/747310.png"> ${d.Inicio} - ${d.Termino}</span>
+          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"> Tendência: ${d.Tendencia}</span>
+          <span><img class="iconMini" src="https://cdn-icons-png.flaticon.com/128/3844/3844224.png"> Projeto: ${d.Projeto}</span>
           </div>
 
         </div>
