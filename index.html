@@ -348,7 +348,71 @@
 * {
   box-sizing: border-box;
 }
+.cardSemana {
+  display: flex;
+  background: white;
+  margin: 12px 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 16px;
+  gap: 12px;
+}
 
+/* ✅ DATA LATERAL */
+.dataSemana {
+  text-align: center;
+  min-width: 55px;
+}
+
+.dia {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1f2d3d;
+}
+
+.mes {
+  font-size: 11px;
+  color: #8bc34a;
+}
+
+.diaSemana {
+  font-size: 11px;
+  color: #999;
+}
+
+/* ✅ DIVISOR */
+.divisorSemana {
+  width: 1px;
+  background: #eee;
+}
+
+/* ✅ LADO DIREITO */
+.infoSemana {
+  flex: 1;
+}
+
+.tituloSemana {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2d3d;
+}
+
+.subtituloSemana {
+  font-size: 13px;
+  color: #8bc34a;
+  margin-top: 2px;
+}
+
+.detalhesSemana {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #555;
+}
+
+.detalhesSemana span {
+  display: block;
+  margin-top: 3px;
+}
     @media (max-width: 768px) {
 
       #bannerHome { height: 160px; }
@@ -831,141 +895,181 @@ async function carregar() {
 
   const lista = document.getElementById("lista");
 
-lista.innerHTML = `
-  <div id="topo">
+  lista.innerHTML = `
+    <div id="topo">
 
-  <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+      <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
 
-  <div class="notif" onclick="abrirNotificacoes()">
-    <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
-    <span id="contadorNotif">0</span>
-  </div>
-
-</div>
-<div class="painel">
-
-  <span class="label">PLANEJAMENTO EM MÃOS</span>
-  <h1>Painel de Progresso</h1>
-
-  <div class="metricas">
-
-    <div class="itemPainel">
-      <img src="https://i.imgur.com/CwjC8pK.png">
-      <div>
-        <h2 id="qtFrentes">0</h2>
-        <p>Frentes Ativas</p>
-      </div>
-    </div>
-
-    <div class="itemPainel">
-      <img src="https://i.imgur.com/BrnrLET.png">
-      <div>
-        <h2 id="noPrazo">0</h2>
-        <p>No prazo</p>
-      </div>
-    </div>
-
-    <div class="itemPainel">
-      <img src="https://i.imgur.com/CcaaD2T.png">
-      <div>
-        <h2 id="atrasadas">0</h2>
-        <p>Atrasadas</p>
-      </div>
-    </div>
-
-    <div class="itemPainel">
-      <img src="https://i.imgur.com/ExdFyYG.png">
-      <div>
-        <h2>2028</h2>
-        <p>2º Sem</p>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-<div class="topoLista">
-  <h3>Frentes de Serviço</h3>
-</div>
-<div id="botoes"></div>
-
-<h2 class="tituloHome">Próximas Semanas</h2>
-<button class="btnSec" onclick="abrirSemanas()">Ver Mais</button>
-`;
-
-const botoes = document.getElementById("botoes");
-
-const snap = await db.collection("Frentes").get();
-
-let noPrazo = 0;
-let atrasadas = 0;
-
-snap.forEach(doc => {
-
-  const data = doc.data();
-
-  const card = document.createElement("div");
-  card.className = "linhaFrente";
-
-  // ✅ valores
-  let progresso = data.Percentual || 0;
-  let previsto = data.Percentualprevisto || 0;
-
-  // ✅ status
-  let status = "ok";
-
-  if (progresso < previsto) {
-    status = "atrasada";
-    atrasadas++;
-  } else {
-    noPrazo++;
-  }
-
-  // ✅ HTML do card
-  card.innerHTML = `
-    <div class="iconeFrente">
-      <img src="https://cdn-icons-png.flaticon.com/128/2716/2716778.png">
-    </div>
-
-    <div class="infoFrente">
-
-      <div class="topoFrente">
-        <span class="nomeFrente">${data.Nome}</span>
-
-        <span class="percentual"
-          style="color:${status === "atrasada" ? "#e53935" : "#7cb342"}">
-          ${progresso}%
-        </span>
-
-        <span class="statusBadge ${status === "atrasada" ? "status-atrasada" : "status-ok"}">
-          <span class="statusDot"></span>
-          ${status === "atrasada" ? "Em atraso" : "No prazo"}
-        </span>
+      <div class="notif" onclick="abrirNotificacoes()">
+        <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
+        <span id="contadorNotif">0</span>
       </div>
 
-      <div class="barra">
-        <div class="barraPreenchida"
-          style="width:${progresso}%; background:${status === "atrasada" ? "#e53935" : "#7cb342"};">
+    </div>
+
+    <div class="painel">
+      <span class="label">PLANEJAMENTO EM MÃOS</span>
+      <h1>Painel de Progresso</h1>
+
+      <div class="metricas">
+
+        <div class="itemPainel">
+          <img src="https://i.imgur.com/CwjC8pK.png">
+          <div>
+            <h2 id="qtFrentes">0</h2>
+            <p>Frentes Ativas</p>
+          </div>
         </div>
-      </div>
 
+        <div class="itemPainel">
+          <img src="https://i.imgur.com/BrnrLET.png">
+          <div>
+            <h2 id="noPrazo">0</h2>
+            <p>No prazo</p>
+          </div>
+        </div>
+
+        <div class="itemPainel">
+          <img src="https://i.imgur.com/CcaaD2T.png">
+          <div>
+            <h2 id="atrasadas">0</h2>
+            <p>Atrasadas</p>
+          </div>
+        </div>
+
+        <div class="itemPainel">
+          <img src="https://i.imgur.com/ExdFyYG.png">
+          <div>
+            <h2>2028</h2>
+            <p>2º Sem</p>
+          </div>
+        </div>
+
+      </div>
     </div>
+
+    <div class="topoLista">
+      <h3>Frentes de Serviço</h3>
+    </div>
+
+    <div id="botoes"></div>
   `;
 
-  card.onclick = () => abrir(data);
+  const botoes = document.getElementById("botoes");
 
-  botoes.appendChild(card);
+  const snap = await db.collection("Frentes").get();
 
-});
+  let noPrazo = 0;
+  let atrasadas = 0;
 
-// ✅ fora do loop
-document.getElementById("qtFrentes").innerText = snap.size;
-document.getElementById("noPrazo").innerText = noPrazo;
-document.getElementById("atrasadas").innerText = atrasadas;
+  // ✅ LOOP DAS FRENTES
+  snap.forEach(doc => {
 
-await verificarAtualizacoes();
-await carregarContadorNotif();
+    const data = doc.data();
+
+    const card = document.createElement("div");
+    card.className = "linhaFrente";
+
+    let progresso = data.Percentual || 0;
+    let previsto = data.Percentualprevisto || 0;
+
+    let status = "ok";
+
+    if (progresso < previsto) {
+      status = "atrasada";
+      atrasadas++;
+    } else {
+      noPrazo++;
+    }
+
+    card.innerHTML = `
+      <div class="iconeFrente">
+        <img src="https://cdn-icons-png.flaticon.com/128/2716/2716778.png">
+      </div>
+
+      <div class="infoFrente">
+        <div class="topoFrente">
+          <span class="nomeFrente">${data.Nome}</span>
+
+          <span class="percentual"
+            style="color:${status === "atrasada" ? "#e53935" : "#7cb342"}">
+            ${progresso}%
+          </span>
+
+          <span class="statusBadge ${status === "atrasada" ? "status-atrasada" : "status-ok"}">
+            <span class="statusDot"></span>
+            ${status === "atrasada" ? "Em atraso" : "No prazo"}
+          </span>
+        </div>
+
+        <div class="barra">
+          <div class="barraPreenchida"
+            style="width:${progresso}%; background:${status === "atrasada" ? "#e53935" : "#7cb342"};">
+          </div>
+        </div>
+      </div>
+    `;
+
+    card.onclick = () => abrir(data);
+
+    botoes.appendChild(card);
+
+  });
+
+  // ✅ METRICAS
+  document.getElementById("qtFrentes").innerText = snap.size;
+  document.getElementById("noPrazo").innerText = noPrazo;
+  document.getElementById("atrasadas").innerText = atrasadas;
+
+  // ✅ AGORA SIM: PRÓXIMAS SEMANAS (FORA DO LOOP)
+  lista.innerHTML += `<h2 class="tituloHome">Próximas Semanas</h2>`;
+
+  const snapSemanas = await db.collection("ProximasSemanas")
+  .orderBy("Inicio", "asc")
+  .get();
+
+  snapSemanas.forEach(doc => {
+
+    const d = doc.data();
+    const dataFormatada = formatarData(d.Inicio);
+
+    lista.innerHTML += `
+      <div class="cardSemana">
+
+        <div class="dataSemana">
+          <div class="dia">${dataFormatada.dia}</div>
+          <div class="mes">${dataFormatada.mes}</div>
+          <div class="diaSemana">${dataFormatada.diaSemana}</div>
+        </div>
+
+        <div class="divisorSemana"></div>
+
+        <div class="infoSemana">
+
+          <div class="tituloSemana">
+            ${d.Nome}
+          </div>
+
+          <div class="subtituloSemana">
+            ${d.Atividade}
+          </div>
+
+          <div class="detalhesSemana">
+            <span>📅 ${d.Inicio} - ${d.Termino}</span>
+            <span>📈 Tendência: ${d.Tendencia}</span>
+            <span>📌 Projeto: ${d.Projeto}</span>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  });
+
+  await verificarAtualizacoes();
+  await carregarContadorNotif();
 }
+
 async function abrirNotificacoes() {
 
   // esconder home
@@ -1053,7 +1157,25 @@ function criarBloco(s, titulo) {
   return html;
 }
 
+function formatarData(dataStr) {
 
+  if (!dataStr) return { dia: "-", mes: "-", diaSemana: "-" };
+
+  const data = new Date(dataStr);
+
+  const dia = data.getDate();
+
+  const meses = ["JAN","FEV","MAR","ABR","MAI","JUN",
+                 "JUL","AGO","SET","OUT","NOV","DEZ"];
+
+  const dias = ["DOM","SEG","TER","QUA","QUI","SEX","SAB"];
+
+  return {
+    dia: dia,
+    mes: meses[data.getMonth()],
+    diaSemana: dias[data.getDay()]
+  };
+}
 // ✅ DETALHE
 function abrir(data) {
 
