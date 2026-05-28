@@ -190,7 +190,7 @@
 }
 
 .notif img {
-  width: 18px;
+  width: 12px;
 }
 
 #contadorNotif {
@@ -323,18 +323,42 @@
         width: 55px;
         margin-bottom: 5px;
       }
-
+  .itemPainel:not(:last-child) {
+    border-right: none;
+  }
   .metricas {
     flex-wrap: wrap;
     gap: 15px;
+    justify-content: center;
   }
 
   .itemPainel {
-    width: 48%;
+    width: 46%;
     border-right: none;
     margin-right: 0;
     padding-right: 0;
+    justify-content: flex-start;
+    margin-bottom: 10px;
   }
+    .itemPainel div {
+      text-align: left;
+  }
+   .itemPainel h2 {
+     font-size: 18px;
+  }
+
+  .itemPainel p {
+      font-size: 11px;
+  }
+  .itemPainel img {
+      width: 14px;
+      height: 14px;
+      padding: 6px;
+  }
+    .painel {
+      padding: 25px 15px;
+  }
+
       .cardLogin input {
         padding: 8px;
         margin: 6px 0;
