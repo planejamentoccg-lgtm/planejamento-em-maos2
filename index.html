@@ -1608,10 +1608,14 @@ html += `
 
  // ✅ FINAL
 document.getElementById("conteudo").innerHTML = `
-  ${html}
-  <div id="areaAbas"></div>
-`;
 
+  <div id="visaoGeral">
+    ${html}
+  </div>
+
+  <div id="desempenho" style="display:none;"></div>
+
+`;
 
 // ✅ abre já na aba "Visão Geral"
 setTimeout(mostrarVisao, 100);
@@ -1635,14 +1639,10 @@ function mostrarVisao() {
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
   document.querySelectorAll(".menuBtn")[0].classList.add("ativo");
 
-  document.getElementById("areaAbas").innerHTML = `
-    <div class="bloco">
-      <h3>Visão Geral</h3>
-      <p>Conteúdo geral aqui...</p>
-    </div>
-  `;
-}
+  document.getElementById("visaoGeral").style.display = "block";
+  document.getElementById("desempenho").style.display = "none";
 
+}
 
 function mostrarDesempenho() {
 
@@ -1651,7 +1651,10 @@ function mostrarDesempenho() {
 
   const d = window.frenteAtual;
 
-  document.getElementById("areaAbas").innerHTML = `
+  document.getElementById("visaoGeral").style.display = "none";
+  document.getElementById("desempenho").style.display = "block";
+
+  document.getElementById("desempenho").innerHTML = `
 
     <div class="bloco">
       <h3>DESEMPENHO</h3>
