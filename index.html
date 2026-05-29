@@ -1588,31 +1588,28 @@ async function abrirNotificacao(idNotif, nomeFrente) {
 
   for (const doc of snap.docs) {
 
-    const data = doc.data();
+  const data = doc.data();
 
-    if (!data.ultimaAtualizacao) continue;
+  if (!data.ultimaAtualizacao) continue; // ✅ NÃO NOTIFICA SEM DATA
 
-    const atualizacao = data.ultimaAtualizacao.toDate();
+  const atualizacao = data.ultimaAtualizacao.toDate();
 
-    let ultimaNotif = data.ultimaNotificada
-      ? data.ultimaNotificada.toDate()
-      : new Date(0);
+  let ultimaNotif = data.ultimaNotificada
+    ? data.ultimaNotificada.toDate()
+    : new Date(0);
 
-    // ✅ só cria se a frente foi atualizada DEPOIS da última notificação
-    if (atualizacao > ultimaNotif) {
+  if (atualizacao > ultimaNotif) {
 
     await db.collection("Notificacoes").add({
       mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
       frente: data.Nome,
-      data: data.ultimaAtualizacao, 
+      data: data.ultimaAtualizacao,
       lidaPor: []
     });
-      // ✅ atualiza o controle para não duplicar
-      await db.collection("Frentes").doc(doc.id).update({
-        ultimaNotificada: data.ultimaAtualizacao
-      });
 
-    }
+    await db.collection("Frentes").doc(doc.id).update({
+      ultimaNotificada: data.ultimaAtualizacao
+    });
 
   }
 }
