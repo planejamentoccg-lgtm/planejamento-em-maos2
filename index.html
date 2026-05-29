@@ -1588,7 +1588,7 @@ async function abrirNotificacao(idNotif, nomeFrente) {
       await db.collection("Notificacoes").add({
         mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
         frente: data.Nome,
-        data: new Date().toISOString(),
+        data: new Date()
         lidaPor: []
     });
 
@@ -1604,8 +1604,10 @@ async function abrirNotificacao(idNotif, nomeFrente) {
 async function carregarContadorNotif() {
 
   const user = auth.currentUser.email;
-  const snap = await db.collection("Notificacoes").get();
-
+  const snap = await db.collection("Notificacoes")
+  .orderBy("data", "desc")
+  .get();
+  
   let naoLidas = 0;
 
   snap.forEach(doc => {
