@@ -1294,17 +1294,14 @@ snap.forEach(doc => {
 
   const d = doc.data();
 
-let dataFormatada = "";
+  let dataFormatada = "";
 
-if (d.data && d.data.toDate) {
-  dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short'
-  });
-}
-    dataFormatada = new Date(d.data).toLocaleString('pt-BR');
+  if (d.data && d.data.toDate) {
+    dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
   }
-}
 
   const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
 
@@ -1607,7 +1604,7 @@ async function abrirNotificacao(idNotif, nomeFrente) {
     await db.collection("Notificacoes").add({
       mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
       frente: data.Nome,
-      data: data.ultimaAtualizacao, ✅
+      data: data.ultimaAtualizacao, 
       lidaPor: []
     });
       // ✅ atualiza o controle para não duplicar
