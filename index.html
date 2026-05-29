@@ -1290,15 +1290,15 @@ async function carregarNotificacoes() {
   const snap = await db.collection("Notificacoes").get();
 
 // ✅ 2. LIMPA AS ANTIGAS
+
 const limiteData = new Date();
-limiteData.setDate(limiteData.getDate() - 7); // exemplo: 7 dias atrás
+limiteData.setDate(limiteData.getDate() - 3); // 3 dias para tudo
 
 for (const doc of snap.docs) {
 
   const d = doc.data();
   const dataNotif = d.data?.toDate?.();
 
-  // apaga se não tiver data OU se for antiga
   if (!dataNotif || dataNotif < limiteData) {
     await db.collection("Notificacoes").doc(doc.id).delete();
   }
