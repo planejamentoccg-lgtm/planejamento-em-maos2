@@ -1452,12 +1452,9 @@ function abrir(data) {
 
     </div>
   `;
-
-  // ✅ IMPORTANTE: cria o html ANTES
-  let html = "";
-
-  // ✅ MENU
-html += `
+  
+// ✅ MENU (COLOCA AQUI)
+let menu = `
 <div class="menuNovo">
 
   <div class="menuBtn" onclick="mostrarVisao()">
@@ -1476,6 +1473,8 @@ html += `
 
 </div>
 `;
+  // ✅ IMPORTANTE: cria o html ANTES
+  let html = "";
 
   // ✅ NOVOS INDICADORES
   html += `
@@ -1609,8 +1608,10 @@ html += `
  // ✅ FINAL
 document.getElementById("conteudo").innerHTML = `
 
+  ${menu}   <!-- ✅ MENU FICA FIXO -->
+
   <div id="visaoGeral">
-    ${html}
+    ${html}  <!-- ✅ SUA TELA NORMAL -->
   </div>
 
   <div id="desempenho" style="display:none;"></div>
