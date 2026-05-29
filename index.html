@@ -1481,11 +1481,11 @@ let menu = `
 html += `
 <div class="bloco">
 
-  <!-- ✅ TÍTULO BONITO -->
+  <!-- ✅ TÍTULO -->
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
     <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" 
-         style="width:18px; height:18px;">
-    <span style="font-size:13px; font-weight:600; color:#1f2d3d;">
+         style="width:18px;">
+    <span style="font-size:13px; font-weight:600;">
       INDICADORES PRINCIPAIS
     </span>
   </div>
@@ -1493,69 +1493,48 @@ html += `
   <!-- ✅ CARDS -->
   <div class="gridIndicadores">
 
-    <div class="cardIndicador">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        
-        <div>
-          <span style="font-size:11px; color:#777;">Total</span>
-          <h2 style="font-size:18px; margin:2px 0;">${data.Total || "-"}</h2>
-        </div>
-
-        <img src="https://cdn-icons-png.flaticon.com/128/992/992651.png" 
-             style="width:18px;">
-        
+    <div class="cardIndicador" style="position:relative;">
+      <div style="text-align:left;">
+        <div style="font-size:12px; font-weight:600;">Total</div>
+        <div style="font-size:15px; margin-top:4px;">${data.Total || "-"}</div>
       </div>
+      <img src="https://cdn-icons-png.flaticon.com/128/992/992651.png"
+           style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
     </div>
 
-    <div class="cardIndicador">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        
-        <div>
-          <span style="font-size:11px; color:#777;">Avanço</span>
-          <h2 style="font-size:18px; margin:2px 0;">${data["Avanço"] || "-"}</h2>
-        </div>
-
-        <img src="https://cdn-icons-png.flaticon.com/128/1828/1828843.png" 
-             style="width:18px;">
-        
+    <div class="cardIndicador" style="position:relative;">
+      <div style="text-align:left;">
+        <div style="font-size:12px; font-weight:600;">Avanço</div>
+        <div style="font-size:15px; margin-top:4px;">${data["Avanço"] || "-"}</div>
       </div>
+      <img src="https://cdn-icons-png.flaticon.com/128/1828/1828843.png"
+           style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
     </div>
 
-    <div class="cardIndicador">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        
-        <div>
-          <span style="font-size:11px; color:#777;">Previsto</span>
-          <h2 style="font-size:18px; margin:2px 0;">${data.Previsto || "-"}</h2>
-        </div>
-
-        <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" 
-             style="width:18px; opacity:0.6;">
-        
+    <div class="cardIndicador" style="position:relative;">
+      <div style="text-align:left;">
+        <div style="font-size:12px; font-weight:600;">Previsto</div>
+        <div style="font-size:15px; margin-top:4px;">${data.Previsto || "-"}</div>
       </div>
+      <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png"
+           style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
     </div>
 
-    <div class="cardIndicador">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        
-        <div>
-          <span style="font-size:11px; color:#777;">Desvio</span>
-          <h2 style="font-size:18px; margin:2px 0; color:#e53935;">
-            ${data.Desvio || "-"}
-          </h2>
+    <div class="cardIndicador" style="position:relative;">
+      <div style="text-align:left;">
+        <div style="font-size:12px; font-weight:600;">Desvio</div>
+        <div style="font-size:15px; margin-top:4px; color:#e53935;">
+          ${data.Desvio || "-"}
         </div>
-
-        <img src="https://cdn-icons-png.flaticon.com/128/463/463612.png" 
-             style="width:18px;">
-        
       </div>
+      <img src="https://cdn-icons-png.flaticon.com/128/463/463612.png"
+           style="width:14px; position:absolute; bottom:10px; right:10px;">
     </div>
 
   </div>
 
 </div>
 `;
-
 
 // ✅ PROGRESSO
 const perc = data.Percentual || 0;
