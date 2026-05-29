@@ -1289,16 +1289,21 @@ async function carregarNotificacoes() {
   // ✅ 1. BUSCA TUDO (sem orderBy)
   const snap = await db.collection("Notificacoes").get();
 
-  // ✅ 2. LIMPA AS ANTIGAS
-  for (const doc of snap.docs) {
+// ✅ 2. LIMPA AS ANTIGAS
+const limiteData = new Date();
+limiteData.setDate(limiteData.getDate() - 7); // exemplo: 7 dias atrás
 
-    const d = doc.data();
+for (const doc of snap.docs) {
 
-    if (!d.data) {
-      await db.collection("Notificacoes").doc(doc.id).delete();
-    }
+  const d = doc.data();
+  const dataNotif = d.data?.toDate?.();
 
+  // apaga se não tiver data OU se for antiga
+  if (!dataNotif || dataNotif < limiteData) {
+    await db.collection("Notificacoes").doc(doc.id).delete();
   }
+
+}
 
   // ✅ 3. BUSCA DE NOVO (AGORA LIMPO e ORDENADO)
   const snapLimpo = await db.collection("Notificacoes")
