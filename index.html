@@ -1619,24 +1619,28 @@ async function abrirNotificacao(idNotif, nomeFrente) {
 async function carregarContadorNotif() {
 
   const user = auth.currentUser.email;
+
   const snap = await db.collection("Notificacoes")
-  .orderBy("data", "desc")
-  .get();
+    .orderBy("data", "desc")
+    .get();
   
   let naoLidas = 0;
 
   snap.forEach(doc => {
+
     const n = doc.data();
+
+    if (!n.data) return; // ✅ ignora sem data
 
     if (!n.lidaPor || !n.lidaPor.includes(user)) {
       naoLidas++;
     }
+
   });
 
-  
-document.querySelectorAll("#contadorNotif").forEach(el => {
-  el.innerText = naoLidas;
-});
+  document.querySelectorAll("#contadorNotif").forEach(el => {
+    el.innerText = naoLidas;
+  });
 }
 </script>
 
