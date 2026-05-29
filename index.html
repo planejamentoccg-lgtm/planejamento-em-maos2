@@ -1477,36 +1477,85 @@ let menu = `
   let html = "";
 
   // ✅ NOVOS INDICADORES
-  html += `
-  <div class="bloco">
- <h3 style="display:flex; align-items:center; gap:8px;">
-  <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" width="18">
-  INDICADORES PRINCIPAIS
-</h3>
+// ✅ NOVOS INDICADORES (AJUSTADO)
+html += `
+<div class="bloco">
 
-    <div class="gridIndicadores">
-      <div class="cardIndicador">
-        <span>Total</span>
-        <h2>${data.Total || "-"}</h2>
-      </div>
+  <!-- ✅ TÍTULO BONITO -->
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+    <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" 
+         style="width:18px; height:18px;">
+    <span style="font-size:13px; font-weight:600; color:#1f2d3d;">
+      INDICADORES PRINCIPAIS
+    </span>
+  </div>
 
-      <div class="cardIndicador">
-        <span>Realizado</span>
-        <h2>${data["Avanço"] || "-"}</h2>
-      </div>
+  <!-- ✅ CARDS -->
+  <div class="gridIndicadores">
 
-      <div class="cardIndicador">
-        <span>Previsto</span>
-        <h2>${data.Previsto || "-"}</h2>
-      </div>
+    <div class="cardIndicador">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        
+        <div>
+          <span style="font-size:11px; color:#777;">Total</span>
+          <h2 style="font-size:18px; margin:2px 0;">${data.Total || "-"}</h2>
+        </div>
 
-      <div class="cardIndicador">
-        <span>Desvio</span>
-        <h2 style="color:#e53935;">${data.Desvio || "-"}</h2>
+        <img src="https://cdn-icons-png.flaticon.com/128/992/992651.png" 
+             style="width:18px;">
+        
       </div>
     </div>
+
+    <div class="cardIndicador">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        
+        <div>
+          <span style="font-size:11px; color:#777;">Avanço</span>
+          <h2 style="font-size:18px; margin:2px 0;">${data["Avanço"] || "-"}</h2>
+        </div>
+
+        <img src="https://cdn-icons-png.flaticon.com/128/1828/1828843.png" 
+             style="width:18px;">
+        
+      </div>
+    </div>
+
+    <div class="cardIndicador">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        
+        <div>
+          <span style="font-size:11px; color:#777;">Previsto</span>
+          <h2 style="font-size:18px; margin:2px 0;">${data.Previsto || "-"}</h2>
+        </div>
+
+        <img src="https://cdn-icons-png.flaticon.com/128/1828/1828884.png" 
+             style="width:18px; opacity:0.6;">
+        
+      </div>
+    </div>
+
+    <div class="cardIndicador">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        
+        <div>
+          <span style="font-size:11px; color:#777;">Desvio</span>
+          <h2 style="font-size:18px; margin:2px 0; color:#e53935;">
+            ${data.Desvio || "-"}
+          </h2>
+        </div>
+
+        <img src="https://cdn-icons-png.flaticon.com/128/463/463612.png" 
+             style="width:18px;">
+        
+      </div>
+    </div>
+
   </div>
-  `;
+
+</div>
+`;
+
 
 // ✅ PROGRESSO
 const perc = data.Percentual || 0;
