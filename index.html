@@ -1296,12 +1296,12 @@ snap.forEach(doc => {
 
 let dataFormatada = "";
 
-if (d.data) {
-  if (d.data.toDate) {
-    dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    });
+if (d.data && d.data.toDate) {
+  dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
+}
     dataFormatada = new Date(d.data).toLocaleString('pt-BR');
   }
 }
