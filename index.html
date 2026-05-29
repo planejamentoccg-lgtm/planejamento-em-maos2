@@ -1294,6 +1294,12 @@ snap.forEach(doc => {
 
   const d = doc.data();
 
+  // ✅ APAGA automaticamente notificações antigas sem data
+  if (!d.data) {
+    db.collection("Notificacoes").doc(doc.id).delete();
+    return;
+  }
+
   let dataFormatada = "";
 
   if (d.data && d.data.toDate) {
