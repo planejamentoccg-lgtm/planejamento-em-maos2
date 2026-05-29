@@ -1422,26 +1422,27 @@ for (const doc of snap.docs) {
 // ✅ DETALHE
 function abrir(data) {
 
+  window.frenteAtual = data; // ✅ COLOCA AQUI (primeira linha)
+
   document.getElementById("lista").style.display = "none";
   document.getElementById("detalhe").style.display = "block";
 
   // ✅ BANNER
-// ✅ NOVO HEADER BONITO
-document.getElementById("banner").innerHTML = `
-  <div class="header-frente" style="background-image:url('${data.Imagem}')">
+  document.getElementById("banner").innerHTML = `
+    <div class="header-frente" style="background-image:url('${data.Imagem}')">
 
-    <div class="overlay"></div>
+      <div class="overlay"></div>
 
-    <div class="conteudo-header">
-      <h1>${data.Nome}</h1>
+      <div class="conteudo-header">
+        <h1>${data.Nome}</h1>
 
-      <div class="breadcrumb">
-        Frentes de Serviço &gt; ${data.Nome}
+        <div class="breadcrumb">
+          Frentes de Serviço > ${data.Nome}
+        </div>
       </div>
-    </div>
 
-  </div>
-`;
+    </div>
+  `;
 
   // ✅ IMPORTANTE: cria o html ANTES
   let html = "";
@@ -1639,11 +1640,25 @@ function mostrarDesempenho() {
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
   document.querySelectorAll(".menuBtn")[1].classList.add("ativo");
 
+  const d = window.frenteAtual;
+
   document.getElementById("areaAbas").innerHTML = `
+
     <div class="bloco">
-      <h3>Desempenho</h3>
-      <p>Dados de desempenho aqui...</p>
+      <h3>DESEMPENHO</h3>
+
+      ${d.Grafico1 ? `
+        <img src="${d.Grafico1}" 
+             style="width:100%; border-radius:10px; margin-bottom:15px;">
+      ` : ""}
+
+      ${d.Grafico2 ? `
+        <img src="${d.Grafico2}" 
+             style="width:100%; border-radius:10px;">
+      ` : ""}
+
     </div>
+
   `;
 }
 async function abrirSemanas() {
