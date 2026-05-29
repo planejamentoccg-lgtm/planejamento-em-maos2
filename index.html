@@ -1376,42 +1376,64 @@ html += `
   PROGRESSO FÍSICO
 </h3>
 
-  <div style="display:flex; align-items:center; gap:20px;">
+<div style="display:flex; align-items:center; gap:20px;">
 
-    <!-- ✅ CÍRCULO -->
+  <!-- ✅ CÍRCULO -->
+  <div style="
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    background: conic-gradient(
+      #7cb342 ${percReal}%,
+      #90a4ae ${percReal}% ${prevReal}%,
+      #e0e0e0 ${prevReal}% 100%
+    );
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  ">
+
     <div style="
-      width:110px;
-      height:110px;
+      width:80px;
+      height:80px;
+      background:white;
       border-radius:50%;
-      background: conic-gradient(
-        #7cb342 ${percReal}%,
-        #90a4ae ${percReal}% ${prevReal}%,
-        #e0e0e0 ${prevReal}% 100%
-      );
-
       display:flex;
       align-items:center;
       justify-content:center;
+      font-weight:bold;
+      color:#7cb342;
+      font-size:18px
     ">
-
-      <!-- centro branco -->
-      <div style="
-        width:80px;
-        height:80px;
-        background:white;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:bold;
-        color:#7cb342;
-        font-size:18px
-      ">
-        ${perc}%
-      </div>
-
+      ${perc}%
     </div>
+
   </div>
+
+  <!-- ✅ LEGENDA -->
+  <div style="font-size:13px;">
+
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <span style="width:10px; height:10px; background:#7cb342; border-radius:50%;"></span>
+      Realizado: ${data["Avanço"] || "-"}
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <span style="width:10px; height:10px; background:#90a4ae; border-radius:50%;"></span>
+      Previsto: ${data.Previsto || "-"}
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="width:10px; height:10px; background:#e0e0e0; border-radius:50%;"></span>
+      Restante: ${restante}
+    </div>
+
+  </div>
+
+</div>
+
+</div>
+`;
     <!-- ✅ LEGENDA -->
     <div style="font-size:13px;">
 
