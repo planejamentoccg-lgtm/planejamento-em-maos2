@@ -1597,46 +1597,17 @@ html += `
   `;
 
  // ✅ FINAL
-document.getElementById("conteudo").innerHTML = html;
+document.getElementById("conteudo").innerHTML = `
+  ${html}
+  <div id="areaAbas"></div>
+`;
+
 
 // ✅ abre já na aba "Visão Geral"
 setTimeout(mostrarVisao, 100);
 
 
 // ✅ NOVA FUNÇÃO
-async function abrirSemanas() {
-
-  document.getElementById("lista").style.display = "none";
-  document.getElementById("semanas").style.display = "block";
-
-  const container = document.getElementById("conteudoSemanas");
-  container.innerHTML = "";
-
-  const snap = await db.collection("ProximasSemanas").get();
-
-  snap.forEach(doc => {
-
-    const d = doc.data();
-
-    let html = '<div class="bloco">';
-    html += '<h3>' + d.Nome + '</h3>';
-
-    if (d.Atividade) html += '<p>' + d.Atividade + '</p>';
-    if (d.Inicio) html += '<p>Início: ' + d.Inicio + '</p>';
-    if (d.Termino) html += '<p>Término: ' + d.Termino + '</p>';
-    if (d.Tendencia) html += '<p>Tendência: ' + d.Tendencia + '</p>';
-    if (d.Projeto) html += '<p>Projeto: ' + d.Projeto + '</p>'
-
-    html += '<div class="linhaImagens">';
-    if (d.Imagem1) html += '<img src="' + d.Imagem1 + '">';
-    if (d.Imagem2) html += '<img src="' + d.Imagem2 + '">';
-    html += '</div>';
-
-    html += '</div>';
-
-    container.innerHTML += html;
-  });
-}
 
 // ✅ VOLTAR
 function voltar() {
@@ -1674,6 +1645,39 @@ function mostrarDesempenho() {
       <p>Dados de desempenho aqui...</p>
     </div>
   `;
+}
+async function abrirSemanas() {
+
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("semanas").style.display = "block";
+
+  const container = document.getElementById("conteudoSemanas");
+  container.innerHTML = "";
+
+  const snap = await db.collection("ProximasSemanas").get();
+
+  snap.forEach(doc => {
+
+    const d = doc.data();
+
+    let html = '<div class="bloco">';
+    html += '<h3>' + d.Nome + '</h3>';
+
+    if (d.Atividade) html += '<p>' + d.Atividade + '</p>';
+    if (d.Inicio) html += '<p>Início: ' + d.Inicio + '</p>';
+    if (d.Termino) html += '<p>Término: ' + d.Termino + '</p>';
+    if (d.Tendencia) html += '<p>Tendência: ' + d.Tendencia + '</p>';
+    if (d.Projeto) html += '<p>Projeto: ' + d.Projeto + '</p>'
+
+    html += '<div class="linhaImagens">';
+    if (d.Imagem1) html += '<img src="' + d.Imagem1 + '">';
+    if (d.Imagem2) html += '<img src="' + d.Imagem2 + '">';
+    html += '</div>';
+
+    html += '</div>';
+
+    container.innerHTML += html;
+  });
 }
 
 async function abrirNotificacao(idNotif, nomeFrente) {
