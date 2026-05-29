@@ -505,6 +505,49 @@
   border-left: 4px solid #7cb342;
   font-weight: bold;
 }
+.header-frente {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background-image: url('sua-imagem.jpg'); /* 👈 coloca sua imagem */
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* escurece a imagem (igual seu print) */
+.header-frente .overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  top: 0;
+  left: 0;
+}
+
+.conteudo-header {
+  position: relative;
+  text-align: center;
+  color: white;
+  z-index: 2;
+}
+
+.conteudo-header h1 {
+  font-size: 42px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  opacity: 0.85;
+  color: #8bc34a; /* um verde igual seu sistema */
+  font-weight: 500;
+
+}
 
 
 @media (min-width: 769px) {
@@ -1349,25 +1392,22 @@ function abrir(data) {
   document.getElementById("detalhe").style.display = "block";
 
   // ✅ BANNER
-  document.getElementById("banner").innerHTML = `
-    <div style="
-      background-image: url('${data.Imagem}');
-      background-size: cover;
-      background-position: center;
-      height: 240px;
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      justify-content:end;
-      padding:20px;
-      color:white;
-    ">
-      <h2 style="margin:0;">${data.Nome}</h2>
-      <span style="font-size:12px;">
-        Frente de Serviço > ${data.Nome}
-      </span>
+// ✅ NOVO HEADER BONITO
+document.getElementById("banner").innerHTML = `
+  <div class="header-frente" style="background-image:url('${data.Imagem}')">
+
+    <div class="overlay"></div>
+
+    <div class="conteudo-header">
+      <h1>${data.Nome}</h1>
+
+      <div class="breadcrumb">
+        Frentes de Serviço &gt; ${data.Nome}
+      </div>
     </div>
-  `;
+
+  </div>
+`;
 
   // ✅ IMPORTANTE: cria o html ANTES
   let html = "";
