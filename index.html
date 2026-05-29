@@ -1447,14 +1447,14 @@ document.getElementById("banner").innerHTML = `
 html += `
 <div class="menuNovo">
 
-  <div class="menuBtn ativo">
+  <div class="menuBtn ativo" onclick="mostrarVisao()">
     <div class="iconCircle">
       <img src="https://cdn-icons-png.flaticon.com/128/1828/1828859.png">
     </div>
     <span>Visão Geral</span>
   </div>
 
-  <div class="menuBtn">
+  <div class="menuBtn" onclick="mostrarDesempenho()">
     <div class="iconCircle">
       <img src="https://cdn-icons-png.flaticon.com/128/2921/2921222.png">
     </div>
@@ -1463,7 +1463,6 @@ html += `
 
 </div>
 `;
-
 
   // ✅ NOVOS INDICADORES
   html += `
@@ -1642,7 +1641,7 @@ function voltar() {
 function voltarHome() {
   document.getElementById("lista").style.display = "block";
   document.getElementById("semanas").style.display = "none";
-  document.getElementById("notificacoes").style.display = "none";
+  document.getElementById("notificacoes").style.display = "none";ni
 }
 async function abrirNotificacao(idNotif, nomeFrente) {
 
