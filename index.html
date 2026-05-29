@@ -1286,14 +1286,13 @@ async function carregarNotificacoes() {
 
   const user = auth.currentUser.email;
   const snap = await db.collection("Notificacoes").get();
-  const dataFormatada = d.data
   ? new Date(d.data.toDate()).toLocaleString('pt-BR')
   : "";
 
 
   snap.forEach(doc => {
     const d = doc.data();
-
+    const dataFormatada = d.data
     const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
 
   container.innerHTML += `
