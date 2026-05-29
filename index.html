@@ -492,11 +492,6 @@
   border-radius: 50%;
   background: #f1f3f5;
 
-.iconCircle img {
-  width: 18px;
-  height: 18px;
-}
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,12 +499,20 @@
   margin-bottom: 6px;
   transition: 0.3s;
 }
-.menuBtn.ativo .iconCircle {
-  background: #7cb342;
+
+.iconCircle img {
+  width: 18px;
+  height: 18px;
+}
+.menuBtn.ativo {
   color: #7cb342;
   font-weight: 500;
-
 }
+
+.menuBtn.ativo .iconCircle {
+  background: #7cb342;
+}
+
 
 .menuBtn.ativo img {
   filter: brightness(0) invert(1);
@@ -1641,8 +1644,16 @@ function voltar() {
 function voltarHome() {
   document.getElementById("lista").style.display = "block";
   document.getElementById("semanas").style.display = "none";
-  document.getElementById("notificacoes").style.display = "none";ni
+  document.getElementById("notificacoes").style.display = "none";
 }
+function mostrarVisao() {
+  console.log("Visão Geral clicado");
+}
+
+function mostrarDesempenho() {
+  console.log("Desempenho clicado");
+}
+
 async function abrirNotificacao(idNotif, nomeFrente) {
 
   const user = auth.currentUser.email;
