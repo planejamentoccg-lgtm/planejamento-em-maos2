@@ -1597,8 +1597,11 @@ html += `
   `;
 
   // ✅ FINAL
-  document.getElementById("conteudo").innerHTML = html;
-}
+document.getElementById("conteudo").innerHTML = `
+  ${html}
+  <div id="areaAbas"></div>
+`;
+
 
 // ✅ NOVA FUNÇÃO
 async function abrirSemanas() {
