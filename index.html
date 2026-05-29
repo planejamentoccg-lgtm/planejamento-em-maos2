@@ -1286,44 +1286,55 @@ async function carregarNotificacoes() {
 
   const user = auth.currentUser.email;
 
-  const snap = await db.collection("Notificacoes")
+  // ✅ 1. BUSCA TUDO (sem orderBy)
+  const snap = await db.collection("Notificacoes").get();
+
+  // ✅ 2. LIMPA AS ANTIGAS
+  for (const doc of snap.docs) {
+
+    const d = doc.data();
+
+    if (!d.data) {
+      await db.collection("Notificacoes").doc(doc.id).delete();
+    }
+
+  }
+
+  // ✅ 3. BUSCA DE NOVO (AGORA LIMPO e ORDENADO)
+  const snapLimpo = await db.collection("Notificacoes")
     .orderBy("data", "desc")
     .get();
 
-for (const doc of snap.docs) {
+  // ✅ 4. MONTA A TELA
+  for (const doc of snapLimpo.docs) {
 
-  const d = doc.data();
+    const d = doc.data();
 
-  // ✅ apaga corretamente e espera finalizar
-  if (!d.data) {
-    await db.collection("Notificacoes").doc(doc.id).delete();
-    continue;
-  }
+    let dataFormatada = "";
 
-  let dataFormatada = "";
+    if (d.data && d.data.toDate) {
+      dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    }
 
-  if (d.data && d.data.toDate) {
-    dataFormatada = d.data.toDate().toLocaleString('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    });
-  }
+    const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
 
-  const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
+    container.innerHTML += `
+      <div class="blocoNotif ${naoLida ? "naoLida" : ""}"
+           onclick="abrirNotificacao('${doc.id}', '${d.frente}')">
 
-  container.innerHTML += `
-    <div class="blocoNotif ${naoLida ? "naoLida" : ""}"
-         onclick="abrirNotificacao('${doc.id}', '${d.frente}')">
+        <div>${d.mensagem}</div>
 
-      <div>${d.mensagem}</div>
+        <div style="font-size:11px; color:#777; margin-top:6px;">
+          ${dataFormatada}
+        </div>
 
-      <div style="font-size:11px; color:#777; margin-top:6px;">
-        ${dataFormatada}
       </div>
+    `;
+  }
 
-    </div>
-  `;
-}
   await carregarContadorNotif(); // ✅ mantém sincronizado
 }
 // ✅ DETALHE
