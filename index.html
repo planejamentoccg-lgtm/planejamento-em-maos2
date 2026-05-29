@@ -1593,13 +1593,12 @@ async function abrirNotificacao(idNotif, nomeFrente) {
     // ✅ só cria se a frente foi atualizada DEPOIS da última notificação
     if (atualizacao > ultimaNotif) {
 
-      await db.collection("Notificacoes").add({
-        mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
-        frente: data.Nome,
-        data: new Date()
-        lidaPor: []
+    await db.collection("Notificacoes").add({
+      mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
+      frente: data.Nome,
+      data: new Date(),
+      lidaPor: []
     });
-
       // ✅ atualiza o controle para não duplicar
       await db.collection("Frentes").doc(doc.id).update({
         ultimaNotificada: data.ultimaAtualizacao
