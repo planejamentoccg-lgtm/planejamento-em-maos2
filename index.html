@@ -454,17 +454,18 @@
   align-items: center;
 
   background: white;
+
   width: calc(100% - 32px);
   max-width: 700px;
 
-  margin: -30px auto 20px auto; /* ✅ SOBE e centraliza */
-  padding: 15px;
+  margin: -25px auto 10px auto; /* ✅ sobe menos e encaixa melhor */
+  padding: 12px 10px;           /* ✅ menor altura */
 
-  border-radius: 20px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 
   position: relative;
-  z-index: 5; /* ✅ fica acima do banner */
+  z-index: 5;
 }
 
 .menuBtn {
@@ -481,6 +482,11 @@
   height: 38px;
   border-radius: 50%;
   background: #f1f3f5;
+
+.iconCircle img {
+  width: 18px;
+  height: 18px;
+}
 
   display: flex;
   align-items: center;
