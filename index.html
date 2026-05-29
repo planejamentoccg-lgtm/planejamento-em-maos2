@@ -1285,15 +1285,26 @@ async function carregarNotificacoes() {
   container.innerHTML = "";
 
   const user = auth.currentUser.email;
-  const snap = await db.collection("Notificacoes").get();
-  ? new Date(d.data.toDate()).toLocaleString('pt-BR')
-  : "";
 
+  const snap = await db.collection("Notificacoes")
+    .orderBy("data", "desc")
+    .get();
 
-  snap.forEach(doc => {
-    const d = doc.data();
-    const dataFormatada = d.data
-    const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
+snap.forEach(doc => {
+
+  const d = doc.data();
+
+let dataFormatada = "";
+
+if (d.data) {
+  if (d.data.toDate) {
+    dataFormatada = d.data.toDate().toLocaleString('pt-BR');
+  } else {
+    dataFormatada = new Date(d.data).toLocaleString('pt-BR');
+  }
+}
+
+  const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
 
   container.innerHTML += `
     <div class="blocoNotif ${naoLida ? "naoLida" : ""}"
@@ -1308,7 +1319,6 @@ async function carregarNotificacoes() {
     </div>
   `;
 });
-
   await carregarContadorNotif(); // ✅ mantém sincronizado
 }
 // ✅ DETALHE
