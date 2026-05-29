@@ -309,11 +309,15 @@
     }
 
 .bloco {
-  margin: 15px;
+  width: calc(100% - 32px);
+  max-width: 700px;
+
+  margin: 12px auto;  /* ✅ centraliza igual o menu */
   padding: 20px;
+
   background: white;
-  border-radius: 16px; /* 👈 aumenta */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 👈 melhora */
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
     .tituloBloco {
       color: #1f6e8c;
