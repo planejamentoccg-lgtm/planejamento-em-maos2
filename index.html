@@ -584,6 +584,15 @@
 
 }
 
+/* ✅ EFEITO NOS GRÁFICOS */
+#areaAbas img {
+  transition: 0.3s;
+}
+
+#areaAbas img:active {
+  transform: scale(0.97);
+}
+
 @media (min-width: 769px) {
   #topo img {
     height: 42px;
@@ -1451,7 +1460,7 @@ function abrir(data) {
 html += `
 <div class="menuNovo">
 
-  <div class="menuBtn ativo" onclick="mostrarVisao()">
+  <div class="menuBtn" onclick="mostrarVisao()">
     <div class="iconCircle">
       <img src="https://cdn-icons-png.flaticon.com/128/1828/1828859.png">
     </div>
