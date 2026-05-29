@@ -484,6 +484,26 @@
 .menuBtn.ativo img {
   filter: brightness(0) invert(1);
 }
+.blocoNotif {
+  margin: 12px;
+  padding: 14px;
+  background: #f5f5f5;
+  border-radius: 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.blocoNotif:hover {
+  transform: translateY(-2px);
+}
+
+.naoLida {
+  background: #e8f5e9; /* leve verde */
+  border-left: 4px solid #7cb342;
+  font-weight: bold;
+}
+
 
 @media (min-width: 769px) {
   #topo img {
@@ -1257,19 +1277,25 @@ function formatarData(dataStr) {
 
   carregarNotificacoes();
 }
- async function carregarNotificacoes() {
+async function carregarNotificacoes() {
 
   const container = document.getElementById("listaNotificacoes");
   container.innerHTML = "";
 
+  const user = auth.currentUser.email;
   const snap = await db.collection("Notificacoes").get();
 
   snap.forEach(doc => {
     const d = doc.data();
 
+    const naoLida = !d.lidaPor || !d.lidaPor.includes(user);
+
     container.innerHTML += `
-      <div class="bloco">
+      <div class="blocoNotif ${naoLida ? "naoLida" : ""}"
+           onclick="abrirNotificacao('${doc.id}', '${d.frente}')">
+
         ${d.mensagem}
+
       </div>
     `;
   });
