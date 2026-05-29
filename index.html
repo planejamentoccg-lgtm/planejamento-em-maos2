@@ -1596,11 +1596,11 @@ html += `
   </div>
   `;
 
-  // ✅ FINAL
-document.getElementById("conteudo").innerHTML = `
-  ${html}
-  <div id="areaAbas"></div>
-`;
+ // ✅ FINAL
+document.getElementById("conteudo").innerHTML = html;
+
+// ✅ abre já na aba "Visão Geral"
+setTimeout(mostrarVisao, 100);
 
 
 // ✅ NOVA FUNÇÃO
@@ -1650,11 +1650,30 @@ function voltarHome() {
   document.getElementById("notificacoes").style.display = "none";
 }
 function mostrarVisao() {
-  console.log("Visão Geral clicado");
+
+  document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
+  document.querySelectorAll(".menuBtn")[0].classList.add("ativo");
+
+  document.getElementById("areaAbas").innerHTML = `
+    <div class="bloco">
+      <h3>Visão Geral</h3>
+      <p>Conteúdo geral aqui...</p>
+    </div>
+  `;
 }
 
+
 function mostrarDesempenho() {
-  console.log("Desempenho clicado");
+
+  document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
+  document.querySelectorAll(".menuBtn")[1].classList.add("ativo");
+
+  document.getElementById("areaAbas").innerHTML = `
+    <div class="bloco">
+      <h3>Desempenho</h3>
+      <p>Dados de desempenho aqui...</p>
+    </div>
+  `;
 }
 
 async function abrirNotificacao(idNotif, nomeFrente) {
