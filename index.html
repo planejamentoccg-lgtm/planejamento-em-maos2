@@ -1290,14 +1290,14 @@ async function carregarNotificacoes() {
     .orderBy("data", "desc")
     .get();
 
-snap.forEach(doc => {
+for (const doc of snap.docs) {
 
   const d = doc.data();
 
-  // ✅ APAGA automaticamente notificações antigas sem data
+  // ✅ apaga corretamente e espera finalizar
   if (!d.data) {
-    db.collection("Notificacoes").doc(doc.id).delete();
-    return;
+    await db.collection("Notificacoes").doc(doc.id).delete();
+    continue;
   }
 
   let dataFormatada = "";
@@ -1323,7 +1323,7 @@ snap.forEach(doc => {
 
     </div>
   `;
-});
+}
   await carregarContadorNotif(); // ✅ mantém sincronizado
 }
 // ✅ DETALHE
