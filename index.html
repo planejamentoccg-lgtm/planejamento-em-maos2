@@ -1488,6 +1488,8 @@ let menu = `
   `;
 
   (data.Etapas || []).forEach((etapa, i) => {
+    const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
+    const corDesvio = desvioNum < 0 ? '#e53935' : '#43a047';
     html += `
     <div style="${i > 0 ? 'margin-top:20px; padding-top:16px; border-top:1px solid #eee;' : ''}">
 
@@ -1530,7 +1532,7 @@ let menu = `
         <div class="cardIndicador" style="position:relative;">
           <div style="text-align:left;">
             <div style="font-size:12px; font-weight:600;">Desvio</div>
-            <div style="font-size:15px; margin-top:4px; color:#e53935;">
+            <div style="font-size:15px; margin-top:4px; color:${corDesvio};">
               ${etapa.Desvio || "-"}
             </div>
           </div>
