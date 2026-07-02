@@ -316,17 +316,23 @@
   margin: 12px auto;  /* ✅ centraliza igual o menu */
   padding: 20px;
 
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  background: var(--card-fundo);
+  color: var(--ink);
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  font-family: 'IBM Plex Sans', sans-serif;
 }
     .tituloBloco {
-      color: #1f6e8c;
-      font-weight: bold;
+      font-family: 'Archivo', sans-serif;
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.01em;
     }
 
     .situacao {
-      color: #2ecc71;
+      color: var(--accent);
       font-weight: bold;
     }
 
@@ -458,7 +464,7 @@
   justify-content: space-around;
   align-items: center;
 
-  background: white;
+  background: var(--card-fundo);
 
   width: calc(100% - 32px);
   max-width: 700px;
@@ -466,7 +472,8 @@
   margin: -25px auto 10px auto; /* ✅ sobe menos e encaixa melhor */
   padding: 12px 10px;           /* ✅ menor altura */
 
-  border-radius: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 
   position: relative;
@@ -478,7 +485,8 @@
   flex-direction: column;
   align-items: center;
   font-size: 12px;
-  color: #999;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text-soft);
   cursor: pointer;
 }
 
@@ -491,7 +499,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #f1f3f5;
+  background: var(--paper-2);
 
   display: flex;
   align-items: center;
@@ -506,17 +514,21 @@
   height: 18px;
 }
 .menuBtn.ativo {
-  color: #7cb342;
+  color: var(--accent);
   font-weight: 500;
 }
 
 .menuBtn.ativo .iconCircle {
-  background: #7cb342;
+  background: var(--accent);
 }
 
 
 .menuBtn.ativo img {
   filter: brightness(0) invert(1);
+}
+body.tema-escuro .menuBtn:not(.ativo) img {
+  filter: brightness(0) invert(1);
+  opacity: 0.65;
 }
 .blocoNotif {
   margin: 12px;
@@ -851,9 +863,10 @@
 }
 
 .cardIndicador {
-  background: linear-gradient(135deg, #f5f7f9, #eef2f6);
+  background: var(--paper-2);
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
 }
 @media (max-height: 500px) {
   #login {
@@ -1002,18 +1015,18 @@
 }
 .barraValor {
   width: 16px;
-  background: #7cb342;
+  background: var(--accent);
   border-radius: 4px 4px 0 0;
 }
 .labelValor {
   font-size: 10px;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 3px;
   white-space: nowrap;
 }
 .labelDia {
   font-size: 10px;
-  color: #999;
+  color: var(--text-soft);
   margin-top: 6px;
   white-space: nowrap;
 }
@@ -1274,56 +1287,91 @@ body.tema-escuro{
 
 /* -------- gráfico de gantt -------- */
 #telaGantt{ background:var(--paper); }
-#telaGantt #topo, #semanas #topo{
+#telaGantt #topo, #semanas #topo, #detalhe #topo{
   background:var(--paper);
   border-bottom:1px solid var(--line);
   color:var(--ink);
 }
 #semanas{ background:var(--paper); }
+#detalhe{ background:var(--paper); }
 #bannerSemanas h1{ color:#F2F1EA; }
 .ganttWrap{
-  padding:16px 20px 40px;
+  padding:16px 16px 40px;
   max-width:900px;
   margin:0 auto;
 }
-.ganttEixo{
-  position:sticky; top:0; background:var(--paper);
-  display:flex; border-bottom:1px solid var(--line-dark);
-  padding-bottom:6px; margin-bottom:10px; z-index:2;
-}
-.ganttEixo .marcaSemana{
-  font-family:'IBM Plex Mono', monospace;
-  font-size:9.5px; color:var(--text-soft); flex-shrink:0;
-  border-left:1px solid var(--line);
-  padding-left:4px;
-}
-.ganttLinha{
-  display:flex; align-items:center;
-  margin-bottom:10px;
-  position:relative;
-  height:26px;
-}
-.ganttLabel{
-  position:sticky; left:0;
-  background:var(--paper);
+.ganttNovo{
   font-family:'IBM Plex Sans', sans-serif;
-  font-size:11px; color:var(--ink);
-  padding-right:10px;
-  white-space:nowrap;
-  z-index:1;
 }
-.ganttTrilha{ position:relative; height:100%; flex-shrink:0; }
-.ganttBarra{
-  position:absolute; top:4px; height:18px;
-  background:var(--accent);
-  border-radius:2px;
-  min-width:6px;
+
+/* ✅ cada linha é sua própria grid de 2 colunas: rótulo (largura fixa) +
+   trilha (o resto do espaço). Como TODAS as linhas usam a mesma largura
+   fixa pra coluna 1, elas ficam perfeitamente alinhadas entre si. */
+.ganttLinhaH{
+  display:grid;
+  grid-template-columns: 118px 1fr;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  border-bottom:1px solid var(--line);
 }
-.ganttFrenteTitulo{
+.ganttLabelH{
+  font-size:11.5px;
+  color:var(--ink);
+  line-height:1.35;
+  padding:6px 0;
+  word-break:break-word;
+}
+.ganttTopico{
+  display:block;
   font-family:'IBM Plex Mono', monospace;
-  font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase;
-  color:var(--text-soft); margin:22px 0 8px;
+  font-size:9px;
+  color:var(--text-soft);
+  margin-bottom:1px;
 }
+
+.ganttEixoLinha{
+  position:sticky; top:0;
+  background:var(--paper);
+  z-index:2;
+  border-bottom:1px solid var(--line-dark);
+  min-height:24px;
+}
+
+.ganttTrilhaH{
+  position:relative;
+  height:24px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--line) 0, var(--line) 1px,
+    transparent 1px, transparent var(--semana-pct)
+  );
+}
+.ganttMarcaSemana{
+  position:absolute;
+  top:2px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9px;
+  color:var(--text-soft);
+  white-space:nowrap;
+  padding-left:3px;
+}
+.ganttBarraH{
+  position:absolute;
+  top:6px; height:12px;
+  background:var(--accent);
+  border-radius:3px;
+}
+
+.ganttGrupoH{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--ink); font-weight:700;
+  margin:20px 0 4px;
+  padding-top:14px;
+  border-top:1px solid var(--line-dark);
+}
+.ganttGrupoH:first-of-type{ border-top:none; padding-top:0; margin-top:6px; }
   </style>
 </head>
 
@@ -1396,8 +1444,9 @@ body.tema-escuro{
         <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
       </div>
     </div>
-  <div id="bannerSemanas">
-      <h1 id="tituloSemanaDetalhe">Próximas Semanas</h1>
+  <div class="heroNovo" style="width:100%;">
+      <div class="eyebrow">Próximas Semanas</div>
+      <h1 id="tituloSemanaDetalhe" style="font-size:26px; margin-bottom:0;">Carregando...</h1>
     </div>
 
     <div id="conteudoSemanas"></div>
@@ -1906,19 +1955,13 @@ function abrir(data) {
   document.getElementById("detalhe").style.display = "block";
 
   // ✅ BANNER
-  document.getElementById("banner").innerHTML = `
-    <div class="header-frente" style="background-image:url('${data.Imagem}')">
-
-      <div class="overlay"></div>
-
-      <div class="conteudo-header">
-        <h1>${data.Nome}</h1>
-
-        <div class="breadcrumb">
-          Frentes de Serviço > ${data.Nome}
-        </div>
-      </div>
-
+  const bannerEl = document.getElementById("banner");
+  bannerEl.style.height = "auto";
+  bannerEl.style.display = "block";
+  bannerEl.innerHTML = `
+    <div class="heroNovo" style="width:100%;">
+      <div class="eyebrow">Frentes de Serviço</div>
+      <h1 style="font-size:26px; margin-bottom:0;">${data.Nome}</h1>
     </div>
   `;
   
@@ -1966,7 +2009,7 @@ let menu = `
         ${etapa.Etapa || 'Etapa'}
       </div>
 
-      <div style="font-size:12px; color:#666; margin-bottom:12px; text-align:left;">
+      <div style="font-size:12px; color:var(--text-soft); margin-bottom:12px; text-align:left;">
         Situação em <b>${etapa.Situacao || "-"}</b>
       </div>
 
@@ -1976,7 +2019,7 @@ let menu = `
             <div style="font-size:12px; font-weight:600;">Total</div>
             <div style="font-size:15px; margin-top:4px;">${etapa.Total || "-"}</div>
           </div>
-          <img src="https://cdn-icons-png.flaticon.com/128/8384/8384450.png"
+          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/8384/8384450.png"
                style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
         </div>
 
@@ -1985,7 +2028,7 @@ let menu = `
             <div style="font-size:12px; font-weight:600;">Avanço</div>
             <div style="font-size:15px; margin-top:4px;">${etapa.Realizado || "-"}</div>
           </div>
-          <img src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
+          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
                style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
         </div>
 
@@ -1994,7 +2037,7 @@ let menu = `
             <div style="font-size:12px; font-weight:600;">Previsto</div>
             <div style="font-size:15px; margin-top:4px;">${etapa.Previsto || "-"}</div>
           </div>
-          <img src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
+          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
                style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
         </div>
 
@@ -2005,7 +2048,7 @@ let menu = `
               ${etapa.Desvio || "-"}
             </div>
           </div>
-          <img src="https://cdn-icons-png.flaticon.com/128/481/481099.png"
+          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/481/481099.png"
                style="width:14px; position:absolute; bottom:10px; right:10px;">
         </div>
       </div>
@@ -2042,9 +2085,9 @@ html += `
     height:110px;
     border-radius:50%;
     background: conic-gradient(
-      #7cb342 ${percReal}%,
-      #90a4ae ${percReal}% ${prevReal}%,
-      #e0e0e0 ${prevReal}% 100%
+      var(--accent) ${percReal}%,
+      var(--line-dark) ${percReal}% ${prevReal}%,
+      var(--paper-2) ${prevReal}% 100%
     );
     display:flex;
     align-items:center;
@@ -2054,13 +2097,13 @@ html += `
     <div style="
       width:80px;
       height:80px;
-      background:white;
+      background:var(--card-fundo);
       border-radius:50%;
       display:flex;
       align-items:center;
       justify-content:center;
       font-weight:bold;
-      color:#7cb342;
+      color:var(--accent);
       font-size:18px
     ">
       ${perc}%
@@ -2072,12 +2115,12 @@ html += `
   <div style="font-size:13px;">
 
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-      <span style="width:10px; height:10px; background:#7cb342; border-radius:50%;"></span>
+      <span style="width:10px; height:10px; background:var(--accent); border-radius:50%;"></span>
       Realizado: ${perc}%
     </div>
 
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-      <span style="width:10px; height:10px; background:#90a4ae; border-radius:50%;"></span>
+      <span style="width:10px; height:10px; background:var(--line-dark); border-radius:50%;"></span>
       Previsto: ${prev}%
     </div>
 
@@ -2100,7 +2143,7 @@ html += `
 
     ${data.Imagem
       ? `<img src="${data.Imagem}" style="width:100%; border-radius:10px;">`
-      : `<p style="font-size:12px; color:#999; text-align:left;">Sem foto cadastrada ainda.</p>`}
+      : `<p style="font-size:12px; color:var(--text-soft); text-align:left;">Sem foto cadastrada ainda.</p>`}
   </div>
   `;
 
@@ -2204,12 +2247,12 @@ function abrirDetalheSemana(data) {
     bloco.className = "bloco";
     bloco.innerHTML = `
       <div class="tituloBloco">${tarefa.Nome}</div>
-      <div style="font-size:12px; color:#666; margin:6px 0 14px; text-align:left;">
+      <div style="font-size:12px; color:var(--text-soft); margin:6px 0 14px; text-align:left;">
         Previsto total: <b>${tarefa.TotalPrevisto}${tarefa.Unidade}</b>
         · Início: ${tarefa.InicioPrevisto || "-"} · Término: ${tarefa.TerminoPrevisto || "-"}
       </div>
       <div class="graficoDiario">
-        ${barrasHtml || '<p style="font-size:12px; color:#999;">Sem previsão diária cadastrada.</p>'}
+        ${barrasHtml || '<p style="font-size:12px; color:var(--text-soft);">Sem previsão diária cadastrada.</p>'}
       </div>
     `;
 
@@ -2234,18 +2277,25 @@ function abrirGantt() {
       if (!inicio) return;
       let termino = parseDiaMes(t.TerminoPrevisto) || inicio;
       if (termino < inicio) termino = inicio;
-      tarefas.push({ frente: formatarTitulo(frente.Nome), nome: t.Nome, inicio, termino });
+      tarefas.push({
+        frente: formatarTitulo(frente.Nome),
+        topico: t.Topico || '',
+        nome: t.Nome,
+        inicio, termino,
+      });
     });
   });
 
   if (tarefas.length === 0) {
-    container.innerHTML = '<p style="font-family:\'IBM Plex Sans\',sans-serif; font-size:13px; color:#6B7570; padding:20px;">Nenhuma tarefa com data prevista encontrada.</p>';
+    container.innerHTML = '<p style="font-family:\'IBM Plex Sans\',sans-serif; font-size:13px; color:var(--text-soft); padding:20px;">Nenhuma tarefa com data prevista encontrada.</p>';
     return;
   }
 
   const minDate = new Date(Math.min(...tarefas.map(t => t.inicio)));
   const maxDate = new Date(Math.max(...tarefas.map(t => t.termino)));
   const totalDias = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
+  const totalSemanas = Math.max(1, Math.ceil(totalDias / 7));
+  const semanaPct = 100 / totalSemanas;
 
   // ✅ agrupa por frente, mantendo a ordem em que apareceram
   const porFrente = {};
@@ -2254,57 +2304,47 @@ function abrirGantt() {
     porFrente[t.frente].push(t);
   });
 
-  // ✅ desenha tudo num SVG com viewBox — isso faz o gráfico inteiro se
-  // redimensionar sozinho pra caber na largura da tela, seja celular
-  // (vertical ou horizontal) ou computador, sem precisar rolar de lado
-  const LARGURA = 1000;
-  const LARGURA_LABEL = 230;
-  const AREA_TEMPO = LARGURA - LARGURA_LABEL - 10;
-  const ALTURA_LINHA = 20;
-  const ALTURA_GRUPO = 22;
-  const MARGEM_TOPO = 26;
+  const pctPorDia = dia => (dia / totalDias) * 100;
 
-  let totalLinhas = 0;
-  Object.keys(porFrente).forEach(f => { totalLinhas += 1 + porFrente[f].length; });
-  const ALTURA = MARGEM_TOPO + totalLinhas * ALTURA_LINHA + 10;
-
-  const escalaX = dia => LARGURA_LABEL + (dia / totalDias) * AREA_TEMPO;
-
-  const truncar = (texto, max) => texto.length > max ? texto.slice(0, max - 1) + '…' : texto;
-
-  let svg = `<svg viewBox="0 0 ${LARGURA} ${ALTURA}" style="width:100%; height:auto; display:block; font-family:'IBM Plex Sans',sans-serif;">`;
-
-  // ✅ eixo com 3 marcas de data (início, meio, fim do período)
-  svg += `<line x1="${LARGURA_LABEL}" y1="${MARGEM_TOPO - 8}" x2="${LARGURA - 4}" y2="${MARGEM_TOPO - 8}" style="stroke:var(--line);" stroke-width="1"/>`;
-  [0, Math.round(totalDias / 2), totalDias - 1].forEach(d => {
+  // ✅ eixo com marcas semanais (os "quadradinhos" de data no topo)
+  let eixoHtml = `
+    <div class="ganttLinhaH ganttEixoLinha">
+      <div class="ganttLabelH"></div>
+      <div class="ganttTrilhaH" style="--semana-pct:${semanaPct}%; height:24px;">
+  `;
+  for (let s = 0; s < totalSemanas; s++) {
     const dt = new Date(minDate);
-    dt.setDate(dt.getDate() + d);
-    svg += `<text x="${escalaX(d)}" y="${MARGEM_TOPO - 12}" font-size="9" style="fill:var(--text-soft);">${formatarDataCurta(dt)}</text>`;
-  });
+    dt.setDate(dt.getDate() + s * 7);
+    eixoHtml += `<div class="ganttMarcaSemana" style="left:${s * semanaPct}%;">${formatarDataCurta(dt)}</div>`;
+  }
+  eixoHtml += `</div></div>`;
 
-  let y = MARGEM_TOPO;
+  let linhasHtml = "";
   Object.keys(porFrente).forEach(nomeFrente => {
-    svg += `<text x="4" y="${y + 13}" font-size="11" font-weight="700" style="fill:var(--ink);">${truncar(nomeFrente, 34)}</text>`;
-    y += ALTURA_GRUPO;
+    linhasHtml += `<div class="ganttGrupoH">${nomeFrente}</div>`;
 
     porFrente[nomeFrente].forEach(t => {
       const offsetDias = Math.round((t.inicio - minDate) / 86400000);
       const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
-      const x1 = escalaX(offsetDias);
-      const x2 = escalaX(offsetDias + duracaoDias);
-      const largura = Math.max(3, x2 - x1);
+      const left = pctPorDia(offsetDias);
+      const width = Math.max(1.5, pctPorDia(duracaoDias));
 
-      svg += `<text x="10" y="${y + 13}" font-size="8" style="fill:var(--text-soft);">${truncar(t.nome, 32)}</text>`;
-      svg += `<rect x="${x1}" y="${y + 5}" width="${largura}" height="9" rx="2" style="fill:var(--accent);">
-        <title>${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}</title>
-      </rect>`;
-      y += ALTURA_LINHA;
+      linhasHtml += `
+        <div class="ganttLinhaH">
+          <div class="ganttLabelH">
+            ${t.topico ? `<span class="ganttTopico">${t.topico}</span>` : ''}
+            ${t.nome}
+          </div>
+          <div class="ganttTrilhaH" style="--semana-pct:${semanaPct}%;">
+            <div class="ganttBarraH" style="left:${left}%; width:${width}%;"
+                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
+          </div>
+        </div>
+      `;
     });
   });
 
-  svg += `</svg>`;
-
-  container.innerHTML = svg;
+  container.innerHTML = `<div class="ganttNovo">${eixoHtml}${linhasHtml}</div>`;
 }
 
 function formatarDataCurta(data) {
