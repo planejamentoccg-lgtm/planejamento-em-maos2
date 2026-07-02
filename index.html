@@ -1032,6 +1032,12 @@
   --accent-bright:#8FB84B;
   --text-soft:#6B7570;
   --text-soft-dark:#8FA098;
+  /* ✅ painel/hero — sempre escuro, não inverte com o tema */
+  --painel-1:#131F1D;
+  --painel-2:#1C2B28;
+  --painel-texto:#F2F1EA;
+  --card-fundo:#FFFFFF;
+  --icone-cor:#131F1D;
 }
 
 /* ✅ TEMA ESCURO — inverte as variáveis; tudo que usa var(--...) responde
@@ -1047,6 +1053,11 @@ body.tema-escuro{
   --accent-bright:#A8D666;
   --text-soft:#93A49C;
   --text-soft-dark:#6B7570;
+  --painel-1:#0B120F;
+  --painel-2:#12201C;
+  --painel-texto:#F2F1EA;
+  --card-fundo:#1C2B28;
+  --icone-cor:#F2F1EA;
   background:var(--paper);
 }
 
@@ -1056,6 +1067,7 @@ body.tema-escuro{
   cursor:pointer;
   font-size:15px;
   margin-right:14px;
+  color:var(--ink);
 }
 
 #lista{ background:var(--paper); }
@@ -1065,12 +1077,17 @@ body.tema-escuro{
   background:var(--paper);
   border-bottom:1px solid var(--line);
 }
+#lista #topo img{
+  background:#FFFFFF;
+  border-radius:8px;
+  padding:4px 8px;
+}
 
 /* -------- hero -------- */
 .heroNovo{
-  background:linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 100%);
+  background:linear-gradient(160deg, var(--painel-1) 0%, var(--painel-2) 100%);
   padding:28px 20px 26px;
-  color:#F2F1EA;
+  color:var(--painel-texto);
   text-align:left;
 }
 .heroNovo .eyebrow{
@@ -1088,7 +1105,7 @@ body.tema-escuro{
   letter-spacing:-0.02em;
   line-height:1.05;
   margin-bottom:22px;
-  color:#F2F1EA;
+  color:var(--painel-texto);
 }
 .kpiGrid{
   display:grid;
@@ -1101,7 +1118,7 @@ body.tema-escuro{
 }
 .kpiCard{
   position:relative;
-  background:var(--ink);
+  background:var(--painel-1);
   padding:16px 14px 14px;
   text-align:left;
 }
@@ -1495,7 +1512,10 @@ async function carregar() {
         <span class="toggleTema" onclick="alternarTema()" id="iconeTema">🌙</span>
 
         <div class="notif" onclick="abrirNotificacoes()">
-          <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.7 21a2 2 0 01-3.4 0"/>
+          </svg>
           <span id="contadorNotif">0</span>
         </div>
 
@@ -1630,23 +1650,26 @@ async function carregar() {
     const tarefas = d.Tarefas || [];
     if (tarefas.length === 0) return;
 
-    // ✅ encontra a tarefa mais próxima (a que ainda não começou e está
-    // mais perto de hoje; se todas já passaram, pega a mais recente)
-    let tarefaDestaque = tarefas[0];
+    // ✅ data de início/término agregada: a mais cedo e a mais tarde
+    // entre TODAS as tarefas da frente (não só uma)
+    let menorInicio = null, maiorTermino = null;
     let melhorOrdenacao = Infinity;
 
     tarefas.forEach(t => {
       const dataInicio = parseDiaMes(t.InicioPrevisto);
-      if (!dataInicio) return;
-      const diff = dataInicio - hoje;
-      const ordenacao = diff >= 0 ? diff : (Math.abs(diff) + 1e12);
-      if (ordenacao < melhorOrdenacao) {
-        melhorOrdenacao = ordenacao;
-        tarefaDestaque = t;
+      const dataTermino = parseDiaMes(t.TerminoPrevisto) || dataInicio;
+
+      if (dataInicio && (!menorInicio || dataInicio < menorInicio)) menorInicio = dataInicio;
+      if (dataTermino && (!maiorTermino || dataTermino > maiorTermino)) maiorTermino = dataTermino;
+
+      if (dataInicio) {
+        const diff = dataInicio - hoje;
+        const ordenacao = diff >= 0 ? diff : (Math.abs(diff) + 1e12);
+        if (ordenacao < melhorOrdenacao) melhorOrdenacao = ordenacao;
       }
     });
 
-    frentesSemanas.push({ dados: d, destaque: tarefaDestaque, ordenacao: melhorOrdenacao });
+    frentesSemanas.push({ dados: d, tarefas, menorInicio, maiorTermino, ordenacao: melhorOrdenacao });
   });
 
   frentesSemanas.sort((a, b) => a.ordenacao - b.ordenacao);
@@ -1658,11 +1681,17 @@ async function carregar() {
 
   frentesSemanas.forEach(item => {
     const d = item.dados;
-    const t = item.destaque;
 
-    const partesData = (t.InicioPrevisto || '').split('/');
-    const dia2 = partesData[0] || '-';
-    const mes2 = partesData[1] ? MESES_ABREV[parseInt(partesData[1]) - 1] : '';
+    const dia2 = item.menorInicio ? String(item.menorInicio.getDate()).padStart(2, '0') : '-';
+    const mes2 = item.menorInicio ? MESES_ABREV[item.menorInicio.getMonth()] : '';
+
+    const linhasTarefas = item.tarefas.map(t => `
+      <div class="subtitulo2">${t.Nome}
+        <span style="color:var(--text-soft); font-family:'IBM Plex Sans',sans-serif; font-weight:400;">
+          — previsto ${t.TotalPrevisto}${t.Unidade}
+        </span>
+      </div>
+    `).join('');
 
     const card = document.createElement("div");
     card.className = "agendaItem";
@@ -1674,9 +1703,11 @@ async function carregar() {
       </div>
       <div class="agendaBody">
         <div class="titulo2">${formatarTitulo(d.Nome)}</div>
-        <div class="subtitulo2">${t.Nome}</div>
-        <div class="agendaRow">Previsto: <b>${t.TotalPrevisto}${t.Unidade}</b></div>
-        <div class="agendaRow">Início ${t.InicioPrevisto || "-"} · Término ${t.TerminoPrevisto || "-"}</div>
+        <div class="agendaRow" style="margin-bottom:8px;">
+          Início ${item.menorInicio ? formatarDataCurta(item.menorInicio) : "-"} ·
+          Término ${item.maiorTermino ? formatarDataCurta(item.maiorTermino) : "-"}
+        </div>
+        ${linhasTarefas}
         <span class="agendaVerMais">Ver mais →</span>
       </div>
     `;
@@ -2376,4 +2407,3 @@ async function carregarContadorNotif() {
 
 </body>
 </html>
-
