@@ -10,6 +10,7 @@
 
   <!-- ✅ FONTE -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
 
@@ -1016,6 +1017,264 @@
   margin-top: 6px;
   white-space: nowrap;
 }
+
+/* ===========================================================
+   ✅ REDESIGN DA TELA INICIAL (hero, régua de progresso, agenda, gantt)
+   =========================================================== */
+:root{
+  --ink:#131F1D;
+  --ink-2:#1C2B28;
+  --paper:#F5F4EF;
+  --paper-2:#EDECE5;
+  --line:#D8D7CD;
+  --line-dark:#2E3E3A;
+  --accent:#6F8F3F;
+  --accent-bright:#8FB84B;
+  --text-soft:#6B7570;
+  --text-soft-dark:#8FA098;
+}
+
+#lista{ background:var(--paper); }
+
+/* -------- topo -------- */
+#lista #topo{
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+
+/* -------- hero -------- */
+.heroNovo{
+  background:linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 100%);
+  padding:28px 20px 26px;
+  color:#F2F1EA;
+  text-align:left;
+}
+.heroNovo .eyebrow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.16em;
+  color:var(--accent-bright);
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.heroNovo h1{
+  font-family:'Archivo', sans-serif;
+  font-weight:800;
+  font-size:30px;
+  letter-spacing:-0.02em;
+  line-height:1.05;
+  margin-bottom:22px;
+  color:#F2F1EA;
+}
+.kpiGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1px;
+  background:var(--line-dark);
+  border:1px solid var(--line-dark);
+  max-width:700px;
+  margin:0 auto;
+}
+.kpiCard{
+  position:relative;
+  background:var(--ink);
+  padding:16px 14px 14px;
+  text-align:left;
+}
+.kpiCard::before, .kpiCard::after{
+  content:''; position:absolute; width:9px; height:9px;
+}
+.kpiCard::before{ top:6px; left:6px; border-top:1.5px solid var(--accent); border-left:1.5px solid var(--accent); }
+.kpiCard::after{ bottom:6px; right:6px; border-bottom:1.5px solid var(--accent); border-right:1.5px solid var(--accent); }
+.kpiCard .val{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:24px;
+  color:#F2F1EA;
+  line-height:1;
+  margin-bottom:8px;
+}
+.kpiCard .val.pos{ color:var(--accent-bright); }
+.kpiCard .lbl{
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:10.5px;
+  letter-spacing:0.04em;
+  color:var(--text-soft-dark);
+  text-transform:uppercase;
+}
+
+/* -------- seções -------- */
+.secaoNova{ padding:26px 20px 6px; max-width:700px; margin:0 auto; }
+.secaoNova .cabecalho{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin-bottom:14px; flex-wrap:wrap; gap:8px;
+}
+.secaoNova .tituloSecao{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text-soft);
+}
+.secaoNova .contagemSecao{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  color:var(--text-soft);
+}
+.secaoNova hr.regra{ border:none; border-top:1px solid var(--line); margin-bottom:18px; }
+
+.btnGantt{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--ink);
+  background:var(--paper-2);
+  border:1px solid var(--line);
+  padding:6px 10px;
+  cursor:pointer;
+  border-radius:2px;
+}
+.btnGantt:hover{ background:var(--line); }
+
+/* -------- régua de progresso (frentes) -------- */
+.frenteNova{
+  padding:16px 0;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.frenteNova:last-child{ border-bottom:none; }
+.frenteNova .topo2{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px;
+}
+.frenteNova .nome2{
+  font-family:'Archivo', sans-serif;
+  font-weight:700;
+  font-size:16.5px;
+  color:var(--ink);
+  letter-spacing:-0.01em;
+}
+.tagStatus{
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9.5px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding:3px 7px;
+  border:1px solid var(--accent);
+  color:var(--accent);
+}
+.tagStatus.atrasada{ border-color:#c0392b; color:#c0392b; }
+.tagStatus .ponto{ width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+.regua{ position:relative; height:16px; margin-bottom:8px; }
+.regua-trilho{
+  position:absolute; top:6px; left:0; right:0; height:3px;
+  background:var(--paper-2); border:1px solid var(--line);
+}
+.regua-preenchida{
+  position:absolute; top:6px; left:0; height:3px; background:var(--accent);
+}
+.regua-marcas{
+  position:absolute; top:0; left:0; right:0; height:16px;
+  display:flex; justify-content:space-between;
+}
+.regua-marcas span{ width:1px; height:6px; background:var(--line); }
+.regua-marcas span:nth-child(5n+1){ height:9px; background:#B9B8AC; }
+
+.frenteNova .baixo2{ display:flex; align-items:center; justify-content:space-between; }
+.frenteNova .pct2{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600; font-size:14px; color:var(--ink);
+}
+.frenteNova .meta2{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px; color:var(--text-soft);
+}
+
+/* -------- agenda (próximas semanas) -------- */
+.agendaItem{
+  display:flex; gap:16px;
+  padding:16px 0 22px;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.agendaItem:last-child{ border-bottom:none; }
+.agendaData{
+  font-family:'IBM Plex Mono', monospace;
+  text-align:center;
+  padding-right:16px;
+  border-right:1px solid var(--line);
+  min-width:44px;
+  flex-shrink:0;
+}
+.agendaData .dia2{ font-size:22px; font-weight:600; color:var(--ink); line-height:1; }
+.agendaData .mes2{ font-size:9.5px; letter-spacing:0.1em; color:var(--text-soft); margin-top:4px; }
+
+.agendaBody .titulo2{
+  font-family:'Archivo', sans-serif;
+  font-weight:700; font-size:15.5px; color:var(--ink); margin-bottom:2px;
+}
+.agendaBody .subtitulo2{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px; color:var(--accent); margin-bottom:10px;
+}
+.agendaRow{
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:12px; color:var(--text-soft); margin-bottom:6px;
+}
+.agendaRow b{ color:var(--ink); }
+.agendaVerMais{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px; letter-spacing:0.04em; color:var(--accent);
+  margin-top:4px; display:inline-block;
+}
+
+/* -------- gráfico de gantt -------- */
+#telaGantt{ background:var(--paper); }
+.ganttWrap{
+  overflow-x:auto;
+  padding:16px 20px 40px;
+}
+.ganttEixo{
+  position:sticky; top:0; background:var(--paper);
+  display:flex; border-bottom:1px solid var(--line-dark);
+  padding-bottom:6px; margin-bottom:10px; z-index:2;
+}
+.ganttEixo .marcaSemana{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9.5px; color:var(--text-soft); flex-shrink:0;
+  border-left:1px solid var(--line);
+  padding-left:4px;
+}
+.ganttLinha{
+  display:flex; align-items:center;
+  margin-bottom:10px;
+  position:relative;
+  height:26px;
+}
+.ganttLabel{
+  position:sticky; left:0;
+  background:var(--paper);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:11px; color:var(--ink);
+  padding-right:10px;
+  white-space:nowrap;
+  z-index:1;
+}
+.ganttTrilha{ position:relative; height:100%; flex-shrink:0; }
+.ganttBarra{
+  position:absolute; top:4px; height:18px;
+  background:var(--accent);
+  border-radius:2px;
+  min-width:6px;
+}
+.ganttFrenteTitulo{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--text-soft); margin:22px 0 8px;
+}
   </style>
 </head>
 
@@ -1097,6 +1356,18 @@
     <button onclick="voltarHome()">Voltar</button>
     
   </div>
+
+<!-- ✅ GRÁFICO DE GANTT -->
+<div id="telaGantt" style="display:none;">
+
+  <div id="topo">
+    <span onclick="voltarHome()" style="cursor:pointer; font-size:20px;">←</span>
+    <span style="font-size:14px; font-weight:500;">Gráfico de Gantt — Todas as Frentes</span>
+  </div>
+
+  <div class="ganttWrap" id="conteudoGantt"></div>
+
+</div>
 
 <!-- ✅ NOTIFICACOES -->
 <div id="notificacoes" style="display:none;">
@@ -1192,52 +1463,38 @@ async function carregar() {
 
     </div>
 
-    <div class="painel">
-      <span class="label">PLANEJAMENTO EM MÃOS</span>
-      <h1>Painel de Progresso</h1>
+    <div class="heroNovo">
+      <div class="eyebrow">Planejamento em mãos</div>
+      <h1>Painel de<br>Progresso</h1>
 
-      <div class="metricas">
-
-        <div class="itemPainel">
-          <img src="https://i.imgur.com/CwjC8pK.png">
-          <div>
-            <h2 id="qtFrentes">0</h2>
-            <p>Frentes Ativas</p>
-          </div>
+      <div class="kpiGrid">
+        <div class="kpiCard">
+          <div class="val" id="qtFrentes">0</div>
+          <div class="lbl">Frentes ativas</div>
         </div>
-
-        <div class="itemPainel">
-          <img src="https://i.imgur.com/BrnrLET.png">
-          <div>
-            <h2 id="noPrazo">0</h2>
-            <p>No prazo</p>
-          </div>
+        <div class="kpiCard">
+          <div class="val pos" id="noPrazo">0</div>
+          <div class="lbl">No prazo</div>
         </div>
-
-        <div class="itemPainel">
-          <img src="https://i.imgur.com/CcaaD2T.png">
-          <div>
-            <h2 id="atrasadas">0</h2>
-            <p>Atrasadas</p>
-          </div>
+        <div class="kpiCard">
+          <div class="val" id="atrasadas">0</div>
+          <div class="lbl">Atrasadas</div>
         </div>
-
-        <div class="itemPainel">
-          <img src="https://i.imgur.com/ExdFyYG.png">
-          <div>
-            <h2>2028</h2>
-            <p>2º Sem</p>
-          </div>
+        <div class="kpiCard">
+          <div class="val">2028</div>
+          <div class="lbl">2º Sem</div>
         </div>
-
       </div>
     </div>
 
-    <div class="topoLista">
-      <h3>Frentes de Serviço</h3>
-    </div>
-
-    <div id="botoes"></div>
+    <section class="secaoNova">
+      <div class="cabecalho">
+        <span class="tituloSecao">Frentes de serviço</span>
+        <span class="contagemSecao" id="contagemFrentes">00</span>
+      </div>
+      <hr class="regra">
+      <div id="botoes"></div>
+    </section>
   `;
 
   const botoes = document.getElementById("botoes");
@@ -1253,7 +1510,7 @@ async function carregar() {
     const data = doc.data();
 
     const card = document.createElement("div");
-    card.className = "linhaFrente";
+    card.className = "frenteNova";
 
     let progresso = data.Percentual || 0;
     let previsto = data.Percentualprevisto || 0;
@@ -1267,31 +1524,34 @@ async function carregar() {
       noPrazo++;
     }
 
+    // ✅ pega a situação mais recente entre as etapas, pra mostrar no rodapé
+    let situacaoRecente = "";
+    (data.Etapas || []).forEach(etapa => {
+      if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
+    });
+
     card.innerHTML = `
-      <div class="iconeFrente">
-        <img src="https://cdn-icons-png.flaticon.com/128/2716/2716778.png">
+      <div class="topo2">
+        <span class="nome2">${data.Nome}</span>
+        <span class="tagStatus ${status === "atrasada" ? "atrasada" : ""}">
+          <span class="ponto"></span>
+          ${status === "atrasada" ? "Em atraso" : "No prazo"}
+        </span>
       </div>
 
-      <div class="infoFrente">
-        <div class="topoFrente">
-          <span class="nomeFrente">${data.Nome}</span>
-
-          <span class="percentual"
-            style="color:${status === "atrasada" ? "#e53935" : "#7cb342"}">
-            ${progresso}%
-          </span>
-
-          <span class="statusBadge ${status === "atrasada" ? "status-atrasada" : "status-ok"}">
-            <span class="statusDot"></span>
-            ${status === "atrasada" ? "Em atraso" : "No prazo"}
-          </span>
+      <div class="regua">
+        <div class="regua-trilho"></div>
+        <div class="regua-preenchida" style="width:${Math.min(progresso, 100)}%"></div>
+        <div class="regua-marcas">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span>
         </div>
+      </div>
 
-        <div class="barra">
-          <div class="barraPreenchida"
-            style="width:${progresso}%; background:${status === "atrasada" ? "#e53935" : "#7cb342"};">
-          </div>
-        </div>
+      <div class="baixo2">
+        <span class="pct2">${progresso}%</span>
+        <span class="meta2">${situacaoRecente ? "situação em " + situacaoRecente : ""}</span>
       </div>
     `;
 
@@ -1305,14 +1565,17 @@ async function carregar() {
   document.getElementById("qtFrentes").innerText = snap.size;
   document.getElementById("noPrazo").innerText = noPrazo;
   document.getElementById("atrasadas").innerText = atrasadas;
+  document.getElementById("contagemFrentes").innerText = String(snap.size).padStart(2, "0");
 
   // ✅ PRÓXIMAS SEMANAS (nova estrutura: Nome + Tarefas[] + Diario[])
   const containerSemanas = document.createElement("div");
 
   containerSemanas.innerHTML = `
-    <div class="topoLista">
-      <h3>Próximas Semanas</h3>
+    <div class="cabecalho">
+      <span class="tituloSecao">Próximas semanas</span>
+      <button class="btnGantt" onclick="abrirGantt()">📊 Gráfico de Gantt</button>
     </div>
+    <hr class="regra">
   `;
 
   const snapSemanas = await db.collection("ProximasSemanas").get();
@@ -1346,26 +1609,33 @@ async function carregar() {
 
   frentesSemanas.sort((a, b) => a.ordenacao - b.ordenacao);
 
+  // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
+  window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
+
+  const MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+
   frentesSemanas.forEach(item => {
     const d = item.dados;
     const t = item.destaque;
 
+    const partesData = (t.InicioPrevisto || '').split('/');
+    const dia2 = partesData[0] || '-';
+    const mes2 = partesData[1] ? MESES_ABREV[parseInt(partesData[1]) - 1] : '';
+
     const card = document.createElement("div");
-    card.className = "cardProxima";
+    card.className = "agendaItem";
 
     card.innerHTML = `
-      <div class="iconeFrente">
-        <img src="https://cdn-icons-png.flaticon.com/128/2716/2716778.png">
+      <div class="agendaData">
+        <div class="dia2">${dia2}</div>
+        <div class="mes2">${mes2}</div>
       </div>
-      <div class="infoProxima">
-        <div class="nomeProxima">${formatarTitulo(d.Nome)}</div>
-        <div class="detalheProxima">
-          Próxima tarefa: <b>${t.Nome}</b> — ${t.TotalPrevisto}${t.Unidade} previstos
-        </div>
-        <div class="detalheProxima">
-          Início: ${t.InicioPrevisto || "-"} · Término: ${t.TerminoPrevisto || "-"}
-        </div>
-        <span class="btnVerMais">Ver mais →</span>
+      <div class="agendaBody">
+        <div class="titulo2">${formatarTitulo(d.Nome)}</div>
+        <div class="subtitulo2">${t.Nome}</div>
+        <div class="agendaRow">Previsto: <b>${t.TotalPrevisto}${t.Unidade}</b></div>
+        <div class="agendaRow">Início ${t.InicioPrevisto || "-"} · Término ${t.TerminoPrevisto || "-"}</div>
+        <span class="agendaVerMais">Ver mais →</span>
       </div>
     `;
 
@@ -1374,6 +1644,7 @@ async function carregar() {
     containerSemanas.appendChild(card);
   });
 
+  containerSemanas.className = "secaoNova";
   lista.appendChild(containerSemanas);
 
 // ✅ FINAL DA FUNÇÃO CARREGAR
@@ -1770,6 +2041,7 @@ function voltarHome() {
   document.getElementById("lista").style.display = "block";
   document.getElementById("semanas").style.display = "none";
   document.getElementById("notificacoes").style.display = "none";
+  document.getElementById("telaGantt").style.display = "none";
 }
 function mostrarVisao() {
 
@@ -1851,6 +2123,87 @@ function abrirDetalheSemana(data) {
 
     container.appendChild(bloco);
   });
+}
+
+// ✅ GRÁFICO DE GANTT — todas as frentes, todas as tarefas com data prevista
+function abrirGantt() {
+
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("telaGantt").style.display = "block";
+
+  const container = document.getElementById("conteudoGantt");
+  const frentes = window.todasFrentesSemanas || [];
+
+  // ✅ achata todas as tarefas de todas as frentes numa lista só
+  const tarefas = [];
+  frentes.forEach(frente => {
+    (frente.Tarefas || []).forEach(t => {
+      const inicio = parseDiaMes(t.InicioPrevisto);
+      if (!inicio) return;
+      let termino = parseDiaMes(t.TerminoPrevisto) || inicio;
+      if (termino < inicio) termino = inicio;
+      tarefas.push({ frente: formatarTitulo(frente.Nome), nome: t.Nome, inicio, termino });
+    });
+  });
+
+  if (tarefas.length === 0) {
+    container.innerHTML = '<p style="font-family:\'IBM Plex Sans\',sans-serif; font-size:13px; color:#6B7570; padding:20px;">Nenhuma tarefa com data prevista encontrada.</p>';
+    return;
+  }
+
+  const minDate = new Date(Math.min(...tarefas.map(t => t.inicio)));
+  const maxDate = new Date(Math.max(...tarefas.map(t => t.termino)));
+
+  const totalDias = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
+  const PX_POR_DIA = 22;
+  const LARGURA_LABEL = 170;
+  const larguraTotal = totalDias * PX_POR_DIA;
+
+  // ✅ eixo com marcas semanais
+  let eixoHtml = `<div class="ganttEixo">
+    <div style="width:${LARGURA_LABEL}px; flex-shrink:0; position:sticky; left:0; background:var(--paper);"></div>`;
+  for (let d = 0; d < totalDias; d += 7) {
+    const dataMarca = new Date(minDate);
+    dataMarca.setDate(dataMarca.getDate() + d);
+    const larguraMarca = Math.min(7, totalDias - d) * PX_POR_DIA;
+    eixoHtml += `<div class="marcaSemana" style="width:${larguraMarca}px;">${formatarDataCurta(dataMarca)}</div>`;
+  }
+  eixoHtml += `</div>`;
+
+  // ✅ agrupa as tarefas por frente, mantendo a ordem em que apareceram
+  const porFrente = {};
+  tarefas.forEach(t => {
+    if (!porFrente[t.frente]) porFrente[t.frente] = [];
+    porFrente[t.frente].push(t);
+  });
+
+  let linhasHtml = "";
+  Object.keys(porFrente).forEach(nomeFrente => {
+    linhasHtml += `<div class="ganttFrenteTitulo">${nomeFrente}</div>`;
+
+    porFrente[nomeFrente].forEach(t => {
+      const offsetDias = Math.round((t.inicio - minDate) / 86400000);
+      const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
+      const left = offsetDias * PX_POR_DIA;
+      const width = Math.max(6, duracaoDias * PX_POR_DIA);
+
+      linhasHtml += `
+        <div class="ganttLinha">
+          <div class="ganttLabel" style="width:${LARGURA_LABEL}px;" title="${t.nome}">${t.nome}</div>
+          <div class="ganttTrilha" style="width:${larguraTotal}px;">
+            <div class="ganttBarra" style="left:${left}px; width:${width}px;"
+                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
+          </div>
+        </div>
+      `;
+    });
+  });
+
+  container.innerHTML = eixoHtml + linhasHtml;
+}
+
+function formatarDataCurta(data) {
+  return String(data.getDate()).padStart(2, '0') + '/' + String(data.getMonth() + 1).padStart(2, '0');
 }
 
 async function abrirNotificacao(idNotif, nomeFrente) {
