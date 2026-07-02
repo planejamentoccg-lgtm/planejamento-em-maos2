@@ -1304,44 +1304,36 @@ body.tema-escuro .iconeIndicador{
 #detalhe{ background:var(--paper); }
 #bannerSemanas h1{ color:#F2F1EA; }
 .ganttWrap{
-  padding:16px 12px 40px;
+  padding:16px 16px 40px;
+  max-width:900px;
+  margin:0 auto;
 }
 
-.ganttScrollArea{
-  overflow-x:auto;
+.ganttNovo{
   font-family:'IBM Plex Sans', sans-serif;
-  padding-bottom:6px;
 }
 
-.ganttLinhaEixo, .ganttLinhaTarefa{
+.ganttLinhaEixo, .ganttLinhaH{
   display:flex;
-  align-items:stretch;
+  align-items:center;
+  gap:8px;
+  min-height:30px;
   border-bottom:1px solid var(--line);
-  min-height:34px;
 }
 
 .ganttLinhaEixo{
-  position:sticky; top:0;
-  z-index:3;
-  background:var(--paper);
+  position:relative;
+  min-height:22px;
   border-bottom:1px solid var(--line-dark);
-  min-height:46px;
+  margin-bottom:6px;
 }
 
-/* ✅ coluna de nomes: fica fixa (position:sticky à esquerda) enquanto
-   a área de datas rola de lado — assim os nomes nunca somem da tela */
-.ganttLabelSticky{
-  position:sticky; left:0;
-  z-index:2;
-  background:var(--paper);
-  width:150px; flex-shrink:0;
-  font-size:11.5px;
+.ganttLabelH{
+  width:118px; flex-shrink:0;
+  font-size:11px;
   color:var(--ink);
   line-height:1.3;
-  padding:6px 10px 6px 0;
   word-break:break-word;
-  display:flex;
-  align-items:center;
 }
 .ganttTopico{
   display:block;
@@ -1351,51 +1343,39 @@ body.tema-escuro .iconeIndicador{
   margin-bottom:1px;
 }
 
-.ganttTrilhaEixo, .ganttTrilhaTarefa{
+.ganttTrilhaH{
   position:relative;
-  flex-shrink:0;
+  flex:1;
+  height:26px;
 }
-.ganttTrilhaTarefa{ height:34px; }
 
-.ganttMarcaSemanaW{
+.ganttMarcaMes{
   position:absolute;
-  top:2px; height:20px;
-  display:flex; align-items:center; justify-content:center;
+  top:0;
+  transform:translateX(-2px);
   font-family:'IBM Plex Mono', monospace;
   font-size:9.5px; font-weight:600;
   color:var(--ink);
-  border-left:1px solid var(--line-dark);
-  padding:0 2px;
-  text-align:center;
-  overflow:hidden;
-}
-.ganttMarcaDiaW{
-  position:absolute;
-  top:24px; height:20px;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'IBM Plex Mono', monospace;
-  font-size:9.5px;
-  color:var(--text-soft);
-  border-left:1px solid var(--line);
+  white-space:nowrap;
 }
 
 .ganttBarraH{
   position:absolute;
-  top:9px; height:16px;
+  top:6px; height:14px;
   background:var(--accent);
   border-radius:3px;
+  z-index:1;
 }
 
 .ganttGrupoH{
-  position:sticky; left:0;
-  display:inline-block;
-  background:var(--paper);
   font-family:'IBM Plex Mono', monospace;
   font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
   color:var(--ink); font-weight:700;
   margin:18px 0 4px;
-  padding:6px 10px 6px 0;
+  padding-top:12px;
+  border-top:1px solid var(--line-dark);
 }
+.ganttGrupoH:first-of-type{ border-top:none; padding-top:0; margin-top:8px; }
   </style>
 </head>
 
@@ -1446,12 +1426,18 @@ body.tema-escuro .iconeIndicador{
     <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
   </div>
 
-  <div class="notif" onclick="abrirNotificacoes()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
-      <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-      <path d="M13.7 21a2 2 0 01-3.4 0"/>
-    </svg>
-    <span id="contadorNotif">0</span>
+  <div style="display:flex; align-items:center;">
+
+    <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+
+    <div class="notif" onclick="abrirNotificacoes()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
+        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.7 21a2 2 0 01-3.4 0"/>
+      </svg>
+      <span id="contadorNotif">0</span>
+    </div>
+
   </div>
 </div>
 
@@ -1470,6 +1456,7 @@ body.tema-escuro .iconeIndicador{
         </span>
         <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
       </div>
+      <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
     </div>
   <div class="heroNovo" style="width:100%;">
       <div class="eyebrow">Próximas Semanas</div>
@@ -1486,8 +1473,11 @@ body.tema-escuro .iconeIndicador{
 <div id="telaGantt" style="display:none;">
 
   <div id="topo">
-    <span onclick="voltarHome()" style="cursor:pointer; font-size:20px;">←</span>
-    <span style="font-size:14px; font-weight:500;">Gráfico de Gantt — Todas as Frentes</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span onclick="voltarHome()" style="cursor:pointer; font-size:20px;">←</span>
+      <span style="font-size:14px; font-weight:500;">Gráfico de Gantt — Todas as Frentes</span>
+    </div>
+    <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
   </div>
 
   <div class="ganttWrap" id="conteudoGantt"></div>
@@ -1500,6 +1490,7 @@ body.tema-escuro .iconeIndicador{
 <div id="topo">
   <span onclick="voltarHome()" style="cursor:pointer;">←</span>
   <span style="font-size:14px; font-weight:500;">Notificações</span>
+  <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
 </div>
 
   <div id="listaNotificacoes"></div>
@@ -1585,7 +1576,7 @@ async function carregar() {
 
       <div style="display:flex; align-items:center;">
 
-        <span class="toggleTema" onclick="alternarTema()" id="iconeTema">🌙</span>
+        <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
 
         <div class="notif" onclick="abrirNotificacoes()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
@@ -1718,7 +1709,6 @@ async function carregar() {
 
   const snapSemanas = await db.collection("ProximasSemanas").get();
 
-  const hoje = new Date();
   const frentesSemanas = [];
 
   snapSemanas.forEach(doc => {
@@ -1729,7 +1719,6 @@ async function carregar() {
     // ✅ data de início/término agregada: a mais cedo e a mais tarde
     // entre TODAS as tarefas da frente (não só uma)
     let menorInicio = null, maiorTermino = null;
-    let melhorOrdenacao = Infinity;
 
     tarefas.forEach(t => {
       const dataInicio = parseDiaMes(t.InicioPrevisto);
@@ -1737,18 +1726,17 @@ async function carregar() {
 
       if (dataInicio && (!menorInicio || dataInicio < menorInicio)) menorInicio = dataInicio;
       if (dataTermino && (!maiorTermino || dataTermino > maiorTermino)) maiorTermino = dataTermino;
-
-      if (dataInicio) {
-        const diff = dataInicio - hoje;
-        const ordenacao = diff >= 0 ? diff : (Math.abs(diff) + 1e12);
-        if (ordenacao < melhorOrdenacao) melhorOrdenacao = ordenacao;
-      }
     });
 
-    frentesSemanas.push({ dados: d, tarefas, menorInicio, maiorTermino, ordenacao: melhorOrdenacao });
+    frentesSemanas.push({ dados: d, tarefas, menorInicio, maiorTermino });
   });
 
-  frentesSemanas.sort((a, b) => a.ordenacao - b.ordenacao);
+  // ✅ ordem cronológica pura: quem começa primeiro aparece primeiro
+  frentesSemanas.sort((a, b) => {
+    if (!a.menorInicio) return 1;
+    if (!b.menorInicio) return -1;
+    return a.menorInicio - b.menorInicio;
+  });
 
   // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
   window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
@@ -1762,7 +1750,7 @@ async function carregar() {
     const mes2 = item.menorInicio ? MESES_ABREV[item.menorInicio.getMonth()] : '';
 
     const linhasTarefas = item.tarefas.map(t => `
-      <div class="subtitulo2">${t.Nome}
+      <div class="subtitulo2">${t.Nome}${t.Subgrupo ? ' <span style="color:var(--text-soft); font-weight:400;">(' + t.Subgrupo + ')</span>' : ''}
         <span style="color:var(--text-soft); font-family:'IBM Plex Sans',sans-serif; font-weight:400;">
           — previsto ${t.TotalPrevisto}${t.Unidade}
         </span>
@@ -1845,8 +1833,10 @@ function alternarTema() {
 }
 
 function atualizarIconeTema() {
-  const icone = document.getElementById('iconeTema');
-  if (icone) icone.innerText = document.body.classList.contains('tema-escuro') ? '☀️' : '🌙';
+  const escuro = document.body.classList.contains('tema-escuro');
+  document.querySelectorAll('.iconeTema').forEach(icone => {
+    icone.innerText = escuro ? '☀️' : '🌙';
+  });
 }
 
 function aplicarTemaSalvo() {
@@ -1855,6 +1845,7 @@ function aplicarTemaSalvo() {
   }
 }
 aplicarTemaSalvo();
+atualizarIconeTema();
 
 function formatarTitulo(texto) {
   if (!texto) return texto;
@@ -2085,6 +2076,33 @@ let menu = `
 
   html += `</div>`;
 
+  // ✅ INFORMAÇÕES ADICIONAIS — um bloco por etapa, só aparece se tiver conteúdo
+  const etapasComInfo = (data.Etapas || []).filter(e => e.InformacoesAdicionais);
+  if (etapasComInfo.length > 0) {
+    html += `
+    <div class="bloco">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+        <img src="https://i.imgur.com/DQZ7PM1.png" style="width:18px;">
+        <span style="font-size:13px; font-weight:600;">
+          INFORMAÇÕES ADICIONAIS
+        </span>
+      </div>
+    `;
+    etapasComInfo.forEach((etapa, i) => {
+      html += `
+      <div style="${i > 0 ? 'margin-top:14px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
+        <div style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:4px; text-align:left;">
+          ${etapa.Etapa || 'Etapa'}
+        </div>
+        <div style="font-size:13px; color:var(--ink); text-align:left; line-height:1.5;">
+          ${etapa.InformacoesAdicionais}
+        </div>
+      </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
 // ✅ PROGRESSO
 const perc = data.Percentual || 0;
 const prev = data.Percentualprevisto || 0;
@@ -2274,6 +2292,9 @@ function abrirDetalheSemana(data) {
     bloco.className = "bloco";
     bloco.innerHTML = `
       <div class="tituloBloco">${tarefa.Nome}</div>
+      <div style="font-size:11px; font-family:'IBM Plex Mono', monospace; color:var(--text-soft); margin-top:2px; text-align:left;">
+        ${tarefa.Topico ? tarefa.Topico + ' · ' : ''}${tarefa.Subgrupo || ''}
+      </div>
       <div style="font-size:12px; color:var(--text-soft); margin:6px 0 14px; text-align:left;">
         Previsto total: <b>${tarefa.TotalPrevisto}${tarefa.Unidade}</b>
         · Início: ${tarefa.InicioPrevisto || "-"} · Término: ${tarefa.TerminoPrevisto || "-"}
@@ -2329,58 +2350,38 @@ function abrirGantt() {
     porFrente[t.frente].push(t);
   });
 
-  // ✅ cada dia tem uma largura fixa e generosa (em px) — a área de tempo
-  // fica maior que a tela e rola de lado; a coluna de nomes fica fixa
-  const LARGURA_DIA = 30;
-  const larguraTotal = totalDias * LARGURA_DIA;
+  const pctPorDia = dia => (dia / totalDias) * 100;
 
-  const MESES_EIXO = ['janeiro','fevereiro','março','abril','maio','junho',
-    'julho','agosto','setembro','outubro','novembro','dezembro'];
+  const MESES_EIXO = ['jan','fev','mar','abr','mai','jun',
+    'jul','ago','set','out','nov','dez'];
 
-  // ✅ eixo: agrupa os dias em blocos de semana (segunda a domingo, como
-  // na planilha) pra mostrar "8 a 14 de Junho" acima dos números dos dias
-  const blocosSemana = [];
-  let cursor = new Date(minDate);
-  // recua até a segunda-feira anterior (ou igual) pra alinhar com a semana
-  const diaSemanaInicio = (cursor.getDay() + 6) % 7; // 0 = segunda
-  cursor.setDate(cursor.getDate() - diaSemanaInicio);
-
-  while (cursor <= maxDate) {
-    const fimBloco = new Date(cursor);
-    fimBloco.setDate(fimBloco.getDate() + 6);
-    blocosSemana.push({ inicio: new Date(cursor), fim: fimBloco });
-    cursor.setDate(cursor.getDate() + 7);
+  // ✅ eixo: só marca o INÍCIO DE CADA MÊS (bem mais espaçado que
+  // marcar cada semana — evita as datas ficarem grudadas)
+  const marcasMes = [];
+  let cursorMes = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  if (cursorMes < minDate) cursorMes.setMonth(cursorMes.getMonth() + 1);
+  while (cursorMes <= maxDate) {
+    marcasMes.push(new Date(cursorMes));
+    cursorMes.setMonth(cursorMes.getMonth() + 1);
+  }
+  // garante que o próprio início do período também apareça marcado
+  if (marcasMes.length === 0 || marcasMes[0].getTime() !== minDate.getTime()) {
+    marcasMes.unshift(new Date(minDate));
   }
 
-  let semanaHtml = '';
-  let diaHtml = '';
-  blocosSemana.forEach(bloco => {
-    // largura visível desse bloco de semana dentro do período total
-    const inicioVisivel = bloco.inicio < minDate ? minDate : bloco.inicio;
-    const fimVisivel = bloco.fim > maxDate ? maxDate : bloco.fim;
-    const offsetDias = Math.round((inicioVisivel - minDate) / 86400000);
-    const duracaoDias = Math.round((fimVisivel - inicioVisivel) / 86400000) + 1;
-    const left = offsetDias * LARGURA_DIA;
-    const largura = duracaoDias * LARGURA_DIA;
-
-    const rotulo = `${inicioVisivel.getDate()} a ${fimVisivel.getDate()} de ${MESES_EIXO[fimVisivel.getMonth()]}`;
-    semanaHtml += `<div class="ganttMarcaSemanaW" style="left:${left}px; width:${largura}px;">${rotulo}</div>`;
-
-    for (let d = 0; d < duracaoDias; d++) {
-      const dt = new Date(inicioVisivel);
-      dt.setDate(dt.getDate() + d);
-      const leftDia = left + d * LARGURA_DIA;
-      diaHtml += `<div class="ganttMarcaDiaW" style="left:${leftDia}px; width:${LARGURA_DIA}px;">${dt.getDate()}</div>`;
-    }
+  let eixoHtml = '';
+  marcasMes.forEach(dt => {
+    const offsetDias = Math.round((dt - minDate) / 86400000);
+    const left = pctPorDia(offsetDias);
+    eixoHtml += `
+      <div class="ganttMarcaMes" style="left:${left}%;">${dt.getDate()} ${MESES_EIXO[dt.getMonth()]}</div>
+    `;
   });
 
   let linhasHtml = `
     <div class="ganttLinhaEixo">
-      <div class="ganttLabelSticky"></div>
-      <div class="ganttTrilhaEixo" style="width:${larguraTotal}px;">
-        ${semanaHtml}
-        ${diaHtml}
-      </div>
+      <div class="ganttLabelH"></div>
+      <div class="ganttTrilhaH">${eixoHtml}</div>
     </div>
   `;
 
@@ -2390,17 +2391,17 @@ function abrirGantt() {
     porFrente[nomeFrente].forEach(t => {
       const offsetDias = Math.round((t.inicio - minDate) / 86400000);
       const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
-      const left = offsetDias * LARGURA_DIA;
-      const width = Math.max(6, duracaoDias * LARGURA_DIA - 3);
+      const left = pctPorDia(offsetDias);
+      const width = Math.max(1.2, pctPorDia(duracaoDias));
 
       linhasHtml += `
-        <div class="ganttLinhaTarefa">
-          <div class="ganttLabelSticky">
+        <div class="ganttLinhaH">
+          <div class="ganttLabelH">
             ${t.topico ? `<span class="ganttTopico">${t.topico}</span>` : ''}
             ${t.nome}
           </div>
-          <div class="ganttTrilhaTarefa" style="width:${larguraTotal}px;">
-            <div class="ganttBarraH" style="left:${left}px; width:${width}px;"
+          <div class="ganttTrilhaH">
+            <div class="ganttBarraH" style="left:${left}%; width:${width}%;"
                  title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
           </div>
         </div>
@@ -2408,7 +2409,7 @@ function abrirGantt() {
     });
   });
 
-  container.innerHTML = `<div class="ganttScrollArea">${linhasHtml}</div>`;
+  container.innerHTML = `<div class="ganttNovo">${linhasHtml}</div>`;
 }
 
 function formatarDataCurta(data) {
