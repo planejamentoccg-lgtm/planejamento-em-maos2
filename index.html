@@ -1034,6 +1034,30 @@
   --text-soft-dark:#8FA098;
 }
 
+/* ✅ TEMA ESCURO — inverte as variáveis; tudo que usa var(--...) responde
+   automaticamente. Vale pra tela inicial e pro gráfico de Gantt. */
+body.tema-escuro{
+  --ink:#F2F1EA;
+  --ink-2:#EDECE5;
+  --paper:#12201C;
+  --paper-2:#1C2B28;
+  --line:#33443F;
+  --line-dark:#465852;
+  --accent:#8FB84B;
+  --accent-bright:#A8D666;
+  --text-soft:#93A49C;
+  --text-soft-dark:#6B7570;
+  background:var(--paper);
+}
+
+.toggleTema{
+  width:20px; height:20px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  font-size:15px;
+  margin-right:14px;
+}
+
 #lista{ background:var(--paper); }
 
 /* -------- topo -------- */
@@ -1104,7 +1128,7 @@
 }
 
 /* -------- seções -------- */
-.secaoNova{ padding:26px 20px 6px; max-width:700px; margin:0 auto; }
+.secaoNova{ padding:26px 20px 6px; max-width:700px; margin:0 auto; text-align:left; }
 .secaoNova .cabecalho{
   display:flex; align-items:baseline; justify-content:space-between;
   margin-bottom:14px; flex-wrap:wrap; gap:8px;
@@ -1233,9 +1257,17 @@
 
 /* -------- gráfico de gantt -------- */
 #telaGantt{ background:var(--paper); }
+#telaGantt #topo, #semanas #topo{
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+  color:var(--ink);
+}
+#semanas{ background:var(--paper); }
+#bannerSemanas h1{ color:#F2F1EA; }
 .ganttWrap{
-  overflow-x:auto;
   padding:16px 20px 40px;
+  max-width:900px;
+  margin:0 auto;
 }
 .ganttEixo{
   position:sticky; top:0; background:var(--paper);
@@ -1456,9 +1488,15 @@ async function carregar() {
 
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
 
-      <div class="notif" onclick="abrirNotificacoes()">
-        <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
-        <span id="contadorNotif">0</span>
+      <div style="display:flex; align-items:center;">
+
+        <span class="toggleTema" onclick="alternarTema()" id="iconeTema">🌙</span>
+
+        <div class="notif" onclick="abrirNotificacoes()">
+          <img src="https://cdn-icons-png.flaticon.com/512/3602/3602145.png">
+          <span id="contadorNotif">0</span>
+        </div>
+
       </div>
 
     </div>
@@ -1496,6 +1534,8 @@ async function carregar() {
       <div id="botoes"></div>
     </section>
   `;
+
+  atualizarIconeTema();
 
   const botoes = document.getElementById("botoes");
 
@@ -1688,6 +1728,25 @@ function criarBloco(s, titulo) {
 }
 // ✅ formata "TÚNEL DE INTERLIGAÇÃO" -> "Túnel de Interligação"
 // mas mantém siglas curtas como "SSR 04" do jeito que estão
+// ✅ TEMA CLARO/ESCURO
+function alternarTema() {
+  const escuro = document.body.classList.toggle('tema-escuro');
+  localStorage.setItem('temaEscuro', escuro ? '1' : '0');
+  atualizarIconeTema();
+}
+
+function atualizarIconeTema() {
+  const icone = document.getElementById('iconeTema');
+  if (icone) icone.innerText = document.body.classList.contains('tema-escuro') ? '☀️' : '🌙';
+}
+
+function aplicarTemaSalvo() {
+  if (localStorage.getItem('temaEscuro') === '1') {
+    document.body.classList.add('tema-escuro');
+  }
+}
+aplicarTemaSalvo();
+
 function formatarTitulo(texto) {
   if (!texto) return texto;
   const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e'];
@@ -2153,53 +2212,66 @@ function abrirGantt() {
 
   const minDate = new Date(Math.min(...tarefas.map(t => t.inicio)));
   const maxDate = new Date(Math.max(...tarefas.map(t => t.termino)));
-
   const totalDias = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
-  const PX_POR_DIA = 22;
-  const LARGURA_LABEL = 170;
-  const larguraTotal = totalDias * PX_POR_DIA;
 
-  // ✅ eixo com marcas semanais
-  let eixoHtml = `<div class="ganttEixo">
-    <div style="width:${LARGURA_LABEL}px; flex-shrink:0; position:sticky; left:0; background:var(--paper);"></div>`;
-  for (let d = 0; d < totalDias; d += 7) {
-    const dataMarca = new Date(minDate);
-    dataMarca.setDate(dataMarca.getDate() + d);
-    const larguraMarca = Math.min(7, totalDias - d) * PX_POR_DIA;
-    eixoHtml += `<div class="marcaSemana" style="width:${larguraMarca}px;">${formatarDataCurta(dataMarca)}</div>`;
-  }
-  eixoHtml += `</div>`;
-
-  // ✅ agrupa as tarefas por frente, mantendo a ordem em que apareceram
+  // ✅ agrupa por frente, mantendo a ordem em que apareceram
   const porFrente = {};
   tarefas.forEach(t => {
     if (!porFrente[t.frente]) porFrente[t.frente] = [];
     porFrente[t.frente].push(t);
   });
 
-  let linhasHtml = "";
+  // ✅ desenha tudo num SVG com viewBox — isso faz o gráfico inteiro se
+  // redimensionar sozinho pra caber na largura da tela, seja celular
+  // (vertical ou horizontal) ou computador, sem precisar rolar de lado
+  const LARGURA = 1000;
+  const LARGURA_LABEL = 230;
+  const AREA_TEMPO = LARGURA - LARGURA_LABEL - 10;
+  const ALTURA_LINHA = 20;
+  const ALTURA_GRUPO = 22;
+  const MARGEM_TOPO = 26;
+
+  let totalLinhas = 0;
+  Object.keys(porFrente).forEach(f => { totalLinhas += 1 + porFrente[f].length; });
+  const ALTURA = MARGEM_TOPO + totalLinhas * ALTURA_LINHA + 10;
+
+  const escalaX = dia => LARGURA_LABEL + (dia / totalDias) * AREA_TEMPO;
+
+  const truncar = (texto, max) => texto.length > max ? texto.slice(0, max - 1) + '…' : texto;
+
+  let svg = `<svg viewBox="0 0 ${LARGURA} ${ALTURA}" style="width:100%; height:auto; display:block; font-family:'IBM Plex Sans',sans-serif;">`;
+
+  // ✅ eixo com 3 marcas de data (início, meio, fim do período)
+  svg += `<line x1="${LARGURA_LABEL}" y1="${MARGEM_TOPO - 8}" x2="${LARGURA - 4}" y2="${MARGEM_TOPO - 8}" style="stroke:var(--line);" stroke-width="1"/>`;
+  [0, Math.round(totalDias / 2), totalDias - 1].forEach(d => {
+    const dt = new Date(minDate);
+    dt.setDate(dt.getDate() + d);
+    svg += `<text x="${escalaX(d)}" y="${MARGEM_TOPO - 12}" font-size="9" style="fill:var(--text-soft);">${formatarDataCurta(dt)}</text>`;
+  });
+
+  let y = MARGEM_TOPO;
   Object.keys(porFrente).forEach(nomeFrente => {
-    linhasHtml += `<div class="ganttFrenteTitulo">${nomeFrente}</div>`;
+    svg += `<text x="4" y="${y + 13}" font-size="11" font-weight="700" style="fill:var(--ink);">${truncar(nomeFrente, 34)}</text>`;
+    y += ALTURA_GRUPO;
 
     porFrente[nomeFrente].forEach(t => {
       const offsetDias = Math.round((t.inicio - minDate) / 86400000);
       const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
-      const left = offsetDias * PX_POR_DIA;
-      const width = Math.max(6, duracaoDias * PX_POR_DIA);
+      const x1 = escalaX(offsetDias);
+      const x2 = escalaX(offsetDias + duracaoDias);
+      const largura = Math.max(3, x2 - x1);
 
-      linhasHtml += `
-        <div class="ganttLinha">
-          <div class="ganttLabel" style="width:${LARGURA_LABEL}px;" title="${t.nome}">${t.nome}</div>
-          <div class="ganttTrilha" style="width:${larguraTotal}px;">
-            <div class="ganttBarra" style="left:${left}px; width:${width}px;"
-                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
-          </div>
-        </div>
-      `;
+      svg += `<text x="10" y="${y + 13}" font-size="8" style="fill:var(--text-soft);">${truncar(t.nome, 32)}</text>`;
+      svg += `<rect x="${x1}" y="${y + 5}" width="${largura}" height="9" rx="2" style="fill:var(--accent);">
+        <title>${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}</title>
+      </rect>`;
+      y += ALTURA_LINHA;
     });
   });
 
-  container.innerHTML = eixoHtml + linhasHtml;
+  svg += `</svg>`;
+
+  container.innerHTML = svg;
 }
 
 function formatarDataCurta(data) {
@@ -2302,4 +2374,3 @@ async function carregarContadorNotif() {
 
 </body>
 </html>
-
