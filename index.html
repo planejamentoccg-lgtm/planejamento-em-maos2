@@ -2290,6 +2290,11 @@ function mostrarVisao() {
 
 }
 
+// ✅ mesma paleta usada no Apps Script pra gerar os gráficos — precisa
+// ficar igual, na mesma ordem, pra legenda em HTML bater com as cores
+// das linhas do gráfico
+const PALETA_ETAPAS_JS = ['#7CB342', '#4A90D9', '#E67E22', '#9B59B6', '#16A085', '#C0392B'];
+
 function statusRealizado(etapa) {
   if (!etapa.InicioRealizado) return 'ainda não iniciado';
 
@@ -2390,6 +2395,29 @@ function mostrarDesempenho() {
   `;
   }).join('');
 
+  // ✅ legenda em HTML — uma linha por etapa, com Previsto e Realizado
+  // lado a lado (a legenda nativa do gráfico foi desligada porque ela
+  // paginava e travava numa imagem estática)
+  const legendaHtml = etapas.length > 0 ? `
+    <div style="display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; font-family:'IBM Plex Sans',sans-serif; font-size:12px;">
+      ${etapas.map((et, i) => {
+        const cor = PALETA_ETAPAS_JS[i % PALETA_ETAPAS_JS.length];
+        return `
+        <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="width:16px; height:2px; background:${cor}; display:inline-block;"></span>
+            ${et.Etapa} - Previsto
+          </span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="width:16px; height:0; border-top:2px dashed ${cor}; display:inline-block;"></span>
+            ${et.Etapa} - Realizado
+          </span>
+        </div>
+        `;
+      }).join('')}
+    </div>
+  ` : '';
+
   document.getElementById("desempenho").innerHTML = `
 
     ${resumoHtml}
@@ -2400,6 +2428,8 @@ function mostrarDesempenho() {
         <img src="${d.Grafico1}" 
              style="width:100%; border-radius:10px; margin-bottom:15px;">
       ` : ""}
+
+      ${legendaHtml}
 
       ${d.Grafico2 ? `
         <img src="${d.Grafico2}" 
