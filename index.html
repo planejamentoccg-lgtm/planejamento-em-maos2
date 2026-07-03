@@ -1232,6 +1232,22 @@ body.tema-escuro .iconeIndicador{
 }
 .btnBusca:hover{ background:var(--accent-bright); }
 
+.btnVoltar{
+  display:block;
+  margin:20px auto 30px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink);
+  background:var(--card-fundo);
+  border:1px solid var(--line);
+  padding:10px 22px;
+  border-radius:4px;
+  cursor:pointer;
+}
+.btnVoltar:hover{ background:var(--paper-2); }
+
 /* -------- régua de progresso (frentes) -------- */
 .frenteNova{
   padding:16px 0;
@@ -1478,7 +1494,7 @@ body.tema-escuro .iconeIndicador{
     <div id="banner"><span id="titulo"></span></div>
     <div id="conteudo"></div>
 
-    <button onclick="voltar()">Voltar</button>
+    <button class="btnVoltar" onclick="voltar()">Voltar</button>
   </div>
 
   <!-- ✅ NOVA TELA -->
@@ -1499,7 +1515,7 @@ body.tema-escuro .iconeIndicador{
 
     <div id="conteudoSemanas"></div>
 
-    <button onclick="voltarHome()">Voltar</button>
+    <button class="btnVoltar" onclick="voltarHome()">Voltar</button>
     
   </div>
 
@@ -2284,32 +2300,72 @@ function mostrarDesempenho() {
   document.getElementById("visaoGeral").style.display = "none";
   document.getElementById("desempenho").style.display = "block";
 
-  const tabelaHtml = (d.AvancoDiario && d.AvancoDiario.length > 0) ? `
-    <div style="margin-top:15px; max-height:420px; overflow-y:auto; border:1px solid var(--line); border-radius:6px;">
-      <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'IBM Plex Sans',sans-serif;">
-        <thead>
-          <tr style="position:sticky; top:0; background:var(--paper-2);">
-            <th style="padding:8px; text-align:left;">Data</th>
-            <th style="padding:8px; text-align:right;">Previsto (m)</th>
-            <th style="padding:8px; text-align:right;">Realizado (m)</th>
-            <th style="padding:8px; text-align:left;">Observações</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${d.AvancoDiario.map(dia => `
-            <tr style="border-top:1px solid var(--line);">
-              <td style="padding:6px 8px; white-space:nowrap;">${dia.Data}</td>
-              <td style="padding:6px 8px; text-align:right;">${dia.Previsto}</td>
-              <td style="padding:6px 8px; text-align:right;">${(dia.Realizado === null || dia.Realizado === undefined) ? '-' : dia.Realizado}</td>
-              <td style="padding:6px 8px; color:var(--text-soft);">${dia.Observacoes || ''}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+  const etapas = d.AvancoPorEtapa || [];
+
+  // ✅ resumo de início/término previsto e realizado, uma linha por etapa
+  const resumoHtml = etapas.length > 0 ? `
+    <div class="bloco">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+        <span style="font-size:13px; font-weight:600;">RESUMO POR ETAPA</span>
+      </div>
+      ${etapas.map((et, i) => `
+        <div style="${i > 0 ? 'margin-top:14px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
+          <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:6px; text-align:left;">
+            ${et.Etapa}
+          </div>
+          <div class="gridIndicadores">
+            <div class="cardIndicador">
+              <div style="text-align:left;">
+                <div style="font-size:11px; font-weight:600;">Previsto</div>
+                <div style="font-size:13px; margin-top:4px;">${et.InicioPrevisto || '-'} até ${et.TerminoPrevisto || '-'}</div>
+              </div>
+            </div>
+            <div class="cardIndicador">
+              <div style="text-align:left;">
+                <div style="font-size:11px; font-weight:600;">Realizado</div>
+                <div style="font-size:13px; margin-top:4px;">${et.InicioRealizado || 'ainda não iniciado'}${et.InicioRealizado ? ' até ' + (et.TerminoRealizado || '-') : ''}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
     </div>
   ` : '';
 
+  // ✅ uma tabela por etapa (não soma etapas juntas)
+  const tabelasHtml = etapas.map(et => `
+    <div class="bloco">
+      <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px; text-align:left;">
+        ${et.Etapa}
+      </div>
+      <div style="max-height:340px; overflow-y:auto; border:1px solid var(--line); border-radius:6px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'IBM Plex Sans',sans-serif;">
+          <thead>
+            <tr style="position:sticky; top:0; background:var(--paper-2);">
+              <th style="padding:8px; text-align:left;">Data</th>
+              <th style="padding:8px; text-align:right;">Previsto (m)</th>
+              <th style="padding:8px; text-align:right;">Realizado (m)</th>
+              <th style="padding:8px; text-align:left;">Observações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(et.Dias || []).map(dia => `
+              <tr style="border-top:1px solid var(--line);">
+                <td style="padding:6px 8px; white-space:nowrap;">${dia.Data}</td>
+                <td style="padding:6px 8px; text-align:right;">${dia.Previsto === null || dia.Previsto === undefined ? '-' : dia.Previsto}</td>
+                <td style="padding:6px 8px; text-align:right;">${dia.Realizado === null || dia.Realizado === undefined ? '-' : dia.Realizado}</td>
+                <td style="padding:6px 8px; color:var(--text-soft);">${dia.Observacoes || ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `).join('');
+
   document.getElementById("desempenho").innerHTML = `
+
+    ${resumoHtml}
 
     <div class="bloco">
 
@@ -2323,9 +2379,9 @@ function mostrarDesempenho() {
              style="width:100%; border-radius:10px;">
       ` : ""}
 
-      ${tabelaHtml}
-
     </div>
+
+    ${tabelasHtml}
 
   `;
 }
