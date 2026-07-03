@@ -1199,6 +1199,39 @@ body.tema-escuro .iconeIndicador{
 }
 .btnGantt:hover{ background:var(--line); }
 
+.caixaBusca{
+  display:flex;
+  gap:8px;
+  margin:14px 0 4px;
+}
+.caixaBusca input{
+  flex:1;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:13px;
+  color:var(--ink);
+  background:var(--card-fundo);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:9px 12px;
+  min-width:0;
+}
+.caixaBusca input::placeholder{ color:var(--text-soft); }
+.caixaBusca input:focus{ outline:none; border-color:var(--accent); }
+.btnBusca{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:#fff;
+  background:var(--accent);
+  border:none;
+  padding:0 16px;
+  border-radius:4px;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.btnBusca:hover{ background:var(--accent-bright); }
+
 /* -------- régua de progresso (frentes) -------- */
 .frenteNova{
   padding:16px 0;
@@ -1705,6 +1738,13 @@ async function carregar() {
       <button class="btnGantt" onclick="abrirGantt()">📊 Gráfico de Gantt</button>
     </div>
     <hr class="regra">
+
+    <div class="caixaBusca">
+      <input type="text" id="inputBusca" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
+             onkeypress="if(event.key==='Enter') buscarInteligente()">
+      <button class="btnBusca" onclick="buscarInteligente()">Buscar</button>
+    </div>
+    <div id="resultadoBusca"></div>
   `;
 
   const snapSemanas = await db.collection("ProximasSemanas").get();
@@ -2414,6 +2454,117 @@ function abrirGantt() {
 
 function formatarDataCurta(data) {
   return String(data.getDate()).padStart(2, '0') + '/' + String(data.getMonth() + 1).padStart(2, '0');
+}
+
+// ✅ BUSCA INTELIGENTE — reconhece perguntas específicas sobre a planilha
+// de Próximas Semanas (sem usar nenhuma IA, é tudo filtro direto)
+function normalizarTexto(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+async function buscarInteligente() {
+  const input = document.getElementById('inputBusca').value.trim();
+  const resultado = document.getElementById('resultadoBusca');
+
+  if (!input) { resultado.innerHTML = ''; return; }
+
+  resultado.innerHTML = '<p style="font-size:12px; color:var(--text-soft); text-align:left; margin-top:10px;">Buscando...</p>';
+
+  const snap = await db.collection('ProximasSemanas').get();
+  const frentes = [];
+  snap.forEach(doc => frentes.push(doc.data()));
+
+  const termo = normalizarTexto(input);
+  const hoje = new Date();
+
+  let html = '';
+
+  if (termo.includes('hoje')) {
+    html = montarRespostaPorData(frentes, formatarDataCurta(hoje), 'hoje');
+  } else if (termo.includes('amanha')) {
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+    html = montarRespostaPorData(frentes, formatarDataCurta(amanha), 'amanhã');
+  } else if (termo.includes('semana')) {
+    html = montarRespostaSemana(frentes, hoje);
+  } else {
+    const encontrada = frentes.find(f => {
+      const nomeNormalizado = normalizarTexto(formatarTitulo(f.Nome));
+      return nomeNormalizado.includes(termo) || termo.includes(nomeNormalizado);
+    });
+
+    if (encontrada) {
+      html = montarRespostaFrente(encontrada);
+    } else {
+      html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px; line-height:1.6;">
+        Não entendi essa pergunta. Tente algo como:<br>
+        · "o que está previsto para hoje"<br>
+        · "o que vem essa semana"<br>
+        · ou o nome de uma frente, tipo "Estação Sul"
+      </p>`;
+    }
+  }
+
+  resultado.innerHTML = html;
+}
+
+function montarRespostaPorData(frentes, dataStr, rotulo) {
+  const itens = [];
+  frentes.forEach(f => {
+    (f.Tarefas || []).forEach(t => {
+      const dia = (t.Diario || []).find(d => d.Data === dataStr);
+      if (dia) {
+        itens.push({ frente: formatarTitulo(f.Nome), tarefa: t.Nome, valor: dia.Valor, unidade: t.Unidade });
+      }
+    });
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto para ${rotulo} (${dataStr}) em nenhuma frente.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Previsto para ${rotulo} (${dataStr}):</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa}: <b>${i.valor}${i.unidade}</b></div>`;
+  });
+  return html;
+}
+
+function montarRespostaSemana(frentes, hoje) {
+  const daqui7 = new Date(hoje);
+  daqui7.setDate(daqui7.getDate() + 7);
+
+  const itens = [];
+  frentes.forEach(f => {
+    (f.Tarefas || []).forEach(t => {
+      const inicio = parseDiaMes(t.InicioPrevisto);
+      if (inicio && inicio >= hoje && inicio <= daqui7) {
+        itens.push({
+          frente: formatarTitulo(f.Nome), tarefa: t.Nome,
+          inicio: t.InicioPrevisto, total: t.TotalPrevisto, unidade: t.Unidade,
+        });
+      }
+    });
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nenhuma tarefa começando nos próximos 7 dias.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Começando nos próximos 7 dias:</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa} (início ${i.inicio}): <b>${i.total}${i.unidade}</b> previstos</div>`;
+  });
+  return html;
+}
+
+function montarRespostaFrente(frente) {
+  const tarefas = frente.Tarefas || [];
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)}:</div>`;
+  tarefas.forEach(t => {
+    html += `<div class="subtitulo2">${t.Nome}${t.Subgrupo ? ' (' + t.Subgrupo + ')' : ''} — Início ${t.InicioPrevisto || '-'} · Término ${t.TerminoPrevisto || '-'} · <b>${t.TotalPrevisto}${t.Unidade}</b></div>`;
+  });
+  return html;
 }
 
 async function abrirNotificacao(idNotif, nomeFrente) {
