@@ -509,7 +509,7 @@
   transition: 0.3s;
 }
 
-.iconCircle img {
+.iconCircle svg {
   width: 18px;
   height: 18px;
 }
@@ -520,15 +520,7 @@
 
 .menuBtn.ativo .iconCircle {
   background: var(--accent);
-}
-
-
-.menuBtn.ativo img {
-  filter: brightness(0) invert(1);
-}
-body.tema-escuro .menuBtn:not(.ativo) img {
-  filter: brightness(0) invert(1);
-  opacity: 0.65;
+  color: #fff;
 }
 .blocoNotif {
   margin: 12px;
@@ -1109,7 +1101,7 @@ body.tema-escuro{
   flex:1;
 }
 .navItem.ativo{ color:var(--accent); font-weight:600; }
-.navIcone{ font-size:18px; }
+.navIcone{ width:20px; height:20px; }
 
 
 /* -------- topo -------- */
@@ -1496,15 +1488,22 @@ body.tema-escuro .iconeIndicador{
 
   <div id="navInferior">
     <div class="navItem" id="navItemFrentes" onclick="mostrarTelaFrentes()">
-      <span class="navIcone">🏗️</span>
+      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
       <span>Frentes</span>
     </div>
     <div class="navItem" id="navItemSemanas" onclick="mostrarTelaProximasSemanas()">
-      <span class="navIcone">📅</span>
+      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/>
+      </svg>
       <span>Semanas</span>
     </div>
     <div class="navItem" id="navItemCronograma" onclick="mostrarTelaCronograma()">
-      <span class="navIcone">📊</span>
+      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>
+      </svg>
       <span>Cronograma</span>
     </div>
   </div>
@@ -2187,14 +2186,18 @@ let menu = `
 
   <div class="menuBtn" onclick="mostrarVisao()">
     <div class="iconCircle">
-      <img src="https://cdn-icons-png.flaticon.com/128/1828/1828859.png">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
     </div>
     <span>Visão Geral</span>
   </div>
 
   <div class="menuBtn" onclick="mostrarDesempenho()">
     <div class="iconCircle">
-      <img src="https://cdn-icons-png.flaticon.com/128/2921/2921222.png">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>
+      </svg>
     </div>
     <span>Desempenho</span>
   </div>
@@ -2268,38 +2271,17 @@ let menu = `
                style="width:14px; position:absolute; bottom:10px; right:10px;">
         </div>
       </div>
+
+      ${etapa.InformacoesAdicionais ? `
+        <div style="margin-top:12px; padding:10px 12px; background:var(--paper-2); border-radius:6px; font-size:12.5px; color:var(--ink); text-align:left; line-height:1.5;">
+          ${etapa.InformacoesAdicionais}
+        </div>
+      ` : ''}
     </div>
     `;
   });
 
   html += `</div>`;
-
-  // ✅ INFORMAÇÕES ADICIONAIS — um bloco por etapa, só aparece se tiver conteúdo
-  const etapasComInfo = (data.Etapas || []).filter(e => e.InformacoesAdicionais);
-  if (etapasComInfo.length > 0) {
-    html += `
-    <div class="bloco">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-        <img src="https://i.imgur.com/DQZ7PM1.png" style="width:18px;">
-        <span style="font-size:13px; font-weight:600;">
-          INFORMAÇÕES ADICIONAIS
-        </span>
-      </div>
-    `;
-    etapasComInfo.forEach((etapa, i) => {
-      html += `
-      <div style="${i > 0 ? 'margin-top:14px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
-        <div style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:4px; text-align:left;">
-          ${etapa.Etapa || 'Etapa'}
-        </div>
-        <div style="font-size:13px; color:var(--ink); text-align:left; line-height:1.5;">
-          ${etapa.InformacoesAdicionais}
-        </div>
-      </div>
-      `;
-    });
-    html += `</div>`;
-  }
 
 // ✅ PROGRESSO
 const perc = data.Percentual || 0;
@@ -2965,25 +2947,39 @@ async function montarRespostaAvancoData(termo, data, rotulo) {
   const dataStr = formatarDataCurta(data);
   const frente = await acharFrentePorNome(termo);
 
-  if (!frente) {
-    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
-  }
-
   const itens = [];
-  (frente.AvancoPorEtapa || []).forEach(et => {
-    const dia = (et.Dias || []).find(d => d.Data === dataStr);
-    if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
-    }
-  });
+
+  if (frente) {
+    // ✅ pergunta com frente específica (ex: "avanço na SSR 04 ontem")
+    (frente.AvancoPorEtapa || []).forEach(et => {
+      const dia = (et.Dias || []).find(d => d.Data === dataStr);
+      if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+        itens.push({ frente: formatarTitulo(frente.Nome), etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+      }
+    });
+  } else {
+    // ✅ pergunta sem frente específica (ex: "quais avanços tivemos ontem")
+    // — busca em todas as frentes
+    const snap = await db.collection('Frentes').get();
+    snap.forEach(doc => {
+      const f = doc.data();
+      (f.AvancoPorEtapa || []).forEach(et => {
+        const dia = (et.Dias || []).find(d => d.Data === dataStr);
+        if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+          itens.push({ frente: formatarTitulo(f.Nome), etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+        }
+      });
+    });
+  }
 
   if (itens.length === 0) {
-    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em ${formatarTitulo(frente.Nome)} para ${rotulo} (${dataStr}).</p>`;
+    const contexto = frente ? ` em ${formatarTitulo(frente.Nome)}` : '';
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado${contexto} para ${rotulo} (${dataStr}).</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — ${rotulo} (${dataStr}):</div>`;
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${rotulo} (${dataStr}):</div>`;
   itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.etapa}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
+    html += `<div class="subtitulo2">${i.frente} — ${i.etapa}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
   });
   return html;
 }
