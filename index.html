@@ -1083,7 +1083,34 @@ body.tema-escuro{
   color:var(--ink);
 }
 
-#lista{ background:var(--paper); }
+#lista{ background:var(--paper); padding-bottom:70px; }
+#telaProximasSemanas{ background:var(--paper); padding-bottom:70px; min-height:100vh; }
+#telaCronograma{ background:var(--paper); padding-bottom:70px; min-height:100vh; }
+
+#navInferior{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  display:flex;
+  justify-content:space-around;
+  background:var(--card-fundo);
+  border-top:1px solid var(--line);
+  padding:8px 0 10px;
+  z-index:20;
+}
+.navItem{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:10.5px;
+  color:var(--text-soft);
+  cursor:pointer;
+  flex:1;
+}
+.navItem.ativo{ color:var(--accent); font-weight:600; }
+.navIcone{ font-size:18px; }
+
 
 /* -------- topo -------- */
 #lista #topo{
@@ -1464,6 +1491,23 @@ body.tema-escuro .iconeIndicador{
 <div id="app" style="display:none;">
 
   <div id="lista"></div>
+  <div id="telaProximasSemanas" style="display:none;"></div>
+  <div id="telaCronograma" style="display:none;"></div>
+
+  <div id="navInferior">
+    <div class="navItem" id="navItemFrentes" onclick="mostrarTelaFrentes()">
+      <span class="navIcone">🏗️</span>
+      <span>Frentes</span>
+    </div>
+    <div class="navItem" id="navItemSemanas" onclick="mostrarTelaProximasSemanas()">
+      <span class="navIcone">📅</span>
+      <span>Semanas</span>
+    </div>
+    <div class="navItem" id="navItemCronograma" onclick="mostrarTelaCronograma()">
+      <span class="navIcone">📊</span>
+      <span>Cronograma</span>
+    </div>
+  </div>
 
   <div id="detalhe" style="display:none;">
 <div id="topo">
@@ -1598,7 +1642,7 @@ async function login() {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
 
-    carregar();
+    mostrarTelaFrentes();
 
   } catch(e) {
     alert(e.message);
@@ -1615,7 +1659,71 @@ async function logout() {
 }
 
 // ✅ HOME
-async function carregar() {
+let telaAtual = 'frentes'; // ✅ controla qual das 3 telas principais está ativa
+
+function ativarNavItem(id) {
+  document.querySelectorAll(".navItem").forEach(el => el.classList.remove("ativo"));
+  const el = document.getElementById(id);
+  if (el) el.classList.add("ativo");
+}
+
+async function mostrarTelaFrentes() {
+  document.getElementById("lista").style.display = "block";
+  document.getElementById("telaProximasSemanas").style.display = "none";
+  document.getElementById("telaCronograma").style.display = "none";
+  ativarNavItem("navItemFrentes");
+  telaAtual = 'frentes';
+
+  if (!window.frentesCarregadas) {
+    window.frentesCarregadas = true;
+    await carregarFrentes();
+  }
+}
+
+async function mostrarTelaProximasSemanas() {
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("telaProximasSemanas").style.display = "block";
+  document.getElementById("telaCronograma").style.display = "none";
+  ativarNavItem("navItemSemanas");
+  telaAtual = 'semanas';
+
+  if (!window.semanasCarregadas) {
+    window.semanasCarregadas = true;
+    await carregarProximasSemanas();
+  }
+}
+
+function mostrarTelaCronograma() {
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("telaProximasSemanas").style.display = "none";
+  document.getElementById("telaCronograma").style.display = "block";
+  ativarNavItem("navItemCronograma");
+  telaAtual = 'cronograma';
+
+  const container = document.getElementById("telaCronograma");
+  if (!container.innerHTML) {
+    container.innerHTML = `
+      <div id="topo">
+        <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+        <div style="display:flex; align-items:center;">
+          <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+        </div>
+      </div>
+      <div class="heroNovo">
+        <div class="eyebrow">Planejamento em mãos</div>
+        <h1 style="font-size:26px;">Cronograma Geral</h1>
+      </div>
+      <section class="secaoNova">
+        <p style="color:var(--text-soft); font-size:13px; text-align:left;">
+          Essa tela ainda está em construção — em breve.
+        </p>
+      </section>
+    `;
+    atualizarIconeTema();
+  }
+}
+
+async function carregarFrentes() {
 
   const lista = document.getElementById("lista");
 
@@ -1665,7 +1773,15 @@ async function carregar() {
     </div>
 
     <section class="secaoNova">
-      <div class="cabecalho">
+
+      <div class="caixaBusca">
+        <input type="text" id="inputBuscaF" placeholder="Pergunte algo... ex: quais detonações tivemos ontem?"
+               onkeypress="if(event.key==='Enter') buscarInteligente('F')">
+        <button class="btnBusca" onclick="buscarInteligente('F')">Buscar</button>
+      </div>
+      <div id="resultadoBuscaF"></div>
+
+      <div class="cabecalho" style="margin-top:20px;">
         <span class="tituloSecao">Frentes de serviço</span>
         <span class="contagemSecao" id="contagemFrentes">00</span>
       </div>
@@ -1746,23 +1862,48 @@ async function carregar() {
   document.getElementById("atrasadas").innerText = atrasadas;
   document.getElementById("contagemFrentes").innerText = String(snap.size).padStart(2, "0");
 
-  // ✅ PRÓXIMAS SEMANAS (nova estrutura: Nome + Tarefas[] + Diario[])
-  const containerSemanas = document.createElement("div");
+  await verificarAtualizacoes();
+  await carregarContadorNotif();
+}
 
-  containerSemanas.innerHTML = `
-    <div class="cabecalho">
-      <span class="tituloSecao">Próximas semanas</span>
-      <button class="btnGantt" onclick="abrirGantt()">📊 Gráfico de Gantt</button>
-    </div>
-    <hr class="regra">
+async function carregarProximasSemanas() {
 
-    <div class="caixaBusca">
-      <input type="text" id="inputBusca" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
-             onkeypress="if(event.key==='Enter') buscarInteligente()">
-      <button class="btnBusca" onclick="buscarInteligente()">Buscar</button>
+  const container = document.getElementById("telaProximasSemanas");
+
+  container.innerHTML = `
+    <div id="topo">
+      <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+      <div style="display:flex; align-items:center;">
+        <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+      </div>
     </div>
-    <div id="resultadoBusca"></div>
+
+    <div class="heroNovo">
+      <div class="eyebrow">Planejamento em mãos</div>
+      <h1 style="font-size:26px;">Próximas Semanas</h1>
+    </div>
+
+    <section class="secaoNova">
+      <div class="cabecalho">
+        <span class="tituloSecao">Próximas semanas</span>
+        <button class="btnGantt" onclick="abrirGantt()">📊 Gráfico de Gantt</button>
+      </div>
+      <hr class="regra">
+
+      <div class="caixaBusca">
+        <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
+               onkeypress="if(event.key==='Enter') buscarInteligente('S')">
+        <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
+      </div>
+      <div id="resultadoBuscaS"></div>
+
+      <div id="listaProximasSemanas" style="margin-top:14px;"></div>
+    </section>
   `;
+
+  atualizarIconeTema();
+
+  const listaContainer = document.getElementById("listaProximasSemanas");
 
   const snapSemanas = await db.collection("ProximasSemanas").get();
 
@@ -1835,15 +1976,8 @@ async function carregar() {
 
     card.onclick = () => abrirDetalheSemana(d);
 
-    containerSemanas.appendChild(card);
+    listaContainer.appendChild(card);
   });
-
-  containerSemanas.className = "secaoNova";
-  lista.appendChild(containerSemanas);
-
-// ✅ FINAL DA FUNÇÃO CARREGAR
-await verificarAtualizacoes();
-await carregarContadorNotif();
 }
 
 // ✅ BLOCO (INTACTO)
@@ -1950,8 +2084,15 @@ function formatarData(dataStr) {
     diaSemana: dias[data.getDay()]
   };
 }
- function abrirNotificacoes() {
+function esconderTelasPrincipais() {
   document.getElementById("lista").style.display = "none";
+  document.getElementById("telaProximasSemanas").style.display = "none";
+  document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("navInferior").style.display = "none";
+}
+
+ function abrirNotificacoes() {
+  esconderTelasPrincipais();
   document.getElementById("detalhe").style.display = "none";
   document.getElementById("semanas").style.display = "none";
   document.getElementById("notificacoes").style.display = "block";
@@ -2026,7 +2167,7 @@ function abrir(data) {
 
   window.frenteAtual = data; // ✅ COLOCA AQUI (primeira linha)
 
-  document.getElementById("lista").style.display = "none";
+  esconderTelasPrincipais();
   document.getElementById("detalhe").style.display = "block";
 
   // ✅ BANNER
@@ -2269,16 +2410,23 @@ setTimeout(mostrarVisao, 100);
 // ✅ NOVA FUNÇÃO
 
 // ✅ VOLTAR
+function voltarParaTelaAtual() {
+  document.getElementById("navInferior").style.display = "flex";
+  document.getElementById("lista").style.display = telaAtual === 'frentes' ? "block" : "none";
+  document.getElementById("telaProximasSemanas").style.display = telaAtual === 'semanas' ? "block" : "none";
+  document.getElementById("telaCronograma").style.display = telaAtual === 'cronograma' ? "block" : "none";
+}
+
 function voltar() {
-  document.getElementById("lista").style.display = "block";
   document.getElementById("detalhe").style.display = "none";
+  voltarParaTelaAtual();
 }
 
 function voltarHome() {
-  document.getElementById("lista").style.display = "block";
   document.getElementById("semanas").style.display = "none";
   document.getElementById("notificacoes").style.display = "none";
   document.getElementById("telaGantt").style.display = "none";
+  voltarParaTelaAtual();
 }
 function mostrarVisao() {
 
@@ -2444,7 +2592,7 @@ function mostrarDesempenho() {
 }
 function abrirDetalheSemana(data) {
 
-  document.getElementById("lista").style.display = "none";
+  esconderTelasPrincipais();
   document.getElementById("semanas").style.display = "block";
 
   document.getElementById("tituloSemanaDetalhe").innerText = formatarTitulo(data.Nome);
@@ -2492,7 +2640,7 @@ function abrirDetalheSemana(data) {
 // ✅ GRÁFICO DE GANTT — todas as frentes, todas as tarefas com data prevista
 function abrirGantt() {
 
-  document.getElementById("lista").style.display = "none";
+  esconderTelasPrincipais();
   document.getElementById("telaGantt").style.display = "block";
 
   const container = document.getElementById("conteudoGantt");
@@ -2603,46 +2751,103 @@ function normalizarTexto(t) {
   return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-async function buscarInteligente() {
-  const input = document.getElementById('inputBusca').value.trim();
-  const resultado = document.getElementById('resultadoBusca');
+async function buscarInteligente(sufixo) {
+  const input = document.getElementById('inputBusca' + sufixo).value.trim();
+  const resultado = document.getElementById('resultadoBusca' + sufixo);
 
   if (!input) { resultado.innerHTML = ''; return; }
 
   resultado.innerHTML = '<p style="font-size:12px; color:var(--text-soft); text-align:left; margin-top:10px;">Buscando...</p>';
 
-  const snap = await db.collection('ProximasSemanas').get();
-  const frentes = [];
-  snap.forEach(doc => frentes.push(doc.data()));
-
   const termo = normalizarTexto(input);
   const hoje = new Date();
 
+  // ✅ extrai uma data mencionada na pergunta: "ontem", "hoje", "amanhã"
+  // ou um dd/mm específico
+  function extrairData() {
+    if (termo.includes('ontem')) {
+      const ontem = new Date(hoje);
+      ontem.setDate(ontem.getDate() - 1);
+      return { data: ontem, rotulo: 'ontem' };
+    }
+    if (termo.includes('amanha')) {
+      const amanha = new Date(hoje);
+      amanha.setDate(amanha.getDate() + 1);
+      return { data: amanha, rotulo: 'amanhã' };
+    }
+    const m = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
+    if (m) {
+      const dia = parseInt(m[1]);
+      const mes = parseInt(m[2]);
+      const d = new Date(hoje.getFullYear(), mes - 1, dia);
+      return { data: d, rotulo: `o dia ${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}` };
+    }
+    if (termo.includes('hoje')) {
+      return { data: hoje, rotulo: 'hoje' };
+    }
+    return null;
+  }
+
   let html = '';
 
-  // ✅ pergunta sobre trabalho feito sem estar previsto (usa o Realizado)
+  const perguntaDetonacao = termo.includes('detonac');
+  const perguntaTermino = termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu');
+  const perguntaAvancoData = termo.includes('avanco') && extrairData();
   const perguntaNaoPrevisto = termo.includes('nao previsto') || termo.includes('sem previsto') ||
     termo.includes('fora do planejado') || termo.includes('nao estava previsto') ||
     termo.includes('nao planejado') || (termo.includes('nao') && termo.includes('previa'));
-
-  // ✅ uma data específica escrita na pergunta, tipo "01/07" ou "1-7"
   const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
 
-  if (perguntaNaoPrevisto) {
+  if (perguntaDetonacao) {
+    const infoData = extrairData() || { data: hoje, rotulo: 'hoje' };
+    html = await montarRespostaDetonacoes(infoData.data, infoData.rotulo);
+
+  } else if (perguntaTermino) {
+    html = await montarRespostaTermino(termo);
+
+  } else if (perguntaAvancoData) {
+    const infoData = extrairData();
+    html = await montarRespostaAvancoData(termo, infoData.data, infoData.rotulo);
+
+  } else if (perguntaNaoPrevisto) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
     html = montarRespostaNaoPrevisto(frentes);
+
   } else if (termo.includes('hoje')) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
     html = montarRespostaPorData(frentes, formatarDataCurta(hoje), 'hoje');
+
   } else if (termo.includes('amanha')) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
     const amanha = new Date(hoje);
     amanha.setDate(amanha.getDate() + 1);
     html = montarRespostaPorData(frentes, formatarDataCurta(amanha), 'amanhã');
+
   } else if (matchData) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
     const dia = matchData[1].padStart(2, '0');
     const mes = matchData[2].padStart(2, '0');
     html = montarRespostaPorData(frentes, `${dia}/${mes}`, `o dia ${dia}/${mes}`);
+
   } else if (termo.includes('semana')) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
     html = montarRespostaSemana(frentes, hoje);
+
   } else {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+
     const encontrada = frentes.find(f => {
       const nomeNormalizado = normalizarTexto(formatarTitulo(f.Nome));
       return nomeNormalizado.includes(termo) || termo.includes(nomeNormalizado);
@@ -2653,8 +2858,10 @@ async function buscarInteligente() {
     } else {
       html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px; line-height:1.6;">
         Não entendi essa pergunta. Tente algo como:<br>
+        · "quais detonações tivemos ontem"<br>
         · "o que está previsto para hoje"<br>
-        · "o que está previsto para o dia 01/07"<br>
+        · "quando termina o Apêndice"<br>
+        · "qual avanço tivemos na SSR 04 ontem"<br>
         · "o que vem essa semana"<br>
         · "tem algo fora do planejado"<br>
         · ou o nome de uma frente, tipo "Estação Sul"
@@ -2663,6 +2870,144 @@ async function buscarInteligente() {
   }
 
   resultado.innerHTML = html;
+}
+
+// ✅ "quais detonações tivemos [ontem/hoje/em dd/mm]" — cruza a aba de
+// sismografia (evento + descrição) com o avanço diário de cada frente
+// (pra saber qual frente/etapa teve avanço naquele dia, com PK e observação)
+async function montarRespostaDetonacoes(data, rotulo) {
+  const dataStr = formatarDataCurta(data);
+
+  let detonacoesDoDia = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) {
+      const eventos = doc.data().Eventos || [];
+      detonacoesDoDia = eventos.filter(e => e.Data === dataStr);
+    }
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  const snapFrentes = await db.collection('Frentes').get();
+  const avancosDoDia = [];
+  snapFrentes.forEach(doc => {
+    const f = doc.data();
+    (f.AvancoPorEtapa || []).forEach(et => {
+      (et.Dias || []).forEach(dia => {
+        if (dia.Data === dataStr && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+          avancosDoDia.push({
+            frente: formatarTitulo(f.Nome), etapa: et.Etapa,
+            pkInicial: dia.PkInicial, pkFinal: dia.PkFinal,
+            avanco: dia.DiarioRealizado, observacao: dia.Observacoes,
+          });
+        }
+      });
+    });
+  });
+
+  if (detonacoesDoDia.length === 0 && avancosDoDia.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações nem avanço registrado para ${rotulo} (${dataStr}).</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Detonações em ${rotulo} (${dataStr}):</div>`;
+
+  if (detonacoesDoDia.length > 0) {
+    detonacoesDoDia.forEach(e => {
+      html += `<div class="subtitulo2">Evento ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+    });
+  } else {
+    html += `<div style="font-size:12px; color:var(--text-soft); margin-bottom:8px;">Nenhum evento de detonação cadastrado nesse dia.</div>`;
+  }
+
+  if (avancosDoDia.length > 0) {
+    html += `<div style="font-size:12px; color:var(--text-soft); margin:12px 0 8px;">Avanço registrado nesse dia:</div>`;
+    avancosDoDia.forEach(a => {
+      html += `<div class="subtitulo2">${a.frente} — ${a.etapa}: PK ${a.pkInicial || '-'} a ${a.pkFinal || '-'}, avanço <b>${a.avanco}m</b>${a.observacao ? ' · ' + a.observacao : ''}</div>`;
+    });
+  }
+
+  return html;
+}
+
+// ✅ "quando termina [frente]" — usa o avanço diário detalhado (que já
+// calcula início/término previsto e os totais) pra responder término,
+// se está dentro ou fora do previsto, e o desvio
+async function montarRespostaTermino(termo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando. Tente incluir o nome, tipo "quando termina o Apêndice".</p>`;
+  }
+
+  const etapas = frente.AvancoPorEtapa || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)}:</div>`;
+  etapas.forEach(et => {
+    const desvio = Math.round(((et.TotalRealizado || 0) - (et.TotalPrevisto || 0)) * 100) / 100;
+    let status;
+    if (!et.InicioRealizado) {
+      status = 'ainda não iniciado';
+    } else if (desvio >= -0.05) {
+      status = 'dentro do previsto';
+    } else {
+      status = `atrasado ${Math.abs(desvio)}m`;
+    }
+    html += `<div class="subtitulo2">${et.Etapa} — término previsto: <b>${et.TerminoPrevisto || '-'}</b> · ${status} · desvio: ${desvio >= 0 ? '+' : ''}${desvio}m</div>`;
+  });
+  return html;
+}
+
+// ✅ "qual avanço tivemos em [frente] ontem/em [data]" — usa o avanço
+// diário detalhado (não acumulado) de cada etapa da frente
+async function montarRespostaAvancoData(termo, data, rotulo) {
+  const dataStr = formatarDataCurta(data);
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const itens = [];
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    const dia = (et.Dias || []).find(d => d.Data === dataStr);
+    if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+    }
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em ${formatarTitulo(frente.Nome)} para ${rotulo} (${dataStr}).</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — ${rotulo} (${dataStr}):</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.etapa}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
+  });
+  return html;
+}
+
+// ✅ acha a frente (coleção "Frentes") pelo nome mencionado na pergunta
+async function acharFrentePorNome(termo) {
+  const snap = await db.collection('Frentes').get();
+  let encontrada = null;
+
+  snap.forEach(doc => {
+    const f = doc.data();
+    const nomeNorm = normalizarTexto(f.Nome);
+    if (termo.includes(nomeNorm) || nomeNorm.includes(termo)) encontrada = f;
+  });
+
+  if (!encontrada) {
+    snap.forEach(doc => {
+      const f = doc.data();
+      const partes = String(f.Nome).split('-').map(p => normalizarTexto(p.trim()));
+      if (partes.some(p => p.length > 3 && termo.includes(p))) encontrada = f;
+    });
+  }
+
+  return encontrada;
 }
 
 function montarRespostaPorData(frentes, dataStr, rotulo) {
@@ -2724,47 +3069,33 @@ function montarRespostaFrente(frente) {
   return html;
 }
 
+// ✅ simplificado a pedido: só o nome das frentes, sem datas/metragens
 function montarRespostaNaoPrevisto(frentes) {
-  const itens = [];
+  const nomes = new Set();
 
   frentes.forEach(f => {
     (f.Tarefas || []).forEach(t => {
       if (t.ForaDoPlanejado) {
-        // ✅ a tarefa inteira não tinha nada previsto, mas tem realizado
-        (t.DiarioRealizado || []).forEach(d => {
-          itens.push({
-            frente: formatarTitulo(f.Nome), tarefa: t.Nome,
-            data: d.Data, valor: d.Valor, unidade: t.Unidade,
-            tipo: 'tarefa inteira fora do planejamento',
-          });
-        });
+        nomes.add(formatarTitulo(f.Nome));
       } else {
-        // ✅ a tarefa era prevista, mas teve dias com realizado sem
-        // previsto pra aquele dia específico
         const datasPrevisto = new Set((t.Diario || []).map(d => d.Data));
-        (t.DiarioRealizado || []).forEach(d => {
-          if (!datasPrevisto.has(d.Data)) {
-            itens.push({
-              frente: formatarTitulo(f.Nome), tarefa: t.Nome,
-              data: d.Data, valor: d.Valor, unidade: t.Unidade,
-              tipo: 'dia extra além do previsto',
-            });
-          }
-        });
+        const temExtra = (t.DiarioRealizado || []).some(d => !datasPrevisto.has(d.Data));
+        if (temExtra) nomes.add(formatarTitulo(f.Nome));
       }
     });
   });
 
-  if (itens.length === 0) {
+  if (nomes.size === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum trabalho realizado fora do que estava previsto.</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Realizado sem estar previsto:</div>`;
-  itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa} em ${i.data}: <b>${i.valor}${i.unidade}</b> <span style="color:var(--text-soft); font-weight:400;">(${i.tipo})</span></div>`;
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Frentes com algo fora do planejado:</div>`;
+  Array.from(nomes).forEach(nome => {
+    html += `<div class="subtitulo2">${nome}</div>`;
   });
   return html;
 }
+
 
 async function abrirNotificacao(idNotif, nomeFrente) {
 
