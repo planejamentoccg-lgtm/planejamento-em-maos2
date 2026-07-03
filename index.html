@@ -2290,6 +2290,23 @@ function mostrarVisao() {
 
 }
 
+function statusRealizado(etapa) {
+  if (!etapa.InicioRealizado) return 'ainda não iniciado';
+
+  const periodo = `${etapa.InicioRealizado} até ${etapa.TerminoRealizado || '-'}`;
+
+  const totalPrevisto = etapa.TotalPrevisto || 0;
+  const totalRealizado = etapa.TotalRealizado || 0;
+
+  // ✅ considera concluído quando o realizado alcança (ou passa) o
+  // total previsto — com uma margem pequena pra arredondamento
+  if (totalPrevisto > 0 && totalRealizado >= totalPrevisto - 0.05) {
+    return `${periodo} — concluído`;
+  }
+
+  return `${periodo} — em andamento`;
+}
+
 function mostrarDesempenho() {
 
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
@@ -2323,7 +2340,7 @@ function mostrarDesempenho() {
             <div class="cardIndicador">
               <div style="text-align:left;">
                 <div style="font-size:11px; font-weight:600;">Realizado</div>
-                <div style="font-size:13px; margin-top:4px;">${et.InicioRealizado || 'ainda não iniciado'}${et.InicioRealizado ? ' até ' + (et.TerminoRealizado || '-') : ''}</div>
+                <div style="font-size:13px; margin-top:4px;">${statusRealizado(et)}</div>
               </div>
             </div>
           </div>
@@ -2332,8 +2349,17 @@ function mostrarDesempenho() {
     </div>
   ` : '';
 
-  // ✅ uma tabela por etapa (não soma etapas juntas)
-  const tabelasHtml = etapas.map(et => `
+  // ✅ uma tabela por etapa (não soma etapas juntas), começando só a
+  // partir do primeiro dia que já tem algum previsto ou realizado
+  const tabelasHtml = etapas.map(et => {
+    const todosDias = et.Dias || [];
+    const primeiroIndice = todosDias.findIndex(dia =>
+      (dia.Previsto !== null && dia.Previsto !== undefined && dia.Previsto > 0) ||
+      (dia.Realizado !== null && dia.Realizado !== undefined && dia.Realizado > 0)
+    );
+    const dias = primeiroIndice >= 0 ? todosDias.slice(primeiroIndice) : todosDias;
+
+    return `
     <div class="bloco">
       <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px; text-align:left;">
         ${et.Etapa}
@@ -2343,13 +2369,13 @@ function mostrarDesempenho() {
           <thead>
             <tr style="position:sticky; top:0; background:var(--paper-2);">
               <th style="padding:8px; text-align:left;">Data</th>
-              <th style="padding:8px; text-align:right;">Previsto (m)</th>
-              <th style="padding:8px; text-align:right;">Realizado (m)</th>
+              <th style="padding:8px; text-align:right;">Previsto acumulado (m)</th>
+              <th style="padding:8px; text-align:right;">Realizado acumulado (m)</th>
               <th style="padding:8px; text-align:left;">Observações</th>
             </tr>
           </thead>
           <tbody>
-            ${(et.Dias || []).map(dia => `
+            ${dias.map(dia => `
               <tr style="border-top:1px solid var(--line);">
                 <td style="padding:6px 8px; white-space:nowrap;">${dia.Data}</td>
                 <td style="padding:6px 8px; text-align:right;">${dia.Previsto === null || dia.Previsto === undefined ? '-' : dia.Previsto}</td>
@@ -2361,7 +2387,8 @@ function mostrarDesempenho() {
         </table>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   document.getElementById("desempenho").innerHTML = `
 
