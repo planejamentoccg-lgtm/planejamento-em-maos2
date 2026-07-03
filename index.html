@@ -1311,9 +1311,10 @@ body.tema-escuro .iconeIndicador{
   font-family:'Archivo', sans-serif;
   font-weight:700; font-size:15.5px; color:var(--ink); margin-bottom:2px;
 }
-.agendaBody .subtitulo2{
+.subtitulo2{
   font-family:'IBM Plex Mono', monospace;
   font-size:11px; color:var(--accent); margin-bottom:10px;
+  text-align:left;
 }
 .agendaRow{
   font-family:'IBM Plex Sans', sans-serif;
@@ -2479,12 +2480,26 @@ async function buscarInteligente() {
 
   let html = '';
 
-  if (termo.includes('hoje')) {
+  // ✅ pergunta sobre trabalho feito sem estar previsto (usa o Realizado)
+  const perguntaNaoPrevisto = termo.includes('nao previsto') || termo.includes('sem previsto') ||
+    termo.includes('fora do planejado') || termo.includes('nao estava previsto') ||
+    termo.includes('nao planejado') || (termo.includes('nao') && termo.includes('previa'));
+
+  // ✅ uma data específica escrita na pergunta, tipo "01/07" ou "1-7"
+  const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
+
+  if (perguntaNaoPrevisto) {
+    html = montarRespostaNaoPrevisto(frentes);
+  } else if (termo.includes('hoje')) {
     html = montarRespostaPorData(frentes, formatarDataCurta(hoje), 'hoje');
   } else if (termo.includes('amanha')) {
     const amanha = new Date(hoje);
     amanha.setDate(amanha.getDate() + 1);
     html = montarRespostaPorData(frentes, formatarDataCurta(amanha), 'amanhã');
+  } else if (matchData) {
+    const dia = matchData[1].padStart(2, '0');
+    const mes = matchData[2].padStart(2, '0');
+    html = montarRespostaPorData(frentes, `${dia}/${mes}`, `o dia ${dia}/${mes}`);
   } else if (termo.includes('semana')) {
     html = montarRespostaSemana(frentes, hoje);
   } else {
@@ -2499,7 +2514,9 @@ async function buscarInteligente() {
       html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px; line-height:1.6;">
         Não entendi essa pergunta. Tente algo como:<br>
         · "o que está previsto para hoje"<br>
+        · "o que está previsto para o dia 01/07"<br>
         · "o que vem essa semana"<br>
+        · "tem algo fora do planejado"<br>
         · ou o nome de uma frente, tipo "Estação Sul"
       </p>`;
     }
@@ -2563,6 +2580,48 @@ function montarRespostaFrente(frente) {
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)}:</div>`;
   tarefas.forEach(t => {
     html += `<div class="subtitulo2">${t.Nome}${t.Subgrupo ? ' (' + t.Subgrupo + ')' : ''} — Início ${t.InicioPrevisto || '-'} · Término ${t.TerminoPrevisto || '-'} · <b>${t.TotalPrevisto}${t.Unidade}</b></div>`;
+  });
+  return html;
+}
+
+function montarRespostaNaoPrevisto(frentes) {
+  const itens = [];
+
+  frentes.forEach(f => {
+    (f.Tarefas || []).forEach(t => {
+      if (t.ForaDoPlanejado) {
+        // ✅ a tarefa inteira não tinha nada previsto, mas tem realizado
+        (t.DiarioRealizado || []).forEach(d => {
+          itens.push({
+            frente: formatarTitulo(f.Nome), tarefa: t.Nome,
+            data: d.Data, valor: d.Valor, unidade: t.Unidade,
+            tipo: 'tarefa inteira fora do planejamento',
+          });
+        });
+      } else {
+        // ✅ a tarefa era prevista, mas teve dias com realizado sem
+        // previsto pra aquele dia específico
+        const datasPrevisto = new Set((t.Diario || []).map(d => d.Data));
+        (t.DiarioRealizado || []).forEach(d => {
+          if (!datasPrevisto.has(d.Data)) {
+            itens.push({
+              frente: formatarTitulo(f.Nome), tarefa: t.Nome,
+              data: d.Data, valor: d.Valor, unidade: t.Unidade,
+              tipo: 'dia extra além do previsto',
+            });
+          }
+        });
+      }
+    });
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum trabalho realizado fora do que estava previsto.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Realizado sem estar previsto:</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa} em ${i.data}: <b>${i.valor}${i.unidade}</b> <span style="color:var(--text-soft); font-weight:400;">(${i.tipo})</span></div>`;
   });
   return html;
 }
