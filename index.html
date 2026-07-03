@@ -2744,28 +2744,35 @@ async function buscarInteligente(sufixo) {
   const termo = normalizarTexto(input);
   const hoje = new Date();
 
-  // ✅ extrai uma data mencionada na pergunta: "ontem", "hoje", "amanhã"
-  // ou um dd/mm específico
-  function extrairData() {
+  // ✅ extrai um período mencionado na pergunta: um dia específico
+  // ("ontem", "hoje", "amanhã", dd/mm) ou um intervalo ("semana passada")
+  function extrairPeriodo() {
+    if (termo.includes('semana passada') || termo.includes('ultima semana') || termo.includes('última semana')) {
+      const fim = new Date(hoje);
+      fim.setDate(fim.getDate() - 1);
+      const inicio = new Date(hoje);
+      inicio.setDate(inicio.getDate() - 7);
+      return { tipo: 'intervalo', inicio, fim, rotulo: 'semana passada' };
+    }
     if (termo.includes('ontem')) {
       const ontem = new Date(hoje);
       ontem.setDate(ontem.getDate() - 1);
-      return { data: ontem, rotulo: 'ontem' };
+      return { tipo: 'dia', data: ontem, rotulo: 'ontem' };
     }
     if (termo.includes('amanha')) {
       const amanha = new Date(hoje);
       amanha.setDate(amanha.getDate() + 1);
-      return { data: amanha, rotulo: 'amanhã' };
+      return { tipo: 'dia', data: amanha, rotulo: 'amanhã' };
     }
     const m = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
     if (m) {
       const dia = parseInt(m[1]);
       const mes = parseInt(m[2]);
       const d = new Date(hoje.getFullYear(), mes - 1, dia);
-      return { data: d, rotulo: `o dia ${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}` };
+      return { tipo: 'dia', data: d, rotulo: `o dia ${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}` };
     }
     if (termo.includes('hoje')) {
-      return { data: hoje, rotulo: 'hoje' };
+      return { tipo: 'dia', data: hoje, rotulo: 'hoje' };
     }
     return null;
   }
@@ -2774,22 +2781,22 @@ async function buscarInteligente(sufixo) {
 
   const perguntaDetonacao = termo.includes('detonac');
   const perguntaTermino = termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu');
-  const perguntaAvancoData = termo.includes('avanco') && extrairData();
+  const perguntaAvancoData = termo.includes('avanco') && extrairPeriodo();
   const perguntaNaoPrevisto = termo.includes('nao previsto') || termo.includes('sem previsto') ||
     termo.includes('fora do planejado') || termo.includes('nao estava previsto') ||
     termo.includes('nao planejado') || (termo.includes('nao') && termo.includes('previa'));
   const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
 
   if (perguntaDetonacao) {
-    const infoData = extrairData() || { data: hoje, rotulo: 'hoje' };
+    const periodo = extrairPeriodo();
+    const infoData = (periodo && periodo.tipo === 'dia') ? periodo : { data: hoje, rotulo: 'hoje' };
     html = await montarRespostaDetonacoes(infoData.data, infoData.rotulo);
 
   } else if (perguntaTermino) {
     html = await montarRespostaTermino(termo);
 
   } else if (perguntaAvancoData) {
-    const infoData = extrairData();
-    html = await montarRespostaAvancoData(termo, infoData.data, infoData.rotulo);
+    html = await montarRespostaAvancoData(termo, perguntaAvancoData);
 
   } else if (perguntaNaoPrevisto) {
     const snap = await db.collection('ProximasSemanas').get();
@@ -2943,43 +2950,49 @@ async function montarRespostaTermino(termo) {
 
 // ✅ "qual avanço tivemos em [frente] ontem/em [data]" — usa o avanço
 // diário detalhado (não acumulado) de cada etapa da frente
-async function montarRespostaAvancoData(termo, data, rotulo) {
-  const dataStr = formatarDataCurta(data);
+async function montarRespostaAvancoData(termo, periodo) {
   const frente = await acharFrentePorNome(termo);
+
+  function diaNoPeriodo(diaStr) {
+    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
+    const d = parseDiaMes(diaStr);
+    return d && d >= periodo.inicio && d <= periodo.fim;
+  }
+
+  function coletar(nomeFrente, avancoPorEtapa, destino) {
+    (avancoPorEtapa || []).forEach(et => {
+      (et.Dias || []).forEach(dia => {
+        if (diaNoPeriodo(dia.Data) && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+          destino.push({ frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: dia.Data, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+        }
+      });
+    });
+  }
 
   const itens = [];
 
   if (frente) {
     // ✅ pergunta com frente específica (ex: "avanço na SSR 04 ontem")
-    (frente.AvancoPorEtapa || []).forEach(et => {
-      const dia = (et.Dias || []).find(d => d.Data === dataStr);
-      if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-        itens.push({ frente: formatarTitulo(frente.Nome), etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
-      }
-    });
+    coletar(frente.Nome, frente.AvancoPorEtapa, itens);
   } else {
     // ✅ pergunta sem frente específica (ex: "quais avanços tivemos ontem")
     // — busca em todas as frentes
     const snap = await db.collection('Frentes').get();
     snap.forEach(doc => {
       const f = doc.data();
-      (f.AvancoPorEtapa || []).forEach(et => {
-        const dia = (et.Dias || []).find(d => d.Data === dataStr);
-        if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-          itens.push({ frente: formatarTitulo(f.Nome), etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
-        }
-      });
+      coletar(f.Nome, f.AvancoPorEtapa, itens);
     });
   }
 
   if (itens.length === 0) {
     const contexto = frente ? ` em ${formatarTitulo(frente.Nome)}` : '';
-    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado${contexto} para ${rotulo} (${dataStr}).</p>`;
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado${contexto} para ${periodo.rotulo}.</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${rotulo} (${dataStr}):</div>`;
+  const mostrarData = periodo.tipo === 'intervalo'; // ✅ num intervalo, mostra a data de cada item
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${periodo.rotulo}:</div>`;
   itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.frente} — ${i.etapa}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
+    html += `<div class="subtitulo2">${i.frente} — ${i.etapa}${mostrarData ? ' (' + i.data + ')' : ''}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
   });
   return html;
 }
@@ -3067,27 +3080,37 @@ function montarRespostaFrente(frente) {
 
 // ✅ simplificado a pedido: só o nome das frentes, sem datas/metragens
 function montarRespostaNaoPrevisto(frentes) {
-  const nomes = new Set();
+  const itens = [];
+  const vistos = new Set(); // ✅ evita repetir a mesma combinação frente+tarefa
 
   frentes.forEach(f => {
     (f.Tarefas || []).forEach(t => {
+      let foraDoPrevisto = false;
+
       if (t.ForaDoPlanejado) {
-        nomes.add(formatarTitulo(f.Nome));
+        foraDoPrevisto = (t.DiarioRealizado || []).length > 0;
       } else {
         const datasPrevisto = new Set((t.Diario || []).map(d => d.Data));
-        const temExtra = (t.DiarioRealizado || []).some(d => !datasPrevisto.has(d.Data));
-        if (temExtra) nomes.add(formatarTitulo(f.Nome));
+        foraDoPrevisto = (t.DiarioRealizado || []).some(d => !datasPrevisto.has(d.Data));
+      }
+
+      if (foraDoPrevisto) {
+        const chave = f.Nome + '|' + t.Nome;
+        if (!vistos.has(chave)) {
+          vistos.add(chave);
+          itens.push({ frente: formatarTitulo(f.Nome), tarefa: t.Nome });
+        }
       }
     });
   });
 
-  if (nomes.size === 0) {
+  if (itens.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum trabalho realizado fora do que estava previsto.</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Frentes com algo fora do planejado:</div>`;
-  Array.from(nomes).forEach(nome => {
-    html += `<div class="subtitulo2">${nome}</div>`;
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Realizado fora do planejado:</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.frente}: ${i.tarefa}</div>`;
   });
   return html;
 }
