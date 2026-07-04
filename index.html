@@ -522,6 +522,14 @@
   background: var(--accent);
   color: #fff;
 }
+.linkMarcarLidas {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.linkMarcarLidas:hover { text-decoration: underline; }
+
 .blocoNotif {
   margin: 12px;
   padding: 14px;
@@ -628,18 +636,6 @@
       .linhaImagens img {
         width: 100%;
       }
-     .cardLogin {
-        width: calc(100% - 60px);
-        max-width: 300px;
-        padding: 16px 12px;
-        top: 0;
-        transform: none;
-        margin-top: 3px;
-      }
-      .logoLogin {
-        width: 55px;
-        margin-bottom: 5px;
-      }
   .itemPainel:not(:last-child) {
     border-right: none;
   }
@@ -677,49 +673,6 @@
     .painel {
       padding: 25px 15px;
   }
-        
-      .cardLogin input {
-        padding: 8px;
-        margin: 6px 0;
-        font-size: 12px;
-      }
-
-      .cardLogin button {
-        padding: 9px;
-        font-size: 12px;
-      }
-
-      .tituloLogin {
-        margin-bottom: 10px;
-      }
-      .textosTitulo h1 {
-        font-size: 16px;
-      }
-
-      .textosTitulo p {
-        font-size: 10px;
-      }
-
-      .iconeTitulo {
-        width: 22px;
-        height: 22px;
-      }
-        
-      #login {
-        height: auto !important;
-        min-height: 100vh;
-        padding: 10px 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .fundoLogin {
-        height: 100%;
-        min-height: 100vh;
-      }  
-      body {
-        text-align: center;
-      }
     }
     
     #bannerSemanas {
@@ -741,113 +694,142 @@
       margin: 0;
       }
 
-   #login {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      }
+#login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
 
-  
-.fundoLogin {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('https://i.imgur.com/LjhQEHI.jpeg');
-  background-size: cover;
-  background-position: center;
-  filter: blur(4px) brightness(0.4);
+.topoLogin {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 24px 0;
 }
 
 .cardLogin {
   position: relative;
-  background: white;
-  width: 350px;
-  max-width: 90%;
-  padding: 35px 30px;
-  border-radius: 20px;
-  margin: auto;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  flex: 1;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 40px 30px 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center; /* ✅ CENTRALIZA TUDO */
+  justify-content: center;
 }
 
-.logoLogin {
-  width: 80px;
-  margin-bottom: 10px;
-}
-
-.cardLogin h1 {
-  font-size: 22px;
-  color: #1f6e8c;
-}
-
-.cardLogin input {
-  width: 95%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  box-sizing: border-box;
-}
-
-.cardLogin button {
-  width: 95%;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #7cb342, #8bc34a);
-  color: white;
-  font-size: 13px;
-  font-weight: bold;
-  margin-top: 10px;
-}
-.cardLogin button:hover {
-  background: #7cb342;
-}
-    
-.cardLogin button {
-  transition: 0.3s;
-}
-
-.cardLogin button:active {
-  transform: scale(0.98);
-}
-
-.tituloLogin {
+.logoLinhaLogin {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  text-align: left;
+  margin-bottom: 40px;
 }
 
-.iconeTitulo {
-  width: 28px;
-  height: 28px;
+.logoLogin {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.logoTextoLogin {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.textosTitulo {
+  text-align: left;
+  margin-bottom: 44px;
 }
 
 .textosTitulo h1 {
-  font-size: 22px;
-  margin: 0;
-  color: #1f6e8c;
+  font-family: 'Archivo', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0 0 8px;
+  color: var(--ink);
 }
 
 .textosTitulo span {
-  color: #8bc34a;
+  color: var(--accent);
 }
 
 .textosTitulo p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: #666;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
 }
+
+.campoLogin {
+  position: relative;
+  margin-bottom: 28px;
+  padding: 14px 16px;
+}
+
+.campoLogin label {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+.campoLogin input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.campoLogin input::placeholder {
+  color: var(--line);
+}
+
+.cantoLogin {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--accent);
+  border-style: solid;
+  border-width: 0;
+}
+.cantoLogin.tl { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
+.cantoLogin.tr { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
+.cantoLogin.bl { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.cantoLogin.br { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+.btnLogin {
+  margin-top: 12px;
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 3px;
+  padding: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btnLogin:hover { background: var(--accent); color: #fff; }
+.btnLogin:active { transform: scale(0.98); }
+
 .gridIndicadores {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -861,14 +843,9 @@
   border: 1px solid var(--line);
 }
 @media (max-height: 500px) {
-  #login {
-    align-items: flex-start;
-    padding-top: 40px;
-    padding-bottom: 60px;
-  }
-
   .cardLogin {
-    margin-top: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
 }
 .linhaFrente {
@@ -1452,29 +1429,37 @@ body.tema-escuro .iconeIndicador{
 
 <div id="login">
 
-  <div class="fundoLogin"></div>
+  <div class="topoLogin">
+    <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+  </div>
 
   <div class="cardLogin">
 
-    <img src="https://i.imgur.com/iZ8gr1i.png" class="logoLogin">
+    <div class="logoLinhaLogin">
+      <img src="https://i.imgur.com/iZ8gr1i.png" class="logoLogin">
+      <span class="logoTextoLogin">Consórcio Construtor Gávea</span>
+    </div>
 
-    <div class="tituloLogin">
+    <div class="textosTitulo">
+      <h1>Planejamento <span>em Mãos</span></h1>
+      <p>Organize, acompanhe e transforme seu planejamento.</p>
+    </div>
 
-  <img src="https://i.imgur.com/EIQKzt1.png" class="iconeTitulo">
+    <div class="campoLogin">
+      <span class="cantoLogin tl"></span><span class="cantoLogin tr"></span>
+      <span class="cantoLogin bl"></span><span class="cantoLogin br"></span>
+      <label>Usuário ou e-mail</label>
+      <input id="email" type="email" placeholder="seuemail@ccg.com">
+    </div>
 
+    <div class="campoLogin">
+      <span class="cantoLogin tl"></span><span class="cantoLogin tr"></span>
+      <span class="cantoLogin bl"></span><span class="cantoLogin br"></span>
+      <label>Senha</label>
+      <input id="senha" type="password" placeholder="••••••••">
+    </div>
 
-  <div class="textosTitulo">
-    <h1>Planejamento <span>em Mãos</span></h1>
-    <p>Organize, acompanhe e transforme seu planejamento.</p>
-  </div>
-
-</div>
-
-    <input id="email" type="email" placeholder="Usuário ou e-mail">
-
-    <input id="senha" type="password" placeholder="Senha">
-
-    <button onclick="login()">Entrar</button>
+    <button class="btnLogin" onclick="login()">Entrar</button>
 
   </div>
 
@@ -1584,6 +1569,10 @@ body.tema-escuro .iconeIndicador{
   <span onclick="voltarHome()" style="cursor:pointer;">←</span>
   <span style="font-size:14px; font-weight:500;">Notificações</span>
   <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
+</div>
+
+<div style="display:flex; justify-content:flex-end; padding:10px 16px 0;">
+  <span class="linkMarcarLidas" onclick="marcarTodasComoLidas()">Marcar todas como lidas</span>
 </div>
 
   <div id="listaNotificacoes"></div>
@@ -2098,6 +2087,26 @@ function esconderTelasPrincipais() {
 
   carregarNotificacoes();
 }
+// ✅ marca todas as notificações não lidas como lidas de uma vez, sem
+// precisar clicar uma por uma
+async function marcarTodasComoLidas() {
+  const user = auth.currentUser.email;
+  const snap = await db.collection("Notificacoes").get();
+
+  const atualizacoes = [];
+  snap.forEach(doc => {
+    const d = doc.data();
+    const lista = d.lidaPor || [];
+    if (!lista.includes(user)) {
+      lista.push(user);
+      atualizacoes.push(db.collection("Notificacoes").doc(doc.id).update({ lidaPor: lista }));
+    }
+  });
+
+  await Promise.all(atualizacoes);
+  await carregarNotificacoes(); // ✅ recarrega a lista já sem nenhuma "não lida"
+}
+
 async function carregarNotificacoes() {
 
   const container = document.getElementById("listaNotificacoes");
@@ -2747,12 +2756,33 @@ async function buscarInteligente(sufixo) {
   // ✅ extrai um período mencionado na pergunta: um dia específico
   // ("ontem", "hoje", "amanhã", dd/mm) ou um intervalo ("semana passada")
   function extrairPeriodo() {
+    const mUltimosDias = termo.match(/ultimos?\s+(\d+)\s+dias?/);
+    if (mUltimosDias) {
+      const n = parseInt(mUltimosDias[1]);
+      const inicio = new Date(hoje);
+      inicio.setDate(inicio.getDate() - (n - 1));
+      return { tipo: 'intervalo', inicio, fim: hoje, rotulo: `os últimos ${n} dias` };
+    }
     if (termo.includes('semana passada') || termo.includes('ultima semana') || termo.includes('última semana')) {
       const fim = new Date(hoje);
       fim.setDate(fim.getDate() - 1);
       const inicio = new Date(hoje);
       inicio.setDate(inicio.getDate() - 7);
       return { tipo: 'intervalo', inicio, fim, rotulo: 'semana passada' };
+    }
+    if (termo.includes('essa semana') || termo.includes('esta semana')) {
+      const diaSemana = (hoje.getDay() + 6) % 7; // 0 = segunda-feira
+      const inicio = new Date(hoje);
+      inicio.setDate(inicio.getDate() - diaSemana);
+      return { tipo: 'intervalo', inicio, fim: hoje, rotulo: 'essa semana' };
+    }
+    if (termo.includes('esse ano') || termo.includes('este ano')) {
+      const inicio = new Date(hoje.getFullYear(), 0, 1);
+      return { tipo: 'intervalo', inicio, fim: hoje, rotulo: 'esse ano' };
+    }
+    if (termo.includes('esse mes') || termo.includes('este mes')) {
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      return { tipo: 'intervalo', inicio, fim: hoje, rotulo: 'esse mês' };
     }
     if (termo.includes('ontem')) {
       const ontem = new Date(hoje);
@@ -2779,15 +2809,54 @@ async function buscarInteligente(sufixo) {
 
   let html = '';
 
-  const perguntaDetonacao = termo.includes('detonac');
+  const perguntaUltimaDetonacao = termo.includes('ultima detonac') || termo.includes('ultimo fogo') || termo.includes('ultima vez que detonou');
+  const perguntaDetonouFrente = termo.includes('detonou');
+  const perguntaTotalFogos = termo.includes('quantos fogos') || termo.includes('ao todo') ||
+    termo.includes('total de detonac') || termo.includes('total de fogos');
+  const perguntaContagemDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos &&
+    termo.includes('detonac') && (termo.includes('quantas') || termo.includes('quantos'));
+  const perguntaDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos &&
+    !perguntaContagemDetonacao && termo.includes('detonac');
   const perguntaTermino = termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu');
-  const perguntaAvancoData = termo.includes('avanco') && extrairPeriodo();
+  const perguntaMediaDiaria = termo.includes('media');
+  const perguntaMaiorAvanco = termo.includes('maior avanco') || (termo.includes('maior') && termo.includes('avanco'));
+  const perguntaDiasSemAvanco = termo.includes('sem avanco') || termo.includes('dias parados') || termo.includes('dias parado');
+  const perguntaAvancoTotalGeral = !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
+    termo.includes('avanco') && termo.includes('total');
+  const perguntaTotalAvancoPeriodo = !perguntaAvancoTotalGeral && !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
+    termo.includes('avanco') && termo.includes('quanto') &&
+    (termo.includes('mes') || termo.includes('semana') || termo.includes('ano') || termo.includes('dias'));
+  const perguntaObservacaoDia = termo.includes('o que aconteceu') || termo.includes('aconteceu em') || termo.includes('aconteceu na') || termo.includes('aconteceu no');
+  const perguntaAvancoData = !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral && !perguntaMediaDiaria &&
+    !perguntaMaiorAvanco && !perguntaDiasSemAvanco && !perguntaObservacaoDia &&
+    termo.includes('avanco') && extrairPeriodo();
+  const perguntaComprimentoTotal = termo.includes('comprimento') || termo.includes('quanto mede') ||
+    (termo.includes('total') && !perguntaAvancoData && !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral);
+  const perguntaPk = /\bpk\b/.test(termo);
+  const perguntaObservacaoFrente = !perguntaObservacaoDia && (termo.includes('observacao') || termo.includes('informacao adicional') || termo.includes('informacoes adicionais'));
+  const perguntaFrenteMaisAtrasada = termo.includes('mais atrasad');
+  const perguntaFrentesAtrasadas = !perguntaFrenteMaisAtrasada && termo.includes('atrasad');
+  const perguntaProgressoGeral = termo.includes('progresso') || termo.includes('percentual');
   const perguntaNaoPrevisto = termo.includes('nao previsto') || termo.includes('sem previsto') ||
     termo.includes('fora do planejado') || termo.includes('nao estava previsto') ||
     termo.includes('nao planejado') || (termo.includes('nao') && termo.includes('previa'));
   const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
 
-  if (perguntaDetonacao) {
+  if (perguntaUltimaDetonacao) {
+    html = await montarRespostaUltimaDetonacao(termo);
+
+  } else if (perguntaDetonouFrente) {
+    const periodo = extrairPeriodo() || { tipo: 'dia', data: hoje, rotulo: 'hoje' };
+    html = await montarRespostaDetonouFrente(termo, periodo);
+
+  } else if (perguntaTotalFogos) {
+    html = await montarRespostaTotalFogos();
+
+  } else if (perguntaContagemDetonacao) {
+    const periodo = extrairPeriodo() || { tipo: 'dia', data: hoje, rotulo: 'hoje' };
+    html = await montarRespostaContagemDetonacoes(periodo);
+
+  } else if (perguntaDetonacao) {
     const periodo = extrairPeriodo();
     const infoData = (periodo && periodo.tipo === 'dia') ? periodo : { data: hoje, rotulo: 'hoje' };
     html = await montarRespostaDetonacoes(infoData.data, infoData.rotulo);
@@ -2795,8 +2864,47 @@ async function buscarInteligente(sufixo) {
   } else if (perguntaTermino) {
     html = await montarRespostaTermino(termo);
 
+  } else if (perguntaMediaDiaria) {
+    html = await montarRespostaMediaDiaria(termo);
+
+  } else if (perguntaMaiorAvanco) {
+    html = await montarRespostaMaiorAvanco(termo);
+
+  } else if (perguntaDiasSemAvanco) {
+    const periodo = extrairPeriodo() || { tipo: 'intervalo', inicio: hoje, fim: hoje, rotulo: 'hoje' };
+    html = await montarRespostaDiasSemAvanco(termo, periodo);
+
+  } else if (perguntaAvancoTotalGeral) {
+    html = await montarRespostaAvancoTotalGeral(termo);
+
+  } else if (perguntaTotalAvancoPeriodo) {
+    const periodo = extrairPeriodo() || { tipo: 'intervalo', inicio: hoje, fim: hoje, rotulo: 'hoje' };
+    html = await montarRespostaTotalAvancoPeriodo(termo, periodo);
+
+  } else if (perguntaObservacaoDia) {
+    const periodo = extrairPeriodo() || { tipo: 'dia', data: hoje, rotulo: 'hoje' };
+    html = await montarRespostaObservacaoDia(termo, periodo);
+
   } else if (perguntaAvancoData) {
     html = await montarRespostaAvancoData(termo, perguntaAvancoData);
+
+  } else if (perguntaPk) {
+    html = await montarRespostaPk(termo);
+
+  } else if (perguntaObservacaoFrente) {
+    html = await montarRespostaObservacaoFrente(termo);
+
+  } else if (perguntaComprimentoTotal) {
+    html = await montarRespostaComprimentoTotal(termo);
+
+  } else if (perguntaFrenteMaisAtrasada) {
+    html = await montarRespostaFrenteMaisAtrasada();
+
+  } else if (perguntaFrentesAtrasadas) {
+    html = await montarRespostaAtraso(termo);
+
+  } else if (perguntaProgressoGeral) {
+    html = await montarRespostaProgressoGeral(termo);
 
   } else if (perguntaNaoPrevisto) {
     const snap = await db.collection('ProximasSemanas').get();
@@ -2847,11 +2955,26 @@ async function buscarInteligente(sufixo) {
     } else {
       html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px; line-height:1.6;">
         Não entendi essa pergunta. Tente algo como:<br>
-        · "quais detonações tivemos ontem"<br>
-        · "o que está previsto para hoje"<br>
+        · "quais detonações tivemos ontem/nos últimos 3 dias"<br>
+        · "quantas detonações tivemos essa semana/mês/ano"<br>
+        · "quantos fogos tivemos ao todo"<br>
+        · "detonou o Apêndice ontem?"<br>
+        · "quando foi a última detonação do Apêndice" (ou geral, sem frente)<br>
         · "quando termina o Apêndice"<br>
-        · "qual avanço tivemos na SSR 04 ontem"<br>
-        · "o que vem essa semana"<br>
+        · "qual frente está mais atrasada"<br>
+        · "qual avanço tivemos na SSR 04 nos últimos 5 dias"<br>
+        · "quanto de avanço tivemos esse mês no Apêndice"<br>
+        · "qual o avanço total do Apêndice até agora"<br>
+        · "qual a média de avanço diário do Apêndice"<br>
+        · "em qual dia tivemos o maior avanço"<br>
+        · "quantos dias sem avanço tivemos essa semana"<br>
+        · "o que aconteceu no Apêndice ontem"<br>
+        · "tem alguma observação no Apêndice"<br>
+        · "em qual PK estamos no Apêndice"<br>
+        · "qual o total do Apêndice"<br>
+        · "quais frentes estão atrasadas"<br>
+        · "qual o progresso geral do Apêndice"<br>
+        · "o que está previsto para hoje"<br>
         · "tem algo fora do planejado"<br>
         · ou o nome de uma frente, tipo "Estação Sul"
       </p>`;
@@ -2917,6 +3040,505 @@ async function montarRespostaDetonacoes(data, rotulo) {
   return html;
 }
 
+// ✅ helper: busca os eventos de detonação cadastrados numa data específica
+async function buscarFogosNaData(dataStr) {
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (!doc.exists) return [];
+    return (doc.data().Eventos || []).filter(e => e.Data === dataStr);
+  } catch (e) {
+    return [];
+  }
+}
+
+// ✅ "quantas detonações tivemos essa semana/esse mês/esse ano" —
+// conta os eventos dentro do período, sem precisar de uma frente
+async function montarRespostaContagemDetonacoes(periodo) {
+  let eventos = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventos = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  function noPeriodo(diaStr) {
+    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
+    const d = parseDiaMes(diaStr);
+    return d && d >= periodo.inicio && d <= periodo.fim;
+  }
+
+  const noIntervalo = eventos.filter(e => noPeriodo(e.Data));
+
+  if (noIntervalo.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações registradas em ${periodo.rotulo}.</p>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Tivemos <b>${noIntervalo.length}</b> detonação(ões) em ${periodo.rotulo}:</div>`;
+  noIntervalo.forEach(e => {
+    html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+  });
+  return html;
+}
+
+// ✅ "quantos fogos tivemos ao todo" — contagem total histórica, sem filtro de período
+async function montarRespostaTotalFogos() {
+  let eventos = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventos = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  if (eventos.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação cadastrada.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${eventos.length}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
+}
+
+// ✅ "qual a média de avanço diário do [frente]" — média só dos dias
+// que tiveram avanço de verdade (não conta os dias parados como zero)
+async function montarRespostaMediaDiaria(termo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapas = frente.AvancoPorEtapa || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — média de avanço diário (só dias com registro):</div>`;
+  let algumaEtapaComDados = false;
+
+  etapas.forEach(et => {
+    let soma = 0, dias = 0;
+    (et.Dias || []).forEach(d => {
+      if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+        soma += d.DiarioRealizado;
+        dias++;
+      }
+    });
+    if (dias > 0) {
+      algumaEtapaComDados = true;
+      const media = Math.round((soma / dias) * 100) / 100;
+      html += `<div class="subtitulo2">${et.Etapa}: <b>${media}m/dia</b> (${dias} dia(s) com avanço)</div>`;
+    }
+  });
+
+  if (!algumaEtapaComDados) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+  return html;
+}
+
+// ✅ "qual dia tivemos o maior avanço" — com frente específica, olha só
+// ela; sem frente, procura o recorde em todas
+async function montarRespostaMaiorAvanco(termo) {
+  const frenteEspecifica = await acharFrentePorNome(termo);
+
+  let melhor = null;
+  function considerar(nomeFrente, avancoPorEtapa) {
+    (avancoPorEtapa || []).forEach(et => {
+      (et.Dias || []).forEach(d => {
+        if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && (!melhor || d.DiarioRealizado > melhor.avanco)) {
+          melhor = { frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: d.Data, avanco: d.DiarioRealizado, obs: d.Observacoes };
+        }
+      });
+    });
+  }
+
+  if (frenteEspecifica) {
+    considerar(frenteEspecifica.Nome, frenteEspecifica.AvancoPorEtapa);
+  } else {
+    const snap = await db.collection('Frentes').get();
+    snap.forEach(doc => {
+      const f = doc.data();
+      considerar(f.Nome, f.AvancoPorEtapa);
+    });
+  }
+
+  if (!melhor) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum avanço registrado.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Maior avanço registrado: <b>${melhor.frente}</b> — ${melhor.etapa} em ${melhor.data}: <b>${melhor.avanco}m</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
+}
+
+// ✅ "quantos dias sem avanço tivemos essa semana/mês" — compara o
+// total de dias do período com os dias que tiveram algum avanço
+async function montarRespostaDiasSemAvanco(termo, periodo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const inicio = periodo.tipo === 'dia' ? periodo.data : periodo.inicio;
+  const fim = periodo.tipo === 'dia' ? periodo.data : periodo.fim;
+
+  function noPeriodo(diaStr) {
+    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
+    const d = parseDiaMes(diaStr);
+    return d && d >= periodo.inicio && d <= periodo.fim;
+  }
+
+  const diasComAvanco = new Set();
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    (et.Dias || []).forEach(d => {
+      if (noPeriodo(d.Data) && d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+        diasComAvanco.add(d.Data);
+      }
+    });
+  });
+
+  const totalDias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
+  const diasSemAvanco = Math.max(totalDias - diasComAvanco.size, 0);
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo}: <b>${diasSemAvanco}</b> dia(s) sem avanço registrado (de ${totalDias} dia(s) no período).</div>`;
+}
+
+// ✅ "qual o avanço total do [frente] até agora" — soma acumulada desde
+// o início, sem filtro de período (usa os totais já calculados)
+async function montarRespostaAvancoTotalGeral(termo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapas = frente.AvancoPorEtapa || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — avanço total realizado até agora:</div>`;
+  etapas.forEach(et => {
+    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.TotalRealizado || 0}m</b> realizado (de ${et.TotalPrevisto || 0}m previstos)</div>`;
+  });
+  return html;
+}
+
+// ✅ "o que aconteceu em [frente] no dia X" — mostra a observação do
+// dia mesmo quando não teve avanço numérico registrado
+async function montarRespostaObservacaoDia(termo, periodo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  if (periodo.tipo !== 'dia') {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Preciso de um dia específico pra essa pergunta, tipo "o que aconteceu no Apêndice ontem".</p>`;
+  }
+
+  const dataStr = formatarDataCurta(periodo.data);
+  const itens = [];
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    const dia = (et.Dias || []).find(d => d.Data === dataStr);
+    if (dia && (dia.Observacoes || (dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0))) {
+      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+    }
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei registros em ${formatarTitulo(frente.Nome)} para ${periodo.rotulo} (${dataStr}).</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo} (${dataStr}):</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.etapa}${(i.avanco !== null && i.avanco !== undefined && i.avanco > 0) ? ': avanço <b>' + i.avanco + 'm</b>' : ''}${i.obs ? ' · ' + i.obs : ''}</div>`;
+  });
+  return html;
+}
+
+// ✅ "tem alguma observação/informação adicional em [frente]" — usa o
+// que já está registrado por etapa na aba Planejamento em Mãos
+async function montarRespostaObservacaoFrente(termo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapasComInfo = (frente.Etapas || []).filter(e => e.InformacoesAdicionais);
+  if (etapasComInfo.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma observação registrada em ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — observações:</div>`;
+  etapasComInfo.forEach(e => {
+    html += `<div class="subtitulo2">${e.Etapa}: ${e.InformacoesAdicionais}</div>`;
+  });
+  return html;
+}
+
+// ✅ "qual frente está mais atrasada" — ranking, não só uma lista
+async function montarRespostaFrenteMaisAtrasada() {
+  const snap = await db.collection('Frentes').get();
+  let pior = null;
+
+  snap.forEach(doc => {
+    const f = doc.data();
+    const progresso = f.Percentual || 0;
+    const previsto = f.Percentualprevisto || 0;
+    const gap = Math.round((previsto - progresso) * 10) / 10;
+    if (gap > 0 && (!pior || gap > pior.gap)) {
+      pior = { nome: f.Nome, progresso, previsto, gap };
+    }
+  });
+
+  if (!pior) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nenhuma frente está atrasada no momento — todas dentro do previsto.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Frente mais atrasada: <b>${formatarTitulo(pior.nome)}</b> — ${pior.progresso}% realizado (previsto ${pior.previsto}%), ${pior.gap}% atrás do previsto.</div>`;
+}
+
+// ✅ "quais frentes estão atrasadas" — visão rápida de todas de uma vez
+async function montarRespostaAtraso(termo) {
+  const snap = await db.collection('Frentes').get();
+  const atrasadas = [];
+
+  snap.forEach(doc => {
+    const f = doc.data();
+    const progresso = f.Percentual || 0;
+    const previsto = f.Percentualprevisto || 0;
+    if (progresso < previsto) {
+      atrasadas.push({ nome: formatarTitulo(f.Nome), progresso, previsto });
+    }
+  });
+
+  if (atrasadas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nenhuma frente está atrasada no momento — todas dentro do previsto.</p>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">${atrasadas.length} frente(s) atrasada(s):</div>`;
+  atrasadas.forEach(a => {
+    html += `<div class="subtitulo2">${a.nome}: ${a.progresso}% realizado (previsto ${a.previsto}%)</div>`;
+  });
+  return html;
+}
+
+// ✅ "quanto de avanço tivemos esse mês/essa semana no [frente]" —
+// soma o avanço diário no período (sem frente, soma por todas)
+async function montarRespostaTotalAvancoPeriodo(termo, periodo) {
+  const frente = await acharFrentePorNome(termo);
+
+  function noPeriodo(diaStr) {
+    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
+    const d = parseDiaMes(diaStr);
+    return d && d >= periodo.inicio && d <= periodo.fim;
+  }
+
+  function somarFrente(f) {
+    let total = 0;
+    let dias = 0;
+    (f.AvancoPorEtapa || []).forEach(et => {
+      (et.Dias || []).forEach(dia => {
+        if (noPeriodo(dia.Data) && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+          total += dia.DiarioRealizado;
+          dias++;
+        }
+      });
+    });
+    return { total: Math.round(total * 100) / 100, dias };
+  }
+
+  if (frente) {
+    const { total, dias } = somarFrente(frente);
+    if (total === 0) {
+      return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em ${formatarTitulo(frente.Nome)} para ${periodo.rotulo}.</p>`;
+    }
+    return `<div style="font-size:13px; color:var(--ink); font-weight:600; margin-top:10px; text-align:left;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo}: <b>${total}m</b> de avanço (${dias} dia(s) com registro).</div>`;
+  }
+
+  const snap = await db.collection('Frentes').get();
+  const itens = [];
+  snap.forEach(doc => {
+    const f = doc.data();
+    const { total, dias } = somarFrente(f);
+    if (total > 0) itens.push({ nome: formatarTitulo(f.Nome), total, dias });
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em nenhuma frente para ${periodo.rotulo}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${periodo.rotulo}:</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.nome}: <b>${i.total}m</b> (${i.dias} dia(s))</div>`;
+  });
+  return html;
+}
+
+// ✅ "qual o progresso geral do [frente]" — percentual atual vs previsto
+async function montarRespostaProgressoGeral(termo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const progresso = frente.Percentual || 0;
+  const previsto = frente.Percentualprevisto || 0;
+  const status = progresso >= previsto ? 'dentro do previsto' : `atrasado ${Math.round((previsto - progresso) * 10) / 10}%`;
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">
+    ${formatarTitulo(frente.Nome)}: <b>${progresso}%</b> realizado (previsto ${previsto}%) — ${status}
+  </div>`;
+}
+
+// ✅ helper: avanço realizado de uma frente numa data (por etapa)
+function avancosDaFrenteNaData(frente, dataStr) {
+  const itens = [];
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    const dia = (et.Dias || []).find(d => d.Data === dataStr);
+    if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+    }
+  });
+  return itens;
+}
+
+// ✅ "detonou [frente] ontem/dia X?" — responde sim/não com os detalhes;
+// se não teve detonação naquela frente, mostra os fogos que tivemos
+// nesse dia (em qualquer frente), como contexto
+async function montarRespostaDetonouFrente(termo, periodo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const dataStr = formatarDataCurta(periodo.data);
+  const avancos = avancosDaFrenteNaData(frente, dataStr);
+  const fogos = await buscarFogosNaData(dataStr);
+
+  if (avancos.length > 0) {
+    const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}`).join(', ') : '';
+    let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Sim — ${formatarTitulo(frente.Nome)} teve detonação em ${periodo.rotulo} (${dataStr}).</div>`;
+    avancos.forEach(a => {
+      html += `<div class="subtitulo2">${a.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${a.avanco}m</b>${a.obs ? ' · ' + a.obs : ''}</div>`;
+    });
+    return html;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Não — ${formatarTitulo(frente.Nome)} não teve detonação registrada em ${periodo.rotulo} (${dataStr}).</div>`;
+  if (fogos.length > 0) {
+    html += `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px;">Fogos que tivemos nesse dia (em outras frentes):</div>`;
+    fogos.forEach(f => {
+      html += `<div class="subtitulo2">Fogo ${f.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${f.Descricao || '-'}</span></div>`;
+    });
+  }
+  return html;
+}
+
+// ✅ "quando foi a última detonação de [frente]" — acha o dia mais
+// recente com avanço registrado em qualquer etapa da frente
+async function montarRespostaUltimaDetonacao(termo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    // ✅ sem frente específica — última detonação registrada, geral
+    let eventos = [];
+    try {
+      const doc = await db.collection('Config').doc('Detonacoes').get();
+      if (doc.exists) eventos = doc.data().Eventos || [];
+    } catch (e) { /* sem detonações cadastradas ainda */ }
+
+    if (eventos.length === 0) {
+      return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação cadastrada.</p>`;
+    }
+
+    let melhorGeral = null;
+    eventos.forEach(e => {
+      const d = parseDiaMes(e.Data);
+      if (d && (!melhorGeral || d > melhorGeral.dataObj)) {
+        melhorGeral = { dataObj: d, ...e };
+      }
+    });
+
+    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Última detonação registrada: <b>${melhorGeral.Data}</b> — Fogo ${melhorGeral.Evento}: ${melhorGeral.Descricao || '-'}</div>`;
+  }
+
+  let melhor = null;
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    (et.Dias || []).forEach(dia => {
+      if (dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
+        const d = parseDiaMes(dia.Data);
+        if (d && (!melhor || d > melhor.dataObj)) {
+          melhor = { dataObj: d, dataStr: dia.Data, etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes };
+        }
+      }
+    });
+  });
+
+  if (!melhor) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação registrada em ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  const fogos = await buscarFogosNaData(melhor.dataStr);
+  const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}${f.Descricao ? ' — ' + f.Descricao : ''}`).join('; ') : '';
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhor.dataStr}</b></div>`;
+  html += `<div class="subtitulo2">${melhor.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${melhor.avanco}m</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
+  return html;
+}
+
+// ✅ "qual o comprimento/total de [frente]" — usa a aba Planejamento em
+// Mãos (Total por etapa)
+async function montarRespostaComprimentoTotal(termo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapas = frente.Etapas || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho o total cadastrado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)}:</div>`;
+  etapas.forEach(et => {
+    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.Total || '-'}</b></div>`;
+  });
+  return html;
+}
+
+// ✅ "qual o último pk de avanço do [frente]" / "em qual pk estamos no
+// [frente] agora" — acha, pra cada etapa, o dia mais recente com PK
+// registrado (indica onde a escavação está "agora")
+async function montarRespostaPk(termo) {
+  const frente = await acharFrentePorNome(termo);
+
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapas = frente.AvancoPorEtapa || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de PK detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — último PK registrado:</div>`;
+  let algumEncontrado = false;
+
+  etapas.forEach(et => {
+    const dias = et.Dias || [];
+    let ultimo = null;
+    for (let i = dias.length - 1; i >= 0; i--) {
+      if (dias[i].PkFinal) { ultimo = dias[i]; break; }
+    }
+    if (ultimo) {
+      algumEncontrado = true;
+      html += `<div class="subtitulo2">${et.Etapa}: PK ${ultimo.PkInicial || '-'} até <b>${ultimo.PkFinal}</b> (em ${ultimo.Data})</div>`;
+    }
+  });
+
+  if (!algumEncontrado) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum PK registrado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  return html;
+}
+
 // ✅ "quando termina [frente]" — usa o avanço diário detalhado (que já
 // calcula início/término previsto e os totais) pra responder término,
 // se está dentro ou fora do previsto, e o desvio
@@ -2927,23 +3549,32 @@ async function montarRespostaTermino(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando. Tente incluir o nome, tipo "quando termina o Apêndice".</p>`;
   }
 
-  const etapas = frente.AvancoPorEtapa || [];
-  if (etapas.length === 0) {
+  const etapasAvanco = frente.AvancoPorEtapa || []; // ✅ só usada pra data de término
+  const etapasPlanejamento = frente.Etapas || []; // ✅ fonte certa pro atrasado/desvio
+
+  if (etapasAvanco.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
   }
 
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)}:</div>`;
-  etapas.forEach(et => {
-    const desvio = Math.round(((et.TotalRealizado || 0) - (et.TotalPrevisto || 0)) * 100) / 100;
-    let status;
-    if (!et.InicioRealizado) {
-      status = 'ainda não iniciado';
-    } else if (desvio >= -0.05) {
-      status = 'dentro do previsto';
-    } else {
-      status = `atrasado ${Math.abs(desvio)}m`;
+
+  etapasAvanco.forEach(et => {
+    // ✅ acha a etapa correspondente na aba "Planejamento em Mãos" (por nome)
+    const etapaPlan = etapasPlanejamento.find(p => normalizarTexto(p.Etapa) === normalizarTexto(et.Etapa));
+
+    let status = 'sem dados de progresso na planilha';
+    let desvioTexto = etapaPlan ? etapaPlan.Desvio : '-';
+
+    if (etapaPlan && etapaPlan.ProgressoFisicoPrevisto !== null && etapaPlan.ProgressoFisicoRealizado !== null) {
+      const diferenca = Math.round((etapaPlan.ProgressoFisicoRealizado - etapaPlan.ProgressoFisicoPrevisto) * 10) / 10;
+      if (diferenca >= -0.5) {
+        status = 'dentro do previsto';
+      } else {
+        status = `atrasado ${Math.abs(diferenca)}% (progresso físico)`;
+      }
     }
-    html += `<div class="subtitulo2">${et.Etapa} — término previsto: <b>${et.TerminoPrevisto || '-'}</b> · ${status} · desvio: ${desvio >= 0 ? '+' : ''}${desvio}m</div>`;
+
+    html += `<div class="subtitulo2">${et.Etapa} — término previsto: <b>${et.TerminoPrevisto || '-'}</b> · ${status} · desvio: ${desvioTexto}</div>`;
   });
   return html;
 }
