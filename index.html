@@ -2871,8 +2871,9 @@ async function buscarInteligente(sufixo) {
   const perguntaAvancoData = !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral && !perguntaMediaDiaria &&
     !perguntaMaiorAvanco && !perguntaDiasSemAvanco && !perguntaObservacaoDia &&
     termo.includes('avanco') && extrairPeriodo();
-  const perguntaComprimentoTotal = termo.includes('comprimento') || termo.includes('quanto mede') ||
-    (termo.includes('total') && !perguntaAvancoData && !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral);
+  const perguntaQuantidadeTotalTarefa = termo.includes('quantidade total') || termo.includes('total geral');
+  const perguntaComprimentoTotal = !perguntaQuantidadeTotalTarefa && (termo.includes('comprimento') || termo.includes('quanto mede') ||
+    (termo.includes('total') && !perguntaAvancoData && !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral));
   const perguntaPk = /\bpk\b/.test(termo);
   const perguntaObservacaoFrente = !perguntaObservacaoDia && (termo.includes('observacao') || termo.includes('informacao adicional') || termo.includes('informacoes adicionais'));
   const perguntaFrenteMaisAtrasada = termo.includes('mais atrasad');
@@ -2931,6 +2932,9 @@ async function buscarInteligente(sufixo) {
 
   } else if (perguntaObservacaoFrente) {
     html = await montarRespostaObservacaoFrente(termo);
+
+  } else if (perguntaQuantidadeTotalTarefa) {
+    html = await montarRespostaQuantidadeTotal(termo);
 
   } else if (perguntaComprimentoTotal) {
     html = await montarRespostaComprimentoTotal(termo);
@@ -3527,6 +3531,59 @@ async function montarRespostaUltimaDetonacao(termo) {
 
 // ✅ "qual o comprimento/total de [frente]" — usa a aba Planejamento em
 // Mãos (Total por etapa)
+// ✅ "qual a quantidade total de [tarefa] do [frente]" — usa o Total
+// GERAL da planilha (coluna G), não a soma dos dias visíveis (que é o
+// TotalPrevisto normal). Busca na coleção ProximasSemanas.
+async function montarRespostaQuantidadeTotal(termo) {
+  const snap = await db.collection('ProximasSemanas').get();
+  let frenteEncontrada = null;
+
+  snap.forEach(doc => {
+    const f = doc.data();
+    const nomeNorm = normalizarTexto(formatarTitulo(f.Nome));
+    if (termo.includes(nomeNorm) || nomeNorm.includes(termo)) frenteEncontrada = f;
+  });
+
+  if (!frenteEncontrada) {
+    snap.forEach(doc => {
+      const f = doc.data();
+      const partes = String(f.Nome).split('-').map(p => normalizarTexto(p.trim()));
+      if (partes.some(p => p.length > 3 && termo.includes(p))) frenteEncontrada = f;
+    });
+  }
+
+  if (!frenteEncontrada) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const tarefas = frenteEncontrada.Tarefas || [];
+
+  // ✅ tenta achar uma tarefa específica mencionada na pergunta (ex: "enfilagens")
+  const tarefaEncontrada = tarefas.find(t => {
+    const nomeTarefaNorm = normalizarTexto(t.Nome);
+    return nomeTarefaNorm.length > 3 && termo.includes(nomeTarefaNorm);
+  });
+
+  if (tarefaEncontrada) {
+    if (tarefaEncontrada.TotalGeral === null || tarefaEncontrada.TotalGeral === undefined) {
+      return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei o total geral cadastrado para "${tarefaEncontrada.Nome}".</p>`;
+    }
+    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frenteEncontrada.Nome)} — ${tarefaEncontrada.Nome}: <b>${tarefaEncontrada.TotalGeral}${tarefaEncontrada.Unidade}</b> (total geral previsto)</div>`;
+  }
+
+  // ✅ sem tarefa específica mencionada — lista todas as com total geral
+  const comTotal = tarefas.filter(t => t.TotalGeral !== null && t.TotalGeral !== undefined);
+  if (comTotal.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei totais gerais cadastrados em ${formatarTitulo(frenteEncontrada.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frenteEncontrada.Nome)} — totais gerais:</div>`;
+  comTotal.forEach(t => {
+    html += `<div class="subtitulo2">${t.Nome}: <b>${t.TotalGeral}${t.Unidade}</b></div>`;
+  });
+  return html;
+}
+
 async function montarRespostaComprimentoTotal(termo) {
   const frente = await acharFrentePorNome(termo);
 
