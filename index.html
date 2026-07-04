@@ -1230,6 +1230,23 @@ body.tema-escuro .iconeIndicador{
 }
 .btnBusca:hover{ background:var(--accent-bright); }
 
+#resultadoBuscaF, #resultadoBuscaS{
+  position:relative;
+  padding-top:4px;
+}
+.fecharBusca{
+  position:absolute;
+  top:8px;
+  right:0;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:18px;
+  line-height:1;
+  color:var(--text-soft);
+  cursor:pointer;
+  padding:4px 6px;
+}
+.fecharBusca:hover{ color:var(--ink); }
+
 .btnVoltar{
   display:block;
   margin:20px auto 30px;
@@ -2750,7 +2767,7 @@ async function buscarInteligente(sufixo) {
 
   if (!input) { resultado.innerHTML = ''; return; }
 
-  resultado.innerHTML = '<p style="font-size:12px; color:var(--text-soft); text-align:left; margin-top:10px;">Buscando...</p>';
+  resultado.innerHTML = `<span class="fecharBusca" onclick="limparBusca('${sufixo}')">×</span><p style="font-size:12px; color:var(--text-soft); text-align:left; margin-top:10px;">Buscando...</p>`;
 
   const termo = normalizarTexto(input);
   const hoje = new Date();
@@ -2861,9 +2878,6 @@ async function buscarInteligente(sufixo) {
   const perguntaFrenteMaisAtrasada = termo.includes('mais atrasad');
   const perguntaFrentesAtrasadas = !perguntaFrenteMaisAtrasada && termo.includes('atrasad');
   const perguntaProgressoGeral = termo.includes('progresso') || termo.includes('percentual');
-  const perguntaNaoPrevisto = termo.includes('nao previsto') || termo.includes('sem previsto') ||
-    termo.includes('fora do planejado') || termo.includes('nao estava previsto') ||
-    termo.includes('nao planejado') || (termo.includes('nao') && termo.includes('previa'));
   const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
 
   if (perguntaUltimaDetonacao) {
@@ -2930,12 +2944,6 @@ async function buscarInteligente(sufixo) {
   } else if (perguntaProgressoGeral) {
     html = await montarRespostaProgressoGeral(termo);
 
-  } else if (perguntaNaoPrevisto) {
-    const snap = await db.collection('ProximasSemanas').get();
-    const frentes = [];
-    snap.forEach(doc => frentes.push(doc.data()));
-    html = montarRespostaNaoPrevisto(frentes);
-
   } else if (termo.includes('hoje')) {
     const snap = await db.collection('ProximasSemanas').get();
     const frentes = [];
@@ -2999,13 +3007,17 @@ async function buscarInteligente(sufixo) {
         · "quais frentes estão atrasadas"<br>
         · "qual o progresso geral do Apêndice"<br>
         · "o que está previsto para hoje"<br>
-        · "tem algo fora do planejado"<br>
         · ou o nome de uma frente, tipo "Estação Sul"
       </p>`;
     }
   }
 
-  resultado.innerHTML = html;
+  resultado.innerHTML = `<span class="fecharBusca" onclick="limparBusca('${sufixo}')">×</span>` + html;
+}
+
+function limparBusca(sufixo) {
+  document.getElementById('inputBusca' + sufixo).value = '';
+  document.getElementById('resultadoBusca' + sufixo).innerHTML = '';
 }
 
 // ✅ "quais detonações tivemos [ontem/hoje/em dd/mm]" — cruza a aba de
@@ -3107,8 +3119,9 @@ async function montarRespostaContagemDetonacoes(periodo) {
   return html;
 }
 
-// ✅ "quantos fogos tivemos ao todo" — contagem total histórica, por
-// número de fogo distinto (não por linha)
+// ✅ "quantos fogos tivemos ao todo" — o total é o MAIOR número de
+// evento registrado (os fogos são numerados em sequência), não a
+// contagem de linhas/entradas
 async function montarRespostaTotalFogos() {
   let eventos = [];
   try {
@@ -3120,9 +3133,9 @@ async function montarRespostaTotalFogos() {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação cadastrada.</p>`;
   }
 
-  const fogosUnicos = new Set(eventos.map(e => e.Evento));
+  const maiorFogo = Math.max(...eventos.map(e => Number(e.Evento) || 0));
 
-  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${fogosUnicos.size}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${maiorFogo}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
 }
 
 // ✅ "qual a média de avanço diário do [frente]" — média só dos dias
