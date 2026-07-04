@@ -729,9 +729,11 @@
 }
 
 .logoLogin {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  height: 32px;
+  width: auto;
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 4px 8px;
 }
 
 .logoTextoLogin {
@@ -2784,6 +2786,28 @@ async function buscarInteligente(sufixo) {
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       return { tipo: 'intervalo', inicio, fim: hoje, rotulo: 'esse mês' };
     }
+    if (termo.includes('mes passado')) {
+      const mesAtual = hoje.getMonth();
+      const anoRef = mesAtual === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+      const mesRef = mesAtual === 0 ? 11 : mesAtual - 1;
+      const inicio = new Date(anoRef, mesRef, 1);
+      const fim = new Date(anoRef, mesRef + 1, 0);
+      return { tipo: 'intervalo', inicio, fim, rotulo: 'mês passado' };
+    }
+    if (termo.includes('ano passado')) {
+      const anoRef = hoje.getFullYear() - 1;
+      const inicio = new Date(anoRef, 0, 1);
+      const fim = new Date(anoRef, 11, 31);
+      return { tipo: 'intervalo', inicio, fim, rotulo: 'ano passado' };
+    }
+    const MESES_NOMES = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    for (let i = 0; i < MESES_NOMES.length; i++) {
+      if (termo.includes(MESES_NOMES[i])) {
+        const inicio = new Date(hoje.getFullYear(), i, 1);
+        const fim = new Date(hoje.getFullYear(), i + 1, 0);
+        return { tipo: 'intervalo', inicio, fim, rotulo: `em ${MESES_NOMES[i]}` };
+      }
+    }
     if (termo.includes('ontem')) {
       const ontem = new Date(hoje);
       ontem.setDate(ontem.getDate() - 1);
@@ -3072,14 +3096,19 @@ async function montarRespostaContagemDetonacoes(periodo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações registradas em ${periodo.rotulo}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Tivemos <b>${noIntervalo.length}</b> detonação(ões) em ${periodo.rotulo}:</div>`;
+  // ✅ conta por número de fogo distinto, não por linha (o mesmo fogo
+  // pode ter mais de um registro)
+  const fogosUnicos = new Set(noIntervalo.map(e => e.Evento));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Tivemos <b>${fogosUnicos.size}</b> detonação(ões) em ${periodo.rotulo}:</div>`;
   noIntervalo.forEach(e => {
     html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
   });
   return html;
 }
 
-// ✅ "quantos fogos tivemos ao todo" — contagem total histórica, sem filtro de período
+// ✅ "quantos fogos tivemos ao todo" — contagem total histórica, por
+// número de fogo distinto (não por linha)
 async function montarRespostaTotalFogos() {
   let eventos = [];
   try {
@@ -3091,7 +3120,9 @@ async function montarRespostaTotalFogos() {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação cadastrada.</p>`;
   }
 
-  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${eventos.length}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
+  const fogosUnicos = new Set(eventos.map(e => e.Evento));
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${fogosUnicos.size}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
 }
 
 // ✅ "qual a média de avanço diário do [frente]" — média só dos dias
