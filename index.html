@@ -2970,6 +2970,18 @@ async function buscarInteligente(sufixo) {
     const mes = matchData[2].padStart(2, '0');
     html = montarRespostaPorData(frentes, `${dia}/${mes}`, `o dia ${dia}/${mes}`);
 
+  } else if (termo.includes('semana passada')) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+    html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
+
+  } else if (termo.includes('essa semana') || termo.includes('esta semana')) {
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+    html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
+
   } else if (termo.includes('semana')) {
     const snap = await db.collection('ProximasSemanas').get();
     const frentes = [];
@@ -3797,6 +3809,38 @@ function montarRespostaSemana(frentes, hoje) {
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Começando nos próximos 7 dias:</div>`;
   itens.forEach(i => {
     html += `<div class="subtitulo2">${i.frente} — ${i.tarefa} (início ${i.inicio}): <b>${i.total}${i.unidade}</b> previstos</div>`;
+  });
+  return html;
+}
+
+// ✅ pra "essa semana" e "semana passada" — olha o dia-a-dia de verdade
+// (Diario) dentro do intervalo, não só a data de início da tarefa
+function montarRespostaPeriodoSemanas(frentes, periodo) {
+  const itens = [];
+  frentes.forEach(f => {
+    (f.Tarefas || []).forEach(t => {
+      (t.Diario || []).forEach(d => {
+        const data = parseDiaMes(d.Data);
+        if (data && data >= periodo.inicio && data <= periodo.fim) {
+          itens.push({
+            frente: formatarTitulo(f.Nome), tarefa: t.Nome,
+            data: d.Data, valor: d.Valor, unidade: t.Unidade,
+          });
+        }
+      });
+    });
+  });
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto para ${periodo.rotulo}.</p>`;
+  }
+
+  // ✅ ordena por data pra ficar mais fácil de ler
+  itens.sort((a, b) => parseDiaMes(a.data) - parseDiaMes(b.data));
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Previsto para ${periodo.rotulo}:</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i.data} — ${i.frente} — ${i.tarefa}: <b>${i.valor}${i.unidade}</b></div>`;
   });
   return html;
 }
