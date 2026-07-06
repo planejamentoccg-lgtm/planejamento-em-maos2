@@ -3988,15 +3988,20 @@ async function montarRespostaUltimaDetonacao(termo) {
       return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação cadastrada.</p>`;
     }
 
-    let melhorGeral = null;
+    let melhorDataGeral = null;
     eventos.forEach(e => {
       const d = parseDiaMes(e.Data);
-      if (d && (!melhorGeral || d > melhorGeral.dataObj)) {
-        melhorGeral = { dataObj: d, ...e };
-      }
+      if (d && (!melhorDataGeral || d > melhorDataGeral)) melhorDataGeral = d;
     });
 
-    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Última detonação registrada: <b>${melhorGeral.Data}</b> — Fogo ${melhorGeral.Evento}: ${melhorGeral.Descricao || '-'}</div>`;
+    const melhorDataGeralStr = formatarDataCurta(melhorDataGeral);
+    const fogosDoDiaGeral = eventos.filter(e => e.Data === melhorDataGeralStr);
+
+    let htmlGeral = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação registrada: <b>${melhorDataGeralStr}</b></div>`;
+    fogosDoDiaGeral.forEach(e => {
+      htmlGeral += `<div class="subtitulo2">Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+    });
+    return htmlGeral;
   }
 
   // ✅ com frente específica: usa a SISMOGRAFIA (Config/Detonacoes) +
@@ -4015,24 +4020,34 @@ async function montarRespostaUltimaDetonacao(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei nenhuma correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)} — sem isso não dá pra saber com segurança qual detonação da sismografia é dela. Confira a aba "Correlações - Frentes x Det." na planilha.</p>`;
   }
 
-  let melhorEvento = null;
+  // ✅ acha a data mais recente com detonação da frente...
+  let melhorData = null;
   eventos.forEach(e => {
     if (descricaoBateComVariantes(e.Descricao || '', variantes)) {
       const d = parseDiaMes(e.Data);
-      if (d && (!melhorEvento || d > melhorEvento.dataObj)) {
-        melhorEvento = { dataObj: d, ...e };
-      }
+      if (d && (!melhorData || d > melhorData)) melhorData = d;
     }
   });
 
   const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
   const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
-  if (!melhorEvento) {
+  if (!melhorData) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação de ${formatarTitulo(frente.Nome)} na sismografia, com as variações de nome cadastradas.</p>${notaData}`;
   }
 
-  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorEvento.Data}</b> — Fogo ${melhorEvento.Evento}: ${melhorEvento.Descricao || '-'}</div>${notaData}`;
+  // ...e junta TODOS os fogos daquele dia (pode ter tido mais de um)
+  const melhorDataStr = formatarDataCurta(melhorData);
+  const fogosDoDia = eventos.filter(e =>
+    e.Data === melhorDataStr && descricaoBateComVariantes(e.Descricao || '', variantes)
+  );
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorDataStr}</b></div>`;
+  fogosDoDia.forEach(e => {
+    html += `<div class="subtitulo2">Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+  });
+  html += notaData;
+  return html;
 }
 
 // ✅ "qual o comprimento/total de [frente]" — usa a aba Planejamento em
