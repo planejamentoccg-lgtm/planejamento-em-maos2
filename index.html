@@ -1238,7 +1238,7 @@ body.tema-escuro .iconeIndicador{
   border:1px solid var(--line);
   border-radius:6px;
   margin-top:4px;
-  max-height:240px;
+  max-height:380px;
   overflow-y:auto;
   box-shadow:0 6px 20px rgba(0,0,0,0.15);
 }
@@ -1253,16 +1253,73 @@ body.tema-escuro .iconeIndicador{
 }
 .sugestaoItem:last-child{ border-bottom:none; }
 .sugestaoItem:hover{ background:var(--paper-2); }
-.inputDataSugestao{
-  width:100%;
-  padding:9px 10px;
+
+.calendarioPopup{ padding:14px; }
+.calendarioAbas{ display:flex; gap:8px; margin-bottom:14px; }
+.calendarioAba{
+  flex:1;
   border:1px solid var(--line);
-  border-radius:4px;
-  background:var(--paper);
-  color:var(--ink);
-  font-family:'IBM Plex Sans', sans-serif;
-  font-size:13px;
+  border-radius:8px;
+  padding:8px 12px;
+  text-align:left;
 }
+.calendarioAba.ativa{ border-color:var(--accent); background:var(--paper-2); }
+.calendarioAbaLabel{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--text-soft);
+}
+.calendarioAbaData{ font-size:14px; color:var(--ink); margin-top:2px; }
+.calendarioNav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+.calendarioMesAno{
+  font-family:'Archivo', sans-serif;
+  font-size:13.5px;
+  font-weight:700;
+  color:var(--ink);
+}
+.calendarioSeta{
+  cursor:pointer;
+  padding:4px 12px;
+  font-size:16px;
+  color:var(--ink);
+  border:1px solid var(--line);
+  border-radius:20px;
+  user-select:none;
+}
+.calendarioSeta:hover{ background:var(--paper-2); }
+.calendarioSemana{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  text-align:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:9.5px;
+  color:var(--text-soft);
+  margin-bottom:6px;
+}
+.calendarioGrade{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:2px;
+}
+.calDia, .calDiaVazio{
+  text-align:center;
+  padding:9px 0;
+  font-size:12.5px;
+  border-radius:4px;
+  cursor:pointer;
+  color:var(--ink);
+}
+.calDiaVazio{ cursor:default; }
+.calDia:hover{ background:var(--paper-2); }
+.calDiaSelecionado{ background:var(--accent); color:#fff; font-weight:600; }
+.calDiaIntervalo{ background:var(--paper-2); }
 
 #resultadoBuscaF, #resultadoBuscaS{
   position:relative;
@@ -2836,14 +2893,14 @@ function calcularMesCompleto(hoje, deslocamentoMeses) {
 // completar sozinho; os com "dia  " (dois espaços) mostram um seletor
 // de data, pra não precisar digitar nem apagar nada
 const SUGESTOES_BUSCA_F = [
-  'Quais detonações houveram dia  ',
+  'Quais detonações houveram dia [data]',
   'Quantas detonações houveram mês passado',
   'Quantas detonações houveram semana passada',
   'Quantas detonações houveram ao todo',
-  'Quantas detonações houveram do dia  até o dia  ',
-  'Quando foi a última detonação da frente ',
-  'Quanto de avanço tem a frente ',
-  'Em qual PK está a frente ',
+  'Quantas detonações houveram do dia [data] até o dia [data]',
+  'Quando foi a última detonação da frente [frente]',
+  'Quanto de avanço tem a frente [frente]',
+  'Em qual PK está a frente [frente]',
 ];
 
 // ✅ perguntas sugeridas na tela de PRÓXIMAS SEMANAS
@@ -2852,10 +2909,11 @@ const SUGESTOES_BUSCA_S = [
   'O que está previsto para esta semana',
   'O que está previsto para a próxima semana',
   'O que está previsto para o próximo mês',
-  'O que está previsto do dia  até o dia  ',
+  'O que está previsto do dia [data] até o dia [data]',
 ];
 
 let timeoutsSugestoes = {};
+let calendarioEstado = {};
 
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
@@ -2873,27 +2931,30 @@ function mostrarSugestoes(sufixo) {
   }
 
   container.innerHTML = filtradas.map(s =>
-    `<div class="sugestaoItem" data-completo="${s.replace(/"/g, '&quot;')}" onmousedown="selecionarSugestao('${sufixo}', this)">${s.trim()}</div>`
+    `<div class="sugestaoItem" data-completo="${s.replace(/"/g, '&quot;')}" onmousedown="selecionarSugestao('${sufixo}', this)">${s}</div>`
   ).join('');
   container.style.display = 'block';
 }
 
+// ✅ [frente] mostra a lista de frentes acompanhadas; [data] abre o
+// calendário (uma ou duas datas, dependendo de quantas aparecerem)
 async function selecionarSugestao(sufixo, el) {
   const textoCompleto = el.dataset.completo;
   const input = document.getElementById('inputBusca' + sufixo);
   input.value = textoCompleto;
 
-  if (/frente\s*$/.test(textoCompleto)) {
+  if (textoCompleto.includes('[frente]')) {
     await mostrarListaFrentes(sufixo);
-  } else if (/dia\s{2}/.test(textoCompleto)) {
-    mostrarSeletorData(sufixo);
+  } else if (textoCompleto.includes('[data]')) {
+    const qtdDatas = (textoCompleto.match(/\[data\]/g) || []).length;
+    abrirCalendario(sufixo, qtdDatas > 1);
   } else {
     document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   }
 }
 
-// ✅ depois de escolher um template terminado em "frente ", mostra as
-// frentes que já estão sendo acompanhadas, pra completar com um clique
+// ✅ depois de escolher um template com [frente], mostra as frentes que
+// já estão sendo acompanhadas, pra completar com um clique
 async function mostrarListaFrentes(sufixo) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
   const container = document.getElementById('sugestoesBusca' + sufixo);
@@ -2922,42 +2983,134 @@ async function mostrarListaFrentes(sufixo) {
 function completarComFrente(sufixo, el) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
   const input = document.getElementById('inputBusca' + sufixo);
-  input.value = input.value.trim() + ' ' + el.textContent;
+  input.value = input.value.replace('[frente]', el.textContent);
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   input.focus();
 }
 
-// ✅ depois de escolher um template com "dia  " (data em branco), mostra
-// um seletor de data nativo (tipo os de reserva de viagem) — se a
-// pergunta tiver duas datas, vai pedindo uma de cada vez
-function mostrarSeletorData(sufixo) {
+// ---------------------------------------------------------------------
+// CALENDÁRIO — igual ao de reserva de viagem: mostra o mês, clica no
+// primeiro dia pra marcar o início, clica de novo (numa data depois)
+// pra marcar o fim (se a pergunta pedir duas datas)
+// ---------------------------------------------------------------------
+const MESES_NOME_CAL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS_SEMANA_CAL = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+
+function abrirCalendario(sufixo, doisCampos) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const hoje = new Date();
+  calendarioEstado[sufixo] = {
+    mesAtual: hoje.getMonth(),
+    anoAtual: hoje.getFullYear(),
+    inicio: null,
+    fim: null,
+    doisCampos,
+  };
+  renderizarCalendario(sufixo);
+}
+
+function renderizarCalendario(sufixo) {
+  const estado = calendarioEstado[sufixo];
   const container = document.getElementById('sugestoesBusca' + sufixo);
+
+  const primeiroDiaMes = new Date(estado.anoAtual, estado.mesAtual, 1);
+  const diaSemanaInicio = primeiroDiaMes.getDay();
+  const diasNoMes = new Date(estado.anoAtual, estado.mesAtual + 1, 0).getDate();
+
+  let celulas = '';
+  for (let i = 0; i < diaSemanaInicio; i++) {
+    celulas += `<div class="calDiaVazio"></div>`;
+  }
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const dataAtual = new Date(estado.anoAtual, estado.mesAtual, dia);
+    let classe = 'calDia';
+    if (estado.inicio && dataAtual.getTime() === estado.inicio.getTime()) classe += ' calDiaSelecionado';
+    if (estado.fim && dataAtual.getTime() === estado.fim.getTime()) classe += ' calDiaSelecionado';
+    if (estado.inicio && estado.fim && dataAtual > estado.inicio && dataAtual < estado.fim) classe += ' calDiaIntervalo';
+    celulas += `<div class="${classe}" onmousedown="selecionarDiaCalendario('${sufixo}', ${dia})">${dia}</div>`;
+  }
+
+  const camposHtml = estado.doisCampos ? `
+    <div class="calendarioAbas">
+      <div class="calendarioAba ${!estado.fim ? 'ativa' : ''}">
+        <div class="calendarioAbaLabel">Início</div>
+        <div class="calendarioAbaData">${estado.inicio ? formatarDataCurta(estado.inicio) : '__/__'}</div>
+      </div>
+      <div class="calendarioAba ${estado.inicio && !estado.fim ? 'ativa' : ''}">
+        <div class="calendarioAbaLabel">Até</div>
+        <div class="calendarioAbaData">${estado.fim ? formatarDataCurta(estado.fim) : '__/__'}</div>
+      </div>
+    </div>
+  ` : '';
+
   container.innerHTML = `
-    <div style="padding:12px 14px;">
-      <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">Escolha a data:</div>
-      <input type="date" class="inputDataSugestao" onchange="preencherDataNaBusca('${sufixo}', this)">
+    <div class="calendarioPopup">
+      ${camposHtml}
+      <div class="calendarioNav">
+        <span class="calendarioSeta" onmousedown="mudarMesCalendario('${sufixo}', -1)">‹</span>
+        <span class="calendarioMesAno">${MESES_NOME_CAL[estado.mesAtual]} ${estado.anoAtual}</span>
+        <span class="calendarioSeta" onmousedown="mudarMesCalendario('${sufixo}', 1)">›</span>
+      </div>
+      <div class="calendarioSemana">
+        ${DIAS_SEMANA_CAL.map(d => `<div class="calDiaSemanaLabel">${d}</div>`).join('')}
+      </div>
+      <div class="calendarioGrade">${celulas}</div>
     </div>
   `;
   container.style.display = 'block';
 }
 
-function preencherDataNaBusca(sufixo, inputData) {
-  if (!inputData.value) return;
+function mudarMesCalendario(sufixo, delta) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const estado = calendarioEstado[sufixo];
+  estado.mesAtual += delta;
+  if (estado.mesAtual < 0) { estado.mesAtual = 11; estado.anoAtual--; }
+  if (estado.mesAtual > 11) { estado.mesAtual = 0; estado.anoAtual++; }
+  renderizarCalendario(sufixo);
+}
 
-  const input = document.getElementById('inputBusca' + sufixo);
-  const partes = inputData.value.split('-'); // formato yyyy-mm-dd
-  const dataFormatada = `${partes[2]}/${partes[1]}`;
+function selecionarDiaCalendario(sufixo, dia) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const estado = calendarioEstado[sufixo];
+  const dataClicada = new Date(estado.anoAtual, estado.mesAtual, dia);
 
-  input.value = input.value.replace(/dia\s{2}/, `dia ${dataFormatada} `);
-
-  if (/dia\s{2}/.test(input.value)) {
-    mostrarSeletorData(sufixo); // ✅ ainda tem outra data em branco (intervalo) — continua
-  } else {
-    document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
-    input.focus();
+  if (!estado.doisCampos) {
+    preencherDataEscolhida(sufixo, dataClicada);
+    return;
   }
+
+  if (!estado.inicio || estado.fim) {
+    estado.inicio = dataClicada;
+    estado.fim = null;
+  } else if (dataClicada < estado.inicio) {
+    estado.inicio = dataClicada;
+    estado.fim = null;
+  } else {
+    estado.fim = dataClicada;
+  }
+
+  renderizarCalendario(sufixo);
+
+  if (estado.inicio && estado.fim) {
+    setTimeout(() => preencherIntervaloEscolhido(sufixo), 350);
+  }
+}
+
+function preencherDataEscolhida(sufixo, data) {
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value.replace('[data]', formatarDataCurta(data));
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
+}
+
+function preencherIntervaloEscolhido(sufixo) {
+  const estado = calendarioEstado[sufixo];
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value
+    .replace('[data]', formatarDataCurta(estado.inicio))
+    .replace('[data]', formatarDataCurta(estado.fim));
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
 }
 
 function esconderSugestoes(sufixo) {
@@ -3084,15 +3237,19 @@ async function buscarInteligente(sufixo) {
   const perguntaMediaDiaria = termo.includes('media');
   const perguntaMaiorAvanco = termo.includes('maior avanco') || (termo.includes('maior') && termo.includes('avanco'));
   const perguntaDiasSemAvanco = termo.includes('sem avanco') || termo.includes('dias parados') || termo.includes('dias parado');
-  const perguntaAvancoTotalGeral = !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
-    termo.includes('avanco') && termo.includes('total');
-  const perguntaTotalAvancoPeriodo = !perguntaAvancoTotalGeral && !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
+  const perguntaTotalAvancoPeriodo = !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
     termo.includes('avanco') && termo.includes('quanto') &&
     (termo.includes('mes') || termo.includes('semana') || termo.includes('ano') || termo.includes('dias'));
   const perguntaObservacaoDia = termo.includes('o que aconteceu') || termo.includes('aconteceu em') || termo.includes('aconteceu na') || termo.includes('aconteceu no');
-  const perguntaAvancoData = !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral && !perguntaMediaDiaria &&
+  const perguntaAvancoData = !perguntaTotalAvancoPeriodo && !perguntaMediaDiaria &&
     !perguntaMaiorAvanco && !perguntaDiasSemAvanco && !perguntaObservacaoDia &&
     termo.includes('avanco') && extrairPeriodo();
+  // ✅ vira o "padrão" de qualquer pergunta de avanço que não se encaixe
+  // em nenhum caso mais específico acima — cobre frases tipo "quanto de
+  // avanço tem a frente X" (sem período nem "total" explícito)
+  const perguntaAvancoTotalGeral = !perguntaMediaDiaria && !perguntaMaiorAvanco && !perguntaDiasSemAvanco &&
+    !perguntaTotalAvancoPeriodo && !perguntaAvancoData &&
+    termo.includes('avanco');
   const perguntaQuantidadeTotalTarefa = termo.includes('quantidade total') || termo.includes('total geral');
   const perguntaComprimentoTotal = !perguntaQuantidadeTotalTarefa && (termo.includes('comprimento') || termo.includes('quanto mede') ||
     (termo.includes('total') && !perguntaAvancoData && !perguntaTotalAvancoPeriodo && !perguntaAvancoTotalGeral));
