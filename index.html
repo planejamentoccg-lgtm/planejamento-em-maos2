@@ -1253,6 +1253,16 @@ body.tema-escuro .iconeIndicador{
 }
 .sugestaoItem:last-child{ border-bottom:none; }
 .sugestaoItem:hover{ background:var(--paper-2); }
+.inputDataSugestao{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:13px;
+}
 
 #resultadoBuscaF, #resultadoBuscaS{
   position:relative;
@@ -1949,21 +1959,23 @@ async function carregarProximasSemanas() {
     const tarefas = d.Tarefas || [];
     if (tarefas.length === 0) return;
 
-    // ✅ data de início/término agregada pro resumo do cartão: usa o
-    // dia-a-dia VISÍVEL de cada tarefa (não o Início/Término oficial da
-    // planilha) — senão a data do cartão fica muito antiga quando uma
-    // tarefa já não tem mais nada previsto nos dias recentes
+    // ✅ início: usa o dia-a-dia VISÍVEL (evita início muito antigo
+    // quando a tarefa já não tem mais nada previsto nos dias recentes).
+    // término: usa a data OFICIAL da planilha (D/E) — essa planilha só
+    // mostra algumas semanas do cronograma inteiro, então usar o
+    // dia-a-dia visível faria parecer que o trabalho termina antes do
+    // previsto de verdade
     let menorInicio = null, maiorTermino = null;
 
     tarefas.forEach(t => {
       const dias = t.Diario || [];
-      if (dias.length === 0) return;
+      if (dias.length > 0) {
+        const dataInicio = parseDiaMes(dias[0].Data);
+        if (dataInicio && (!menorInicio || dataInicio < menorInicio)) menorInicio = dataInicio;
+      }
 
-      const dataInicio = parseDiaMes(dias[0].Data);
-      const dataTermino = parseDiaMes(dias[dias.length - 1].Data);
-
-      if (dataInicio && (!menorInicio || dataInicio < menorInicio)) menorInicio = dataInicio;
-      if (dataTermino && (!maiorTermino || dataTermino > maiorTermino)) maiorTermino = dataTermino;
+      const dataTerminoOficial = parseDiaMes(t.TerminoPrevisto);
+      if (dataTerminoOficial && (!maiorTermino || dataTerminoOficial > maiorTermino)) maiorTermino = dataTerminoOficial;
     });
 
     frentesSemanas.push({ dados: d, tarefas, menorInicio, maiorTermino });
@@ -2819,24 +2831,31 @@ function calcularMesCompleto(hoje, deslocamentoMeses) {
 // ✅ lista de perguntas de exemplo — aparece ao clicar na caixa de busca
 // e vai filtrando conforme a pessoa digita
 // ✅ perguntas sugeridas na tela de FRENTES DE SERVIÇO
+// ✅ perguntas sugeridas na tela de FRENTES DE SERVIÇO — os templates
+// terminados em "frente " (com espaço) mostram uma lista de frentes pra
+// completar sozinho; os com "dia  " (dois espaços) mostram um seletor
+// de data, pra não precisar digitar nem apagar nada
 const SUGESTOES_BUSCA_F = [
-  'quantas detonações houveram dia 05/07',
-  'quantas detonações houveram mês passado',
-  'quantas detonações houveram semana passada',
-  'quantas detonações houveram ao todo',
-  'quando foi a última detonação da frente Apêndice',
-  'quando termina a frente Apêndice',
-  'quanto de avanço tem a frente Apêndice',
-  'em qual PK está a frente Apêndice',
+  'Quais detonações houveram dia  ',
+  'Quantas detonações houveram mês passado',
+  'Quantas detonações houveram semana passada',
+  'Quantas detonações houveram ao todo',
+  'Quantas detonações houveram do dia  até o dia  ',
+  'Quando foi a última detonação da frente ',
+  'Quanto de avanço tem a frente ',
+  'Em qual PK está a frente ',
 ];
 
 // ✅ perguntas sugeridas na tela de PRÓXIMAS SEMANAS
 const SUGESTOES_BUSCA_S = [
-  'o que está previsto para hoje',
-  'o que está previsto para esta semana',
-  'o que está previsto para a próxima semana',
-  'o que está previsto para o próximo mês',
+  'O que está previsto para hoje',
+  'O que está previsto para esta semana',
+  'O que está previsto para a próxima semana',
+  'O que está previsto para o próximo mês',
+  'O que está previsto do dia  até o dia  ',
 ];
+
+let timeoutsSugestoes = {};
 
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
@@ -2854,20 +2873,97 @@ function mostrarSugestoes(sufixo) {
   }
 
   container.innerHTML = filtradas.map(s =>
-    `<div class="sugestaoItem" onmousedown="selecionarSugestao('${sufixo}', this)">${s}</div>`
+    `<div class="sugestaoItem" data-completo="${s.replace(/"/g, '&quot;')}" onmousedown="selecionarSugestao('${sufixo}', this)">${s.trim()}</div>`
   ).join('');
   container.style.display = 'block';
 }
 
-function selecionarSugestao(sufixo, el) {
-  document.getElementById('inputBusca' + sufixo).value = el.textContent;
+async function selecionarSugestao(sufixo, el) {
+  const textoCompleto = el.dataset.completo;
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = textoCompleto;
+
+  if (/frente\s*$/.test(textoCompleto)) {
+    await mostrarListaFrentes(sufixo);
+  } else if (/dia\s{2}/.test(textoCompleto)) {
+    mostrarSeletorData(sufixo);
+  } else {
+    document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  }
+}
+
+// ✅ depois de escolher um template terminado em "frente ", mostra as
+// frentes que já estão sendo acompanhadas, pra completar com um clique
+async function mostrarListaFrentes(sufixo) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const container = document.getElementById('sugestoesBusca' + sufixo);
+  container.innerHTML = `<div style="padding:10px 14px; font-size:11.5px; color:var(--text-soft);">Carregando frentes...</div>`;
+  container.style.display = 'block';
+
+  let nomes = [];
+  try {
+    const snap = await db.collection('Frentes').get();
+    snap.forEach(doc => nomes.push(formatarTitulo(doc.data().Nome)));
+  } catch (e) { /* ignora */ }
+
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+
+  if (nomes.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = nomes.map(n =>
+    `<div class="sugestaoItem" onmousedown="completarComFrente('${sufixo}', this)">${n}</div>`
+  ).join('');
+  container.style.display = 'block';
+}
+
+function completarComFrente(sufixo, el) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value.trim() + ' ' + el.textContent;
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
+}
+
+// ✅ depois de escolher um template com "dia  " (data em branco), mostra
+// um seletor de data nativo (tipo os de reserva de viagem) — se a
+// pergunta tiver duas datas, vai pedindo uma de cada vez
+function mostrarSeletorData(sufixo) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const container = document.getElementById('sugestoesBusca' + sufixo);
+  container.innerHTML = `
+    <div style="padding:12px 14px;">
+      <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">Escolha a data:</div>
+      <input type="date" class="inputDataSugestao" onchange="preencherDataNaBusca('${sufixo}', this)">
+    </div>
+  `;
+  container.style.display = 'block';
+}
+
+function preencherDataNaBusca(sufixo, inputData) {
+  if (!inputData.value) return;
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+
+  const input = document.getElementById('inputBusca' + sufixo);
+  const partes = inputData.value.split('-'); // formato yyyy-mm-dd
+  const dataFormatada = `${partes[2]}/${partes[1]}`;
+
+  input.value = input.value.replace(/dia\s{2}/, `dia ${dataFormatada} `);
+
+  if (/dia\s{2}/.test(input.value)) {
+    mostrarSeletorData(sufixo); // ✅ ainda tem outra data em branco (intervalo) — continua
+  } else {
+    document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+    input.focus();
+  }
 }
 
 function esconderSugestoes(sufixo) {
   // ✅ espera um pouco pra dar tempo do "mousedown" do clique registrar
   // antes do "blur" esconder a lista (senão o clique nunca funciona)
-  setTimeout(() => {
+  timeoutsSugestoes[sufixo] = setTimeout(() => {
     const el = document.getElementById('sugestoesBusca' + sufixo);
     if (el) el.style.display = 'none';
   }, 150);
@@ -3293,6 +3389,18 @@ function descricaoBateComVariantes(descricaoEvento, variantes) {
 
 // ✅ "quantas detonações tivemos essa semana/esse mês/esse ano" —
 // conta os eventos dentro do período, sem precisar de uma frente
+// ✅ acha a data mais recente preenchida na sismografia — usado pra
+// avisar até quando os dados estão atualizados, já que a planilha pode
+// ainda não ter os dias mais recentes lançados
+function ultimaDataPreenchidaDetonacoes(eventos) {
+  let maisRecente = null;
+  eventos.forEach(e => {
+    const d = parseDiaMes(e.Data);
+    if (d && (!maisRecente || d > maisRecente)) maisRecente = d;
+  });
+  return maisRecente ? formatarDataCurta(maisRecente) : null;
+}
+
 async function montarRespostaContagemDetonacoes(periodo) {
   let eventos = [];
   try {
@@ -3307,9 +3415,11 @@ async function montarRespostaContagemDetonacoes(periodo) {
   }
 
   const noIntervalo = eventos.filter(e => noPeriodo(e.Data));
+  const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
+  const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
   if (noIntervalo.length === 0) {
-    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações registradas em ${periodo.rotulo}.</p>`;
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações registradas em ${periodo.rotulo}.</p>${notaData}`;
   }
 
   // ✅ conta por número de fogo distinto, não por linha (o mesmo fogo
@@ -3320,6 +3430,7 @@ async function montarRespostaContagemDetonacoes(periodo) {
   noIntervalo.forEach(e => {
     html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
   });
+  html += notaData;
   return html;
 }
 
@@ -3338,8 +3449,10 @@ async function montarRespostaTotalFogos() {
   }
 
   const maiorFogo = Math.max(...eventos.map(e => Number(e.Evento) || 0));
+  const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
+  const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
-  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${maiorFogo}</b> detonação(ões) ao todo, desde o início do registro.</div>`;
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${maiorFogo}</b> detonação(ões) ao todo, desde o início do registro.${notaData}</div>`;
 }
 
 // ✅ "qual a média de avanço diário do [frente]" — média só dos dias
@@ -3742,8 +3855,17 @@ async function montarRespostaUltimaDetonacao(termo) {
   const fogos = await buscarFogosNaData(melhor.dataStr);
   const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}${f.Descricao ? ' — ' + f.Descricao : ''}`).join('; ') : '';
 
+  let eventosGerais = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventosGerais = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+  const ultimaData = ultimaDataPreenchidaDetonacoes(eventosGerais);
+  const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
+
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhor.dataStr}</b></div>`;
   html += `<div class="subtitulo2">${melhor.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${melhor.avanco}m</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
+  html += notaData;
   return html;
 }
 
