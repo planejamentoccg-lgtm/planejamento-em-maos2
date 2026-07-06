@@ -1949,13 +1949,18 @@ async function carregarProximasSemanas() {
     const tarefas = d.Tarefas || [];
     if (tarefas.length === 0) return;
 
-    // ✅ data de início/término agregada: a mais cedo e a mais tarde
-    // entre TODAS as tarefas da frente (não só uma)
+    // ✅ data de início/término agregada pro resumo do cartão: usa o
+    // dia-a-dia VISÍVEL de cada tarefa (não o Início/Término oficial da
+    // planilha) — senão a data do cartão fica muito antiga quando uma
+    // tarefa já não tem mais nada previsto nos dias recentes
     let menorInicio = null, maiorTermino = null;
 
     tarefas.forEach(t => {
-      const dataInicio = parseDiaMes(t.InicioPrevisto);
-      const dataTermino = parseDiaMes(t.TerminoPrevisto) || dataInicio;
+      const dias = t.Diario || [];
+      if (dias.length === 0) return;
+
+      const dataInicio = parseDiaMes(dias[0].Data);
+      const dataTermino = parseDiaMes(dias[dias.length - 1].Data);
 
       if (dataInicio && (!menorInicio || dataInicio < menorInicio)) menorInicio = dataInicio;
       if (dataTermino && (!maiorTermino || dataTermino > maiorTermino)) maiorTermino = dataTermino;
@@ -2802,43 +2807,46 @@ function calcularSemanaCompleta(hoje, deslocamentoSemanas) {
   return { inicio: segunda, fim: sabado };
 }
 
+// ✅ 1º ao último dia de um mês — deslocamento 0 = mês atual, 1 = mês
+// que vem. Mesma ideia da semana completa, mas pra "o que está
+// previsto pro próximo mês".
+function calcularMesCompleto(hoje, deslocamentoMeses) {
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + deslocamentoMeses, 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth() + deslocamentoMeses + 1, 0);
+  return { inicio, fim };
+}
+
 // ✅ lista de perguntas de exemplo — aparece ao clicar na caixa de busca
 // e vai filtrando conforme a pessoa digita
-const SUGESTOES_BUSCA = [
-  'quais detonações tivemos ontem',
-  'quantas detonações tivemos essa semana',
-  'quantas detonações tivemos mês passado',
-  'quantos fogos tivemos ao todo',
-  'detonou o Apêndice ontem?',
-  'quando foi a última detonação do Apêndice',
-  'quando termina o Apêndice',
-  'qual avanço tivemos na SSR 04 ontem',
-  'quais avanços tivemos nos últimos 3 dias',
-  'quanto de avanço tivemos esse mês no Apêndice',
-  'qual o avanço total do Apêndice até agora',
-  'qual a média de avanço diário do Apêndice',
-  'em qual dia tivemos o maior avanço',
-  'quantos dias sem avanço tivemos essa semana',
-  'o que aconteceu no Apêndice ontem',
-  'tem alguma observação no Apêndice',
-  'em qual PK estamos no Apêndice',
-  'qual o total do Apêndice',
-  'quais frentes estão atrasadas',
-  'qual o progresso geral do Apêndice',
+// ✅ perguntas sugeridas na tela de FRENTES DE SERVIÇO
+const SUGESTOES_BUSCA_F = [
+  'quantas detonações houveram dia 05/07',
+  'quantas detonações houveram mês passado',
+  'quantas detonações houveram semana passada',
+  'quantas detonações houveram ao todo',
+  'quando foi a última detonação da frente Apêndice',
+  'quando termina a frente Apêndice',
+  'quanto de avanço tem a frente Apêndice',
+  'em qual PK está a frente Apêndice',
+];
+
+// ✅ perguntas sugeridas na tela de PRÓXIMAS SEMANAS
+const SUGESTOES_BUSCA_S = [
   'o que está previsto para hoje',
-  'o que está previsto para essa semana',
-  'o que está previsto para a semana que vem',
-  'o que está previsto do dia 06/07 até o dia 08/07',
+  'o que está previsto para esta semana',
+  'o que está previsto para a próxima semana',
+  'o que está previsto para o próximo mês',
 ];
 
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
   const container = document.getElementById('sugestoesBusca' + sufixo);
+  const lista = sufixo === 'F' ? SUGESTOES_BUSCA_F : SUGESTOES_BUSCA_S;
   const termo = normalizarTexto(input.value.trim());
 
   const filtradas = termo
-    ? SUGESTOES_BUSCA.filter(s => normalizarTexto(s).includes(termo))
-    : SUGESTOES_BUSCA;
+    ? lista.filter(s => normalizarTexto(s).includes(termo))
+    : lista;
 
   if (filtradas.length === 0) {
     container.style.display = 'none';
@@ -2875,6 +2883,7 @@ async function buscarInteligente(sufixo) {
 
   const termo = normalizarTexto(input);
   const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // ✅ zera a hora — sem isso, comparar "segunda às 14h" com "segunda à meia-noite" excluía a segunda-feira dos intervalos de semana
 
   // ✅ extrai um período mencionado na pergunta: um dia específico
   // ("ontem", "hoje", "amanhã", dd/mm) ou um intervalo ("semana passada")
@@ -3100,6 +3109,14 @@ async function buscarInteligente(sufixo) {
     const frentes = [];
     snap.forEach(doc => frentes.push(doc.data()));
     html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
+
+  } else if (termo.includes('mes que vem') || termo.includes('proximo mes') || termo.includes('próximo mês')) {
+    // ✅ próximo mês = 1º ao último dia do mês seguinte, completo
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+    const { inicio, fim } = calcularMesCompleto(hoje, 1);
+    html = montarRespostaPeriodoSemanas(frentes, { tipo: 'intervalo', inicio, fim, rotulo: 'o próximo mês' });
 
   } else if (termo.includes('semana que vem') || termo.includes('proxima semana') || termo.includes('próxima semana')) {
     // ✅ próxima semana = segunda a sábado da semana seguinte (não é
