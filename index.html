@@ -1874,7 +1874,7 @@ async function carregarFrentes() {
 
       <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaF" placeholder="Pergunte algo... ex: quais detonações tivemos ontem?"
-               oninput="mostrarSugestoes('F')" onfocus="mostrarSugestoes('F')" onblur="esconderSugestoes('F')"
+               oninput="mostrarSugestoes('F')" onfocus="mostrarSugestoes('F')"
                onkeypress="if(event.key==='Enter') buscarInteligente('F')">
         <button class="btnBusca" onclick="buscarInteligente('F')">Buscar</button>
         <div class="sugestoesBusca" id="sugestoesBuscaF" style="display:none;"></div>
@@ -1992,7 +1992,7 @@ async function carregarProximasSemanas() {
 
       <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
-               oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')" onblur="esconderSugestoes('S')"
+               oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')"
                onkeypress="if(event.key==='Enter') buscarInteligente('S')">
         <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
         <div class="sugestoesBusca" id="sugestoesBuscaS" style="display:none;"></div>
@@ -3113,14 +3113,20 @@ function preencherIntervaloEscolhido(sufixo) {
   input.focus();
 }
 
-function esconderSugestoes(sufixo) {
-  // ✅ espera um pouco pra dar tempo do "mousedown" do clique registrar
-  // antes do "blur" esconder a lista (senão o clique nunca funciona)
-  timeoutsSugestoes[sufixo] = setTimeout(() => {
-    const el = document.getElementById('sugestoesBusca' + sufixo);
-    if (el) el.style.display = 'none';
-  }, 150);
-}
+// ✅ fecha a lista/calendário só quando clicar de verdade fora da caixa
+// de busca inteira — muito mais confiável do que usar blur com timeout,
+// que estava fechando o calendário antes de dar tempo de escolher a data
+document.addEventListener('click', function(e) {
+  ['F', 'S'].forEach(sufixo => {
+    const input = document.getElementById('inputBusca' + sufixo);
+    if (!input) return;
+    const caixa = input.closest('.caixaBusca');
+    if (caixa && !caixa.contains(e.target)) {
+      const el = document.getElementById('sugestoesBusca' + sufixo);
+      if (el) el.style.display = 'none';
+    }
+  });
+});
 
 async function buscarInteligente(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo).value.trim();
@@ -3993,37 +3999,40 @@ async function montarRespostaUltimaDetonacao(termo) {
     return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Última detonação registrada: <b>${melhorGeral.Data}</b> — Fogo ${melhorGeral.Evento}: ${melhorGeral.Descricao || '-'}</div>`;
   }
 
-  let melhor = null;
-  (frente.AvancoPorEtapa || []).forEach(et => {
-    (et.Dias || []).forEach(dia => {
-      if (dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-        const d = parseDiaMes(dia.Data);
-        if (d && (!melhor || d > melhor.dataObj)) {
-          melhor = { dataObj: d, dataStr: dia.Data, etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes };
-        }
-      }
-    });
-  });
-
-  if (!melhor) {
-    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação registrada em ${formatarTitulo(frente.Nome)}.</p>`;
-  }
-
-  const fogos = await buscarFogosNaData(melhor.dataStr);
-  const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}${f.Descricao ? ' — ' + f.Descricao : ''}`).join('; ') : '';
-
-  let eventosGerais = [];
+  // ✅ com frente específica: usa a SISMOGRAFIA (Config/Detonacoes) +
+  // as CORRELAÇÕES de nome (que você cadastrou pra isso) como fonte de
+  // verdade — não o avanço da aba de detalhe, que é só um indício
+  // indireto e pode divergir da detonação de verdade
+  let eventos = [];
   try {
     const doc = await db.collection('Config').doc('Detonacoes').get();
-    if (doc.exists) eventosGerais = doc.data().Eventos || [];
+    if (doc.exists) eventos = doc.data().Eventos || [];
   } catch (e) { /* sem detonações cadastradas ainda */ }
-  const ultimaData = ultimaDataPreenchidaDetonacoes(eventosGerais);
+
+  const variantes = await buscarCorrelacoesDaFrente(frente.Nome);
+
+  if (variantes.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei nenhuma correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)} — sem isso não dá pra saber com segurança qual detonação da sismografia é dela. Confira a aba "Correlações - Frentes x Det." na planilha.</p>`;
+  }
+
+  let melhorEvento = null;
+  eventos.forEach(e => {
+    if (descricaoBateComVariantes(e.Descricao || '', variantes)) {
+      const d = parseDiaMes(e.Data);
+      if (d && (!melhorEvento || d > melhorEvento.dataObj)) {
+        melhorEvento = { dataObj: d, ...e };
+      }
+    }
+  });
+
+  const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
   const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhor.dataStr}</b></div>`;
-  html += `<div class="subtitulo2">${melhor.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${melhor.avanco}m</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
-  html += notaData;
-  return html;
+  if (!melhorEvento) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação de ${formatarTitulo(frente.Nome)} na sismografia, com as variações de nome cadastradas.</p>${notaData}`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorEvento.Data}</b> — Fogo ${melhorEvento.Evento}: ${melhorEvento.Descricao || '-'}</div>${notaData}`;
 }
 
 // ✅ "qual o comprimento/total de [frente]" — usa a aba Planejamento em
