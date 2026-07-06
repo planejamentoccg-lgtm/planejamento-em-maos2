@@ -7,6 +7,11 @@
   <link rel="apple-touch-icon" href="https://i.imgur.com/NphFuB6.png">
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6F8F3F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Planejamento">
+  <link rel="apple-touch-icon" href="https://i.imgur.com/iZ8gr1i.png">
 
   <!-- ✅ FONTE -->
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -1108,6 +1113,43 @@ body.tema-escuro{
 #telaProximasSemanas{ background:var(--paper); padding-bottom:70px; min-height:100vh; }
 #telaCronograma{ background:var(--paper); padding-bottom:70px; min-height:100vh; }
 
+#bannerInstalarApp{
+  position:fixed;
+  bottom:64px; left:0; right:0;
+  z-index:21;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:var(--ink);
+  color:var(--paper);
+  padding:12px 16px;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:12.5px;
+}
+.btnBannerInstalar{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--ink);
+  background:var(--accent-bright);
+  border:none;
+  padding:8px 14px;
+  border-radius:3px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.fecharBannerInstalar{
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--paper);
+  opacity:0.6;
+  padding:2px 4px;
+}
+.fecharBannerInstalar:hover{ opacity:1; }
+
 #navInferior{
   position:fixed;
   bottom:0; left:0; right:0;
@@ -1686,6 +1728,14 @@ body.tema-escuro .iconeIndicador{
   <div id="telaProximasSemanas" style="display:none;"></div>
   <div id="telaCronograma" style="display:none;"></div>
 
+  <div id="bannerInstalarApp" style="display:none;">
+    <span class="textoBannerInstalar">Instale esse app no seu celular pra acesso rápido</span>
+    <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+      <button class="btnBannerInstalar" onclick="acaoBotaoInstalar()">Instalar</button>
+      <span class="fecharBannerInstalar" onclick="fecharBannerInstalar()">×</span>
+    </div>
+  </div>
+
   <div id="navInferior">
     <div class="navItem" id="navItemFrentes" onclick="mostrarTelaFrentes()">
       <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -1807,6 +1857,87 @@ const firebaseConfig = {
   authDomain: "cortex-planejamento.firebaseapp.com",
   projectId: "cortex-planejamento"
 };
+
+// ✅ registra o service worker — necessário pro navegador considerar o
+// app "instalável" de forma confiável (sem isso, o botão de instalar
+// aparece de forma inconsistente)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* ignora, não é crítico */ });
+}
+
+// ✅ INSTALAÇÃO DO APP — mostra um botão sempre visível em vez de
+// depender do aviso automático do navegador (que só aparece às vezes,
+// dependendo de critérios internos do Chrome que mudam sem aviso)
+let promptInstalacaoDiferido = null;
+
+function appJaInstalado() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function ehIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  promptInstalacaoDiferido = e;
+  mostrarBannerInstalar('android');
+});
+
+window.addEventListener('appinstalled', () => {
+  promptInstalacaoDiferido = null;
+  esconderBannerInstalar();
+});
+
+function mostrarBannerInstalar(tipo) {
+  if (appJaInstalado()) return;
+  if (localStorage.getItem('bannerInstalarFechado') === '1') return;
+
+  const banner = document.getElementById('bannerInstalarApp');
+  if (!banner) return;
+  banner.dataset.tipo = tipo;
+  banner.querySelector('.textoBannerInstalar').innerText = tipo === 'ios'
+    ? 'Instale esse app no seu celular pra acesso rápido'
+    : 'Instale esse app no seu celular pra acesso rápido';
+  banner.querySelector('.btnBannerInstalar').innerText = tipo === 'ios' ? 'Como instalar' : 'Instalar';
+  banner.style.display = 'flex';
+}
+
+function esconderBannerInstalar() {
+  const banner = document.getElementById('bannerInstalarApp');
+  if (banner) banner.style.display = 'none';
+}
+
+function fecharBannerInstalar() {
+  esconderBannerInstalar();
+  localStorage.setItem('bannerInstalarFechado', '1');
+}
+
+async function acaoBotaoInstalar() {
+  const banner = document.getElementById('bannerInstalarApp');
+  const tipo = banner ? banner.dataset.tipo : 'android';
+
+  if (tipo === 'ios') {
+    mostrarInstrucoesIOS();
+    return;
+  }
+
+  if (!promptInstalacaoDiferido) return;
+  promptInstalacaoDiferido.prompt();
+  await promptInstalacaoDiferido.userChoice;
+  promptInstalacaoDiferido = null;
+  esconderBannerInstalar();
+}
+
+function mostrarInstrucoesIOS() {
+  alert('Pra instalar:\n\n1. Toque no ícone de Compartilhar (o quadrado com uma seta pra cima), na barra do Safari.\n2. Escolha "Adicionar à Tela de Início".\n3. Toque em "Adicionar".');
+}
+
+// ✅ no iOS, o navegador não avisa que dá pra instalar (diferente do
+// Android) — então mostramos o banner direto, com instruções
+if (ehIOS() && !appJaInstalado()) {
+  mostrarBannerInstalar('ios');
+}
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
