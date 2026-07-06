@@ -1,20 +1,25 @@
 {
   "name": "Planejamento em Mãos",
   "short_name": "Planejamento",
-  "start_url": ".",
+  "description": "Acompanhamento de frentes de serviço, próximas semanas e cronograma — Consórcio Construtor Gávea",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7cb342",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#6F8F3F",
   "icons": [
     {
-      "src": "https://i.imgur.com/NphFuB6.png",
+      "src": "https://i.imgur.com/iZ8gr1i.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://i.imgur.com/NphFuB6.png",
+      "src": "https://i.imgur.com/iZ8gr1i.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
