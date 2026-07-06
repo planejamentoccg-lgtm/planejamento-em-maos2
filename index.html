@@ -1230,6 +1230,30 @@ body.tema-escuro .iconeIndicador{
 }
 .btnBusca:hover{ background:var(--accent-bright); }
 
+.sugestoesBusca{
+  position:absolute;
+  top:100%; left:0; right:0;
+  z-index:30;
+  background:var(--card-fundo);
+  border:1px solid var(--line);
+  border-radius:6px;
+  margin-top:4px;
+  max-height:240px;
+  overflow-y:auto;
+  box-shadow:0 6px 20px rgba(0,0,0,0.15);
+}
+.sugestaoItem{
+  padding:10px 14px;
+  font-size:12.5px;
+  font-family:'IBM Plex Sans', sans-serif;
+  color:var(--ink);
+  cursor:pointer;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+.sugestaoItem:last-child{ border-bottom:none; }
+.sugestaoItem:hover{ background:var(--paper-2); }
+
 #resultadoBuscaF, #resultadoBuscaS{
   position:relative;
   padding-top:4px;
@@ -1781,10 +1805,12 @@ async function carregarFrentes() {
 
     <section class="secaoNova">
 
-      <div class="caixaBusca">
+      <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaF" placeholder="Pergunte algo... ex: quais detonações tivemos ontem?"
+               oninput="mostrarSugestoes('F')" onfocus="mostrarSugestoes('F')" onblur="esconderSugestoes('F')"
                onkeypress="if(event.key==='Enter') buscarInteligente('F')">
         <button class="btnBusca" onclick="buscarInteligente('F')">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaF" style="display:none;"></div>
       </div>
       <div id="resultadoBuscaF"></div>
 
@@ -1897,10 +1923,12 @@ async function carregarProximasSemanas() {
       </div>
       <hr class="regra">
 
-      <div class="caixaBusca">
+      <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
+               oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')" onblur="esconderSugestoes('S')"
                onkeypress="if(event.key==='Enter') buscarInteligente('S')">
         <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaS" style="display:none;"></div>
       </div>
       <div id="resultadoBuscaS"></div>
 
@@ -2761,6 +2789,82 @@ function normalizarTexto(t) {
   return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// ✅ segunda a sábado de uma semana — deslocamento 0 = semana atual,
+// 1 = semana que vem, -1 = semana passada. Usado nas perguntas de
+// PLANEJAMENTO ("o que está previsto"), que devem mostrar a semana
+// inteira mesmo que alguns dias ainda não tenham chegado.
+function calcularSemanaCompleta(hoje, deslocamentoSemanas) {
+  const diaSemana = (hoje.getDay() + 6) % 7; // 0 = segunda-feira
+  const segunda = new Date(hoje);
+  segunda.setDate(segunda.getDate() - diaSemana + deslocamentoSemanas * 7);
+  const sabado = new Date(segunda);
+  sabado.setDate(sabado.getDate() + 5);
+  return { inicio: segunda, fim: sabado };
+}
+
+// ✅ lista de perguntas de exemplo — aparece ao clicar na caixa de busca
+// e vai filtrando conforme a pessoa digita
+const SUGESTOES_BUSCA = [
+  'quais detonações tivemos ontem',
+  'quantas detonações tivemos essa semana',
+  'quantas detonações tivemos mês passado',
+  'quantos fogos tivemos ao todo',
+  'detonou o Apêndice ontem?',
+  'quando foi a última detonação do Apêndice',
+  'quando termina o Apêndice',
+  'qual avanço tivemos na SSR 04 ontem',
+  'quais avanços tivemos nos últimos 3 dias',
+  'quanto de avanço tivemos esse mês no Apêndice',
+  'qual o avanço total do Apêndice até agora',
+  'qual a média de avanço diário do Apêndice',
+  'em qual dia tivemos o maior avanço',
+  'quantos dias sem avanço tivemos essa semana',
+  'o que aconteceu no Apêndice ontem',
+  'tem alguma observação no Apêndice',
+  'em qual PK estamos no Apêndice',
+  'qual o total do Apêndice',
+  'quais frentes estão atrasadas',
+  'qual o progresso geral do Apêndice',
+  'o que está previsto para hoje',
+  'o que está previsto para essa semana',
+  'o que está previsto para a semana que vem',
+  'o que está previsto do dia 06/07 até o dia 08/07',
+];
+
+function mostrarSugestoes(sufixo) {
+  const input = document.getElementById('inputBusca' + sufixo);
+  const container = document.getElementById('sugestoesBusca' + sufixo);
+  const termo = normalizarTexto(input.value.trim());
+
+  const filtradas = termo
+    ? SUGESTOES_BUSCA.filter(s => normalizarTexto(s).includes(termo))
+    : SUGESTOES_BUSCA;
+
+  if (filtradas.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = filtradas.map(s =>
+    `<div class="sugestaoItem" onmousedown="selecionarSugestao('${sufixo}', this)">${s}</div>`
+  ).join('');
+  container.style.display = 'block';
+}
+
+function selecionarSugestao(sufixo, el) {
+  document.getElementById('inputBusca' + sufixo).value = el.textContent;
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+}
+
+function esconderSugestoes(sufixo) {
+  // ✅ espera um pouco pra dar tempo do "mousedown" do clique registrar
+  // antes do "blur" esconder a lista (senão o clique nunca funciona)
+  setTimeout(() => {
+    const el = document.getElementById('sugestoesBusca' + sufixo);
+    if (el) el.style.display = 'none';
+  }, 150);
+}
+
 async function buscarInteligente(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo).value.trim();
   const resultado = document.getElementById('resultadoBusca' + sufixo);
@@ -2835,6 +2939,19 @@ async function buscarInteligente(sufixo) {
       amanha.setDate(amanha.getDate() + 1);
       return { tipo: 'dia', data: amanha, rotulo: 'amanhã' };
     }
+    // ✅ intervalo explícito: "do dia 06/07 até o dia 08/07" (ou variações
+    // como "de 06/07 a 08/07", "entre 06/07 e 08/07") — precisa vir antes
+    // do reconhecimento de uma data única, senão ela pega só a primeira
+    const mIntervalo = termo.match(/(\d{1,2})[\/\-](\d{1,2}).*?\b(?:ate|a|e)\b.*?(\d{1,2})[\/\-](\d{1,2})/);
+    if (mIntervalo) {
+      const dia1 = parseInt(mIntervalo[1]), mes1 = parseInt(mIntervalo[2]);
+      const dia2 = parseInt(mIntervalo[3]), mes2 = parseInt(mIntervalo[4]);
+      const inicio = new Date(hoje.getFullYear(), mes1 - 1, dia1);
+      const fim = new Date(hoje.getFullYear(), mes2 - 1, dia2);
+      const rotuloIni = `${String(dia1).padStart(2,'0')}/${String(mes1).padStart(2,'0')}`;
+      const rotuloFim = `${String(dia2).padStart(2,'0')}/${String(mes2).padStart(2,'0')}`;
+      return { tipo: 'intervalo', inicio, fim, rotulo: `de ${rotuloIni} até ${rotuloFim}` };
+    }
     const m = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
     if (m) {
       const dia = parseInt(m[1]);
@@ -2879,6 +2996,7 @@ async function buscarInteligente(sufixo) {
   const perguntaFrenteMaisAtrasada = termo.includes('mais atrasad');
   const perguntaFrentesAtrasadas = !perguntaFrenteMaisAtrasada && termo.includes('atrasad');
   const perguntaProgressoGeral = termo.includes('progresso') || termo.includes('percentual');
+  const mIntervalo = termo.match(/(\d{1,2})[\/\-](\d{1,2}).*?\b(?:ate|a|e)\b.*?(\d{1,2})[\/\-](\d{1,2})/);
   const matchData = termo.match(/(\d{1,2})[\/\-](\d{1,2})/);
 
   if (perguntaUltimaDetonacao) {
@@ -2962,6 +3080,13 @@ async function buscarInteligente(sufixo) {
     amanha.setDate(amanha.getDate() + 1);
     html = montarRespostaPorData(frentes, formatarDataCurta(amanha), 'amanhã');
 
+  } else if (mIntervalo) {
+    // ✅ "o que está previsto do dia X até o dia Y" — intervalo explícito
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+    html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
+
   } else if (matchData) {
     const snap = await db.collection('ProximasSemanas').get();
     const frentes = [];
@@ -2976,11 +3101,24 @@ async function buscarInteligente(sufixo) {
     snap.forEach(doc => frentes.push(doc.data()));
     html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
 
-  } else if (termo.includes('essa semana') || termo.includes('esta semana')) {
+  } else if (termo.includes('semana que vem') || termo.includes('proxima semana') || termo.includes('próxima semana')) {
+    // ✅ próxima semana = segunda a sábado da semana seguinte (não é
+    // "próximos 7 dias" — é a semana de calendário completa)
     const snap = await db.collection('ProximasSemanas').get();
     const frentes = [];
     snap.forEach(doc => frentes.push(doc.data()));
-    html = montarRespostaPeriodoSemanas(frentes, extrairPeriodo());
+    const { inicio, fim } = calcularSemanaCompleta(hoje, 1);
+    html = montarRespostaPeriodoSemanas(frentes, { tipo: 'intervalo', inicio, fim, rotulo: 'a semana que vem' });
+
+  } else if (termo.includes('essa semana') || termo.includes('esta semana')) {
+    // ✅ essa semana = segunda a sábado da semana atual INTEIRA (mesmo
+    // que ainda não tenha chegado nesses dias) — diferente da versão
+    // usada pra contar avanço/detonação, que para em hoje
+    const snap = await db.collection('ProximasSemanas').get();
+    const frentes = [];
+    snap.forEach(doc => frentes.push(doc.data()));
+    const { inicio, fim } = calcularSemanaCompleta(hoje, 0);
+    html = montarRespostaPeriodoSemanas(frentes, { tipo: 'intervalo', inicio, fim, rotulo: 'essa semana' });
 
   } else if (termo.includes('semana')) {
     const snap = await db.collection('ProximasSemanas').get();
@@ -3101,6 +3239,39 @@ async function buscarFogosNaData(dataStr) {
   } catch (e) {
     return [];
   }
+}
+
+// ✅ busca as variações de descrição conhecidas pra uma frente (vindas
+// da aba "Correlações - Frentes x Det." da planilha) — cobre casos em
+// que a detonação é descrita de um jeito diferente do nome oficial
+async function buscarCorrelacoesDaFrente(nomeFrente) {
+  try {
+    const doc = await db.collection('Config').doc('Correlacoes').get();
+    if (!doc.exists) return [];
+    const lista = doc.data().Lista || [];
+    return lista.filter(c => c.Nome === nomeFrente).map(c => c.Descricao);
+  } catch (e) {
+    return [];
+  }
+}
+
+// ✅ tira palavras genéricas ("frente", "de", "da"...) pra sobrar só as
+// palavras que realmente identificam o lugar
+function extrairPalavrasChave(texto) {
+  const normalizado = normalizarTexto(texto);
+  const ignoradas = ['frente', 'de', 'da', 'do', 'e', 'a', 'o', 'para', 'no', 'na'];
+  return normalizado.split(/[\s\-\/]+/).filter(p => p.length > 2 && !ignoradas.includes(p));
+}
+
+// ✅ a descrição do evento "bate" com a frente se TODAS as palavras-chave
+// de PELO MENOS UMA das variações conhecidas aparecem nela
+function descricaoBateComVariantes(descricaoEvento, variantes) {
+  const descNorm = normalizarTexto(descricaoEvento);
+  return variantes.some(variante => {
+    const palavras = extrairPalavrasChave(variante);
+    if (palavras.length === 0) return false;
+    return palavras.every(p => descNorm.includes(p));
+  });
 }
 
 // ✅ "quantas detonações tivemos essa semana/esse mês/esse ano" —
@@ -3470,12 +3641,30 @@ async function montarRespostaDetonouFrente(termo, periodo) {
   const avancos = avancosDaFrenteNaData(frente, dataStr);
   const fogos = await buscarFogosNaData(dataStr);
 
-  if (avancos.length > 0) {
+  // ✅ além do avanço registrado, também olha se a DESCRIÇÃO do evento
+  // bate com alguma variação conhecida da frente (tabela de
+  // correlações) — cobre casos em que a detonação foi lançada mas o
+  // avanço em metros ainda não, ou quando a descrição usa um jeito
+  // diferente de se referir ao mesmo lugar
+  const variantes = await buscarCorrelacoesDaFrente(frente.Nome);
+  const partesNome = String(frente.Nome).split(/[-,]/).map(p => p.trim()).filter(p => p.length > 3);
+  const variantesComFallback = variantes.length > 0 ? variantes : partesNome;
+
+  const fogosDaFrentePelaDescricao = fogos.filter(f =>
+    descricaoBateComVariantes(f.Descricao || '', variantesComFallback)
+  );
+
+  if (avancos.length > 0 || fogosDaFrentePelaDescricao.length > 0) {
     const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}`).join(', ') : '';
     let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Sim — ${formatarTitulo(frente.Nome)} teve detonação em ${periodo.rotulo} (${dataStr}).</div>`;
     avancos.forEach(a => {
       html += `<div class="subtitulo2">${a.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${a.avanco}m</b>${a.obs ? ' · ' + a.obs : ''}</div>`;
     });
+    if (avancos.length === 0) {
+      fogosDaFrentePelaDescricao.forEach(f => {
+        html += `<div class="subtitulo2">Fogo ${f.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${f.Descricao}</span></div>`;
+      });
+    }
     return html;
   }
 
