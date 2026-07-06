@@ -831,6 +831,56 @@
 }
 .btnLogin:hover { background: var(--accent); color: #fff; }
 .btnLogin:active { transform: scale(0.98); }
+.btnLogin:disabled { opacity: 0.4; cursor: not-allowed; }
+.btnLogin:disabled:hover { background: var(--ink); color: var(--paper); }
+
+.linhaCampoSenha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.linhaCampoSenha input {
+  flex: 1;
+  min-width: 0;
+}
+.toggleSenha {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--text-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toggleSenha:hover { color: var(--ink); }
+.toggleSenha svg { width: 100%; height: 100%; }
+
+.checklistSenha {
+  margin: 4px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.checklistItem {
+  font-size: 12px;
+  color: var(--text-soft);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+}
+.checklistMarca {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.checklistItem.checklistOk {
+  color: var(--ink);
+}
+.checklistItem.checklistOk .checklistMarca {
+  color: var(--accent);
+}
 
 .gridIndicadores {
   display: grid;
@@ -1566,10 +1616,65 @@ body.tema-escuro .iconeIndicador{
       <span class="cantoLogin tl"></span><span class="cantoLogin tr"></span>
       <span class="cantoLogin bl"></span><span class="cantoLogin br"></span>
       <label>Senha</label>
-      <input id="senha" type="password" placeholder="••••••••">
+      <div class="linhaCampoSenha">
+        <input id="senha" type="password" placeholder="••••••••">
+        <span class="toggleSenha" onclick="alternarVisibilidadeSenha('senha', this)"></span>
+      </div>
     </div>
 
     <button class="btnLogin" onclick="login()">Entrar</button>
+
+  </div>
+
+</div>
+
+<!-- ✅ TROCA DE SENHA OBRIGATÓRIA NO PRIMEIRO LOGIN -->
+<div id="trocarSenha" style="display:none;">
+
+  <div class="topoLogin">
+    <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+  </div>
+
+  <div class="cardLogin">
+
+    <div class="logoLinhaLogin">
+      <img src="https://i.imgur.com/iZ8gr1i.png" class="logoLogin">
+      <span class="logoTextoLogin">Consórcio Construtor Gávea</span>
+    </div>
+
+    <div class="textosTitulo">
+      <h1>Crie sua <span>nova senha</span></h1>
+      <p>Por segurança, defina uma senha só sua antes de continuar.</p>
+    </div>
+
+    <div class="campoLogin">
+      <span class="cantoLogin tl"></span><span class="cantoLogin tr"></span>
+      <span class="cantoLogin bl"></span><span class="cantoLogin br"></span>
+      <label>Nova senha</label>
+      <div class="linhaCampoSenha">
+        <input id="novaSenha1" type="password" placeholder="••••••••" oninput="validarNovaSenhaTela()">
+        <span class="toggleSenha" onclick="alternarVisibilidadeSenha('novaSenha1', this)"></span>
+      </div>
+    </div>
+
+    <div class="campoLogin">
+      <span class="cantoLogin tl"></span><span class="cantoLogin tr"></span>
+      <span class="cantoLogin bl"></span><span class="cantoLogin br"></span>
+      <label>Confirmar nova senha</label>
+      <div class="linhaCampoSenha">
+        <input id="novaSenha2" type="password" placeholder="••••••••" oninput="validarNovaSenhaTela()">
+        <span class="toggleSenha" onclick="alternarVisibilidadeSenha('novaSenha2', this)"></span>
+      </div>
+    </div>
+
+    <div class="checklistSenha">
+      <div class="checklistItem" id="reqTamanho"><span class="checklistMarca">○</span> Mínimo de 8 caracteres</div>
+      <div class="checklistItem" id="reqMaiuscula"><span class="checklistMarca">○</span> Pelo menos 1 letra maiúscula</div>
+      <div class="checklistItem" id="reqEspecial"><span class="checklistMarca">○</span> Pelo menos 1 caractere especial</div>
+      <div class="checklistItem" id="reqIguais"><span class="checklistMarca">○</span> As duas senhas são iguais</div>
+    </div>
+
+    <button class="btnLogin" id="btnCriarSenha" onclick="criarNovaSenha()" disabled>Criar senha</button>
 
   </div>
 
@@ -1707,6 +1812,72 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// ✅ ícones minimalistas de olho aberto/fechado (sem cor própria — herdam
+// a cor do texto ao redor, igual ao resto dos ícones do app)
+const SVG_OLHO_ABERTO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const SVG_OLHO_FECHADO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 004.24 4.24"/><path d="M9.9 4.24A11 11 0 0112 4c7 0 11 7 11 7a13.2 13.2 0 01-3.4 4.13M6.1 6.1C3.6 7.9 2 10.1 2 10.1s1.2 2.13 3.4 3.9"/></svg>`;
+
+// ✅ inicializa todos os ícones de olho já visíveis (aberto = senha oculta)
+document.querySelectorAll('.toggleSenha').forEach(el => { el.innerHTML = SVG_OLHO_ABERTO; });
+
+function alternarVisibilidadeSenha(inputId, iconEl) {
+  const input = document.getElementById(inputId);
+  const estaOculta = input.type === 'password';
+  input.type = estaOculta ? 'text' : 'password';
+  iconEl.innerHTML = estaOculta ? SVG_OLHO_FECHADO : SVG_OLHO_ABERTO;
+}
+
+// ✅ regras da nova senha: mínimo 8 caracteres, 1 maiúscula, 1 caractere
+// especial — vai marcando cada item conforme a pessoa digita
+function validarNovaSenhaTela() {
+  const senha1 = document.getElementById('novaSenha1').value;
+  const senha2 = document.getElementById('novaSenha2').value;
+
+  const req = {
+    tamanho: senha1.length >= 8,
+    maiuscula: /[A-Z]/.test(senha1),
+    especial: /[^A-Za-z0-9]/.test(senha1),
+    iguais: senha1.length > 0 && senha1 === senha2,
+  };
+
+  atualizarChecklistItem('reqTamanho', req.tamanho);
+  atualizarChecklistItem('reqMaiuscula', req.maiuscula);
+  atualizarChecklistItem('reqEspecial', req.especial);
+  atualizarChecklistItem('reqIguais', req.iguais);
+
+  const tudoOk = req.tamanho && req.maiuscula && req.especial && req.iguais;
+  document.getElementById('btnCriarSenha').disabled = !tudoOk;
+}
+
+function atualizarChecklistItem(id, ok) {
+  const el = document.getElementById(id);
+  const marca = el.querySelector('.checklistMarca');
+  el.classList.toggle('checklistOk', ok);
+  marca.textContent = ok ? '✓' : '○';
+}
+
+async function criarNovaSenha() {
+  const senha1 = document.getElementById('novaSenha1').value;
+  const senha2 = document.getElementById('novaSenha2').value;
+
+  const valida = senha1.length >= 8 && /[A-Z]/.test(senha1) && /[^A-Za-z0-9]/.test(senha1) && senha1 === senha2;
+  if (!valida) return; // segurança extra — o botão já deveria estar desabilitado
+
+  try {
+    await auth.currentUser.updatePassword(senha1);
+
+    const email = auth.currentUser.email;
+    await db.collection("Usuarios").doc(email).set({ senhaAlterada: true }, { merge: true });
+
+    document.getElementById("trocarSenha").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    mostrarTelaFrentes();
+
+  } catch (e) {
+    alert("Não consegui trocar a senha: " + e.message + "\n\nSe o erro falar de login recente, saia e entre de novo com a senha temporária, e tente logo em seguida.");
+  }
+}
+
 // ✅ LOGIN
 async function login() {
 
@@ -1718,12 +1889,13 @@ async function login() {
   const ref = db.collection("Sessoes").doc(email);
   const doc = await ref.get();
 
-  // ✅ verifica se já existe sessão
+  // ✅ permite até 2 dispositivos cadastrados por conta — só bloqueia
+  // um TERCEIRO dispositivo diferente
+  let dispositivos = [];
   if (doc.exists) {
-    const dados = doc.data();
-
-    if (dados.dispositivo !== dispositivoAtual) {
-      alert("Este usuário já está logado em outro dispositivo.");
+    dispositivos = doc.data().dispositivos || [];
+    if (!dispositivos.includes(dispositivoAtual) && dispositivos.length >= 2) {
+      alert("Este usuário já está logado em 2 dispositivos. Saia de um deles pra entrar em um novo.");
       return;
     }
   }
@@ -1731,11 +1903,25 @@ async function login() {
   try {
     await auth.signInWithEmailAndPassword(email, senha);
 
-    // ✅ salva sessão
+    // ✅ salva o dispositivo atual na lista, se ainda não estiver nela
+    if (!dispositivos.includes(dispositivoAtual)) {
+      dispositivos.push(dispositivoAtual);
+    }
     await db.collection("Sessoes").doc(email).set({
-      dispositivo: dispositivoAtual,
+      dispositivos,
       data: new Date()
     });
+
+    // ✅ se essa pessoa ainda não trocou a senha temporária, pede antes
+    // de deixar entrar no app
+    const usuarioDoc = await db.collection("Usuarios").doc(email).get();
+    const jaTrocouSenha = usuarioDoc.exists && usuarioDoc.data().senhaAlterada === true;
+
+    if (!jaTrocouSenha) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("trocarSenha").style.display = "block";
+      return;
+    }
 
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -1750,7 +1936,18 @@ async function logout() {
 
   const email = auth.currentUser.email;
 
-  await db.collection("Sessoes").doc(email).delete();
+  // ✅ remove só o dispositivo atual da lista (mantém o outro logado, se tiver)
+  const ref = db.collection("Sessoes").doc(email);
+  const doc = await ref.get();
+  if (doc.exists) {
+    const dispositivos = (doc.data().dispositivos || []).filter(d => d !== navigator.userAgent);
+    if (dispositivos.length > 0) {
+      await ref.set({ dispositivos, data: new Date() });
+    } else {
+      await ref.delete();
+    }
+  }
+
   await auth.signOut();
 
   location.reload();
