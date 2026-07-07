@@ -2128,25 +2128,510 @@ function mostrarTelaCronograma() {
 
   const container = document.getElementById("telaCronograma");
   if (!container.innerHTML) {
-    container.innerHTML = `
-      <div id="topo">
-        <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
-        <div style="display:flex; align-items:center;">
-          <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
-        </div>
-      </div>
-      <div class="heroNovo">
-        <div class="eyebrow">Planejamento em mãos</div>
-        <h1 style="font-size:26px;">Cronograma Geral</h1>
-      </div>
-      <section class="secaoNova">
-        <p style="color:var(--text-soft); font-size:13px; text-align:left;">
-          Essa tela ainda está em construção — em breve.
-        </p>
-      </section>
-    `;
+    container.innerHTML = renderizarCronogramaGeral();
     atualizarIconeTema();
   }
+}
+
+// ---------------------------------------------------------------------
+// CRONOGRAMA GERAL — dados extraídos manualmente do PDF de replanejamento
+// (o app não sincroniza isso automaticamente, já que vem do MS Project;
+// atualiza aqui a cada novo replanejamento que a Byanca mandar)
+// ---------------------------------------------------------------------
+const CRONOGRAMA_GERAL_INFO = {
+  titulo: 'Replanejamento — Junho 2026',
+  corte: '30/06/2026',
+  pdfUrl: 'https://drive.google.com/file/d/1GxxwNyXiviopxVBrZA41hhRB6YZGAkZb/view?usp=drivesdk',
+  percentualGeralObra: 47, // ✅ vem da linha 1 do PDF ("LINHA 04 - METRÔ RJ - ESTAÇÃO GÁVEA")
+};
+
+const CRONOGRAMA_GERAL_ATIVIDADES = [
+  { nome: 'Marcos Contratuais', area: 'Geral', percentual: 0, inicioPrevisto: '08/03/2027', terminoPrevisto: '07/12/2028', inicioBase: null, terminoBase: null },
+  { nome: 'Ordem de Início', area: 'Geral', percentual: 100, inicioPrevisto: '28/05/2025', terminoPrevisto: '28/05/2025', inicioBase: '28/05/2025', terminoBase: '28/05/2025' },
+  { nome: 'Mobilização da Obra', area: 'Geral', percentual: 85, inicioPrevisto: '28/05/2025', terminoPrevisto: '14/04/2027', inicioBase: '28/05/2025', terminoBase: '21/02/2026' },
+  { nome: 'Obras de Superfície', area: 'Estação Gávea', percentual: 0, inicioPrevisto: '24/08/2027', terminoPrevisto: '22/11/2028', inicioBase: '20/11/2026', terminoBase: '25/09/2027' },
+  { nome: 'Túnel de Via Trecho Oeste', area: 'Túnel Via Trecho Oeste', percentual: 7, inicioPrevisto: '23/09/2025', terminoPrevisto: '15/05/2028', inicioBase: '18/11/2025', terminoBase: '31/01/2028' },
+  { nome: 'Estação Gávea', area: 'Estação Gávea', percentual: 19, inicioPrevisto: '16/06/2025', terminoPrevisto: '07/12/2028', inicioBase: '26/07/2025', terminoBase: '22/01/2028' },
+  { nome: 'Estação Sul', area: 'Estação Gávea', percentual: 7, inicioPrevisto: '08/01/2026', terminoPrevisto: '07/12/2028', inicioBase: '27/01/2026', terminoBase: '26/06/2027' },
+  { nome: 'Sistemas Estação Sul', area: 'Estação Gávea', percentual: 0, inicioPrevisto: '14/09/2028', terminoPrevisto: '07/12/2028', inicioBase: '03/04/2027', terminoBase: '26/06/2027' },
+  { nome: 'Estação Oeste', area: 'Estação Gávea', percentual: 25, inicioPrevisto: '08/01/2026', terminoPrevisto: '05/10/2028', inicioBase: '27/01/2026', terminoBase: '22/01/2028' },
+  { nome: 'Sistemas Estação Oeste', area: 'Estação Gávea', percentual: 0, inicioPrevisto: '16/05/2028', terminoPrevisto: '05/10/2028', inicioBase: '19/10/2027', terminoBase: '22/01/2028' },
+  { nome: 'Túnel de Interligação', area: 'Estação Gávea', percentual: 6, inicioPrevisto: '20/04/2026', terminoPrevisto: '27/09/2028', inicioBase: '29/07/2026', terminoBase: '12/01/2028' },
+  { nome: 'Túnel de Ligação entre Plataformas', area: 'Estação Gávea', percentual: 0, inicioPrevisto: '30/01/2027', terminoPrevisto: '20/03/2028', inicioBase: '06/10/2026', terminoBase: '18/11/2027' },
+  { nome: 'Túnel Madre Jacinta', area: 'Túnel Madre Jacinta', percentual: 34, inicioPrevisto: '04/08/2025', terminoPrevisto: '25/10/2028', inicioBase: '24/09/2025', terminoBase: '30/06/2028' },
+];
+
+// ✅ próximo nível de detalhe de cada item macro — usado no "toque pra
+// abrir" (drill-down). Extraído do mesmo PDF, um nível abaixo.
+// ✅ dependência específica da CONCLUSÃO FINAL DA OBRA (o marco mais
+// importante), extraída direto da coluna "Predecessors" da linha 8
+const CRONOGRAMA_GERAL_DEPENDENCIAS_CONCLUSAO = [
+  'Obras de Superfície',
+  'Sistemas Estação Sul',
+  'Sistemas Estação Oeste',
+  'Túnel de Interligação',
+  'Túnel de Ligação entre Plataformas',
+  'Túnel Madre Jacinta',
+];
+
+// ✅ mapa COMPLETO de dependências entre as 13 atividades macro — pra
+// cada uma, de quais outras ela depende (extraído rastreando os IDs de
+// "Predecessors" de todas as 458 linhas do MS Project, e verificando a
+// quais dessas 13 macro-atividades cada ID pertence)
+const CRONOGRAMA_GERAL_DEPENDENCIAS = {
+  'Marcos Contratuais': ['Estação Oeste', 'Estação Sul', 'Obras de Superfície', 'Sistemas Estação Oeste', 'Sistemas Estação Sul', 'Túnel Madre Jacinta', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'],
+  'Ordem de Início': [],
+  'Mobilização da Obra': ['Ordem de Início'],
+  'Obras de Superfície': ['Estação Oeste', 'Estação Sul', 'Mobilização da Obra'],
+  'Túnel de Via Trecho Oeste': ['Estação Gávea', 'Estação Oeste', 'Mobilização da Obra', 'Túnel Madre Jacinta'],
+  'Estação Gávea': ['Mobilização da Obra'],
+  'Estação Sul': ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Interligação', 'Túnel de Via Trecho Oeste'],
+  'Sistemas Estação Sul': ['Estação Sul'],
+  'Estação Oeste': ['Mobilização da Obra', 'Túnel de Interligação', 'Túnel de Via Trecho Oeste'],
+  'Sistemas Estação Oeste': ['Estação Oeste'],
+  'Túnel de Interligação': ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Ligação entre Plataformas'],
+  'Túnel de Ligação entre Plataformas': ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Interligação'],
+  'Túnel Madre Jacinta': ['Estação Oeste', 'Mobilização da Obra'],
+};
+
+const CRONOGRAMA_GERAL_FILHOS = {
+  'Marcos Contratuais': [
+    { nome: 'Conclusão das escavações da Estação OESTE', percentual: 0, inicioPrevisto: '16/04/2027', terminoPrevisto: '16/04/2027', inicioBase: '15/04/2027', terminoBase: '15/04/2027' },
+    { nome: 'Conclusão das escavações da Estação SUL', percentual: 0, inicioPrevisto: '05/02/2028', terminoPrevisto: '05/02/2028', inicioBase: null, terminoBase: null },
+    { nome: 'Conclusão do revestimento Secundário Estação e Poços', percentual: 0, inicioPrevisto: '21/06/2028', terminoPrevisto: '21/06/2028', inicioBase: '16/11/2027', terminoBase: '16/11/2027' },
+    { nome: 'Conclusão da Via Permanente', percentual: 0, inicioPrevisto: '15/05/2028', terminoPrevisto: '15/05/2028', inicioBase: '27/07/2028', terminoBase: '27/07/2028' },
+    { nome: 'Liberação da SSR / SSA / STC', percentual: 0, inicioPrevisto: '08/03/2027', terminoPrevisto: '08/03/2027', inicioBase: '17/12/2027', terminoBase: '17/12/2027' },
+    { nome: 'Conclusão Final da Obra', percentual: 0, inicioPrevisto: '07/12/2028', terminoPrevisto: '07/12/2028', inicioBase: null, terminoBase: null },
+  ],
+  'Mobilização da Obra': [
+    { nome: 'Mobilização da equipe', percentual: 100, inicioPrevisto: '28/05/2025', terminoPrevisto: '17/07/2025', inicioBase: '28/05/2025', terminoBase: '24/07/2025' },
+    { nome: 'Projeto', percentual: 68, inicioPrevisto: '27/06/2025', terminoPrevisto: '14/04/2027', inicioBase: '28/05/2025', terminoBase: '21/02/2026' },
+    { nome: 'Infraestrutura de Obra', percentual: 100, inicioPrevisto: '11/06/2025', terminoPrevisto: '13/12/2025', inicioBase: '26/07/2025', terminoBase: '23/09/2025' },
+    { nome: 'Licenças e Autorizações', percentual: 100, inicioPrevisto: '02/06/2025', terminoPrevisto: '21/11/2025', inicioBase: '26/06/2025', terminoBase: '17/11/2025' },
+    { nome: 'Adequação dos Canteiros de Obra', percentual: 100, inicioPrevisto: '02/06/2025', terminoPrevisto: '19/01/2026', inicioBase: '26/06/2025', terminoBase: '16/09/2025' },
+  ],
+  'Obras de Superfície': [
+    { nome: 'Fundações', percentual: 0, inicioPrevisto: '24/08/2027', terminoPrevisto: '07/01/2028', inicioBase: '20/11/2026', terminoBase: '03/04/2027' },
+    { nome: 'Subsolo - Canais de Ventilação', percentual: 0, inicioPrevisto: '07/01/2028', terminoPrevisto: '22/06/2028', inicioBase: null, terminoBase: null },
+    { nome: 'Estrutura', percentual: 0, inicioPrevisto: '22/06/2028', terminoPrevisto: '19/07/2028', inicioBase: '03/04/2027', terminoBase: '03/05/2027' },
+    { nome: 'Laje Piso Cobertura', percentual: 0, inicioPrevisto: '20/07/2028', terminoPrevisto: '28/09/2028', inicioBase: '04/05/2027', terminoBase: '01/06/2027' },
+    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '18/08/2028', terminoPrevisto: '17/10/2028', inicioBase: '02/06/2027', terminoBase: '29/07/2027' },
+    { nome: 'Bandejamentos', percentual: 0, inicioPrevisto: '05/09/2028', terminoPrevisto: '27/10/2028', inicioBase: '18/06/2027', terminoBase: '09/08/2027' },
+    { nome: 'Urbanização', percentual: 0, inicioPrevisto: '23/08/2028', terminoPrevisto: '22/11/2028', inicioBase: '01/06/2027', terminoBase: '25/09/2027' },
+  ],
+  'Túnel de Via Trecho Oeste': [
+    { nome: 'Escavação da Rolha (60 m)', percentual: 100, inicioPrevisto: '26/11/2025', terminoPrevisto: '13/06/2026', inicioBase: '09/10/2026', terminoBase: '14/11/2026' },
+    { nome: 'Túnel de via', percentual: 0, inicioPrevisto: '17/04/2027', terminoPrevisto: '17/06/2027', inicioBase: '16/11/2026', terminoBase: '31/01/2028' },
+    { nome: 'Via Permanente', percentual: 2, inicioPrevisto: '23/09/2025', terminoPrevisto: '15/05/2028', inicioBase: '19/01/2027', terminoBase: '29/12/2027' },
+    { nome: 'Passagem de Emergência entre Vias PK 7.858', percentual: 0, inicioPrevisto: '27/06/2026', terminoPrevisto: '13/08/2026', inicioBase: '18/11/2025', terminoBase: '21/01/2026' },
+    { nome: 'Passagem de Emergência entre Vias PK 80.071', percentual: 0, inicioPrevisto: '15/09/2026', terminoPrevisto: '26/11/2026', inicioBase: '22/01/2026', terminoBase: '09/04/2026' },
+    { nome: 'Passagem de Emergência entre Vias PK 8.240', percentual: 0, inicioPrevisto: '14/08/2026', terminoPrevisto: '26/10/2026', inicioBase: '26/03/2026', terminoBase: '09/06/2026' },
+    { nome: 'Reservatório de água No.4', percentual: 0, inicioPrevisto: '27/11/2026', terminoPrevisto: '17/12/2026', inicioBase: '28/05/2026', terminoBase: '18/06/2026' },
+    { nome: 'SSR 04', percentual: 9, inicioPrevisto: '26/05/2026', terminoPrevisto: '08/03/2027', inicioBase: '17/08/2026', terminoBase: '26/05/2027' },
+  ],
+  'Estação Sul': [
+    { nome: 'Escavação a Fogo', percentual: 16, inicioPrevisto: '08/01/2026', terminoPrevisto: '05/02/2028', inicioBase: '27/01/2026', terminoBase: '03/07/2026' },
+    { nome: 'Obras Civis da Estação Sul', percentual: 0, inicioPrevisto: '04/02/2028', terminoPrevisto: '25/10/2028', inicioBase: '04/07/2026', terminoBase: '02/04/2027' },
+  ],
+  'Estação Oeste': [
+    { nome: 'Escavação a Fogo', percentual: 55, inicioPrevisto: '08/01/2026', terminoPrevisto: '16/04/2027', inicioBase: '27/01/2026', terminoBase: '17/10/2026' },
+    { nome: 'Obras Civis da Estação Oeste', percentual: 0, inicioPrevisto: '17/04/2027', terminoPrevisto: '05/10/2028', inicioBase: '19/10/2026', terminoBase: '11/12/2027' },
+  ],
+  'Túnel de Interligação': [
+    { nome: 'Alteamento', percentual: 54, inicioPrevisto: '20/04/2026', terminoPrevisto: '03/11/2026', inicioBase: null, terminoBase: null },
+    { nome: 'Escavação a Fogo Túnel de interligação', percentual: 0, inicioPrevisto: '24/11/2026', terminoPrevisto: '30/03/2027', inicioBase: '29/07/2026', terminoBase: '04/11/2026' },
+    { nome: 'Revestimento Secundário', percentual: 0, inicioPrevisto: '07/05/2027', terminoPrevisto: '01/09/2027', inicioBase: null, terminoBase: null },
+    { nome: 'Estruturas', percentual: 0, inicioPrevisto: '13/10/2027', terminoPrevisto: '17/05/2028', inicioBase: '23/02/2027', terminoBase: '08/09/2027' },
+    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '23/03/2028', terminoPrevisto: '15/07/2028', inicioBase: '04/08/2027', terminoBase: '08/12/2027' },
+    { nome: 'Sistemas', percentual: 0, inicioPrevisto: '17/06/2028', terminoPrevisto: '27/09/2028', inicioBase: '02/10/2027', terminoBase: '12/01/2028' },
+  ],
+  'Túnel de Ligação entre Plataformas': [
+    { nome: 'Escavação à Fogo', percentual: 0, inicioPrevisto: '30/01/2027', terminoPrevisto: '07/04/2027', inicioBase: '06/10/2026', terminoBase: '17/10/2026' },
+    { nome: 'Revestimento Secundário Sul', percentual: 0, inicioPrevisto: '19/05/2027', terminoPrevisto: '26/08/2027', inicioBase: null, terminoBase: null },
+    { nome: 'Revestimento Secundário Norte', percentual: 0, inicioPrevisto: '07/05/2027', terminoPrevisto: '29/06/2027', inicioBase: null, terminoBase: null },
+    { nome: 'Obras Civis', percentual: 0, inicioPrevisto: '25/11/2027', terminoPrevisto: '07/01/2028', inicioBase: '04/08/2027', terminoBase: '08/09/2027' },
+    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '08/01/2028', terminoPrevisto: '24/02/2028', inicioBase: '09/09/2027', terminoBase: '26/10/2027' },
+    { nome: 'Bandejamento', percentual: 0, inicioPrevisto: '25/02/2028', terminoPrevisto: '20/03/2028', inicioBase: '27/10/2027', terminoBase: '18/11/2027' },
+  ],
+  'Túnel Madre Jacinta': [
+    { nome: 'Túnel de Serviço Madre Jacinta', percentual: 59, inicioPrevisto: '04/08/2025', terminoPrevisto: '27/07/2026', inicioBase: '24/09/2025', terminoBase: '16/01/2026' },
+    { nome: 'Ventilação Primária Emboque', percentual: 0, inicioPrevisto: '14/08/2028', terminoPrevisto: '18/08/2028', inicioBase: '30/12/2027', terminoBase: '08/05/2028' },
+    { nome: 'Desmontagem do Canteiro', percentual: 0, inicioPrevisto: '18/08/2028', terminoPrevisto: '10/10/2028', inicioBase: '24/04/2028', terminoBase: '09/06/2028' },
+    { nome: 'Urbanização do Entorno', percentual: 0, inicioPrevisto: '12/09/2028', terminoPrevisto: '25/10/2028', inicioBase: '18/05/2028', terminoBase: '30/06/2028' },
+  ],
+};
+
+
+function parseDataCompleta(str) {
+  if (!str) return null;
+  const [d, m, a] = str.split('/');
+  return new Date(parseInt(a), parseInt(m) - 1, parseInt(d));
+}
+
+// ✅ calcula a diferença em dias entre o previsto atual e a linha de base
+// (positivo = atrasou, negativo = adiantou, null = sem linha de base pra comparar)
+function variacaoDias(dataAtualStr, dataBaseStr) {
+  const a = parseDataCompleta(dataAtualStr), b = parseDataCompleta(dataBaseStr);
+  if (!a || !b) return null;
+  return Math.round((a - b) / 86400000);
+}
+
+function renderizarCronogramaGeral() {
+  const atividades = CRONOGRAMA_GERAL_ATIVIDADES;
+  const hoje = new Date();
+
+  // ✅ acha a janela de datas (mais cedo/mais tarde) entre tudo (previsto + linha de base)
+  let menorData = null, maiorData = null;
+  atividades.forEach(a => {
+    [a.inicioPrevisto, a.terminoPrevisto, a.inicioBase, a.terminoBase].forEach(d => {
+      const data = parseDataCompleta(d);
+      if (!data) return;
+      if (!menorData || data < menorData) menorData = data;
+      if (!maiorData || data > maiorData) maiorData = data;
+    });
+  });
+  const janelaTotal = (maiorData - menorData) || 1;
+
+  function posicao(dataStr) {
+    const data = parseDataCompleta(dataStr);
+    if (!data) return null;
+    return ((data - menorData) / janelaTotal) * 100;
+  }
+
+  // ✅ estatísticas do topo
+  const atrasadas = atividades.filter(a => {
+    const d = variacaoDias(a.terminoPrevisto, a.terminoBase);
+    return d !== null && d > 0;
+  });
+
+  const marcosContratuais = CRONOGRAMA_GERAL_FILHOS['Marcos Contratuais'] || [];
+  let proximoMarco = null;
+  marcosContratuais.forEach(m => {
+    const d = parseDataCompleta(m.terminoPrevisto);
+    if (d && d >= hoje && (!proximoMarco || d < parseDataCompleta(proximoMarco.terminoPrevisto))) {
+      proximoMarco = m;
+    }
+  });
+
+  // ✅ linha do "hoje" (só desenha se a data de hoje cair dentro da janela do gráfico)
+  const posHoje = posicao(`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`);
+  const linhaHojeHtml = (posHoje !== null && posHoje >= 0 && posHoje <= 100)
+    ? `<div style="position:absolute; left:${posHoje}%; top:0; bottom:0; width:1.5px; background:#B23A3A; z-index:2;"></div>
+       <div style="position:absolute; left:${posHoje}%; top:-16px; transform:translateX(-50%); font-size:9px; font-weight:700; color:#B23A3A; white-space:nowrap;">HOJE</div>`
+    : '';
+
+  // ✅ agrupa por área, na ordem em que a área aparece pela primeira vez
+  const areas = [];
+  atividades.forEach(a => { if (!areas.includes(a.area)) areas.push(a.area); });
+
+  function renderizarBarra(a, nivel) {
+    const pIni = posicao(a.inicioPrevisto), pFim = posicao(a.terminoPrevisto);
+    const bIni = posicao(a.inicioBase), bFim = posicao(a.terminoBase);
+    const delta = variacaoDias(a.terminoPrevisto, a.terminoBase);
+
+    let badgeDelta = '';
+    if (delta === null) {
+      badgeDelta = `<span style="color:var(--text-soft); font-size:10px;">sem linha de base</span>`;
+    } else if (delta === 0) {
+      badgeDelta = `<span style="color:#4F7A2E; font-weight:600; font-size:10px;">sem alteração</span>`;
+    } else if (delta > 0) {
+      badgeDelta = `<span style="color:#B23A3A; font-weight:600; font-size:10px;">+${delta}d</span>`;
+    } else {
+      badgeDelta = `<span style="color:#4F7A2E; font-weight:600; font-size:10px;">${delta}d</span>`;
+    }
+
+    const barraBase = (bIni !== null && bFim !== null && mostrarLinhaBaseCronograma)
+      ? `<div style="position:absolute; left:${bIni}%; width:${Math.max(bFim - bIni, 0.5)}%; height:100%; border:1.5px dashed var(--line); border-radius:4px; box-sizing:border-box;"></div>`
+      : '';
+    const barraAtual = (pIni !== null && pFim !== null)
+      ? `<div style="position:absolute; left:${pIni}%; width:${Math.max(pFim - pIni, 0.5)}%; height:100%; background:var(--accent); border-radius:4px; opacity:0.92;"></div>`
+      : '';
+
+    const temFilhos = nivel === 0 && CRONOGRAMA_GERAL_FILHOS[a.nome] && CRONOGRAMA_GERAL_FILHOS[a.nome].length > 0;
+    const idExpansivel = 'cron_' + a.nome.replace(/[^a-zA-Z0-9]/g, '');
+    const expandido = cronogramaExpandido[idExpansivel];
+
+    let filhosHtml = '';
+    if (temFilhos && expandido) {
+      filhosHtml = CRONOGRAMA_GERAL_FILHOS[a.nome].map(f => renderizarBarra(f, 1)).join('');
+    }
+
+    const paddingEsquerda = nivel === 1 ? '14px' : '0';
+    const setaExpandir = temFilhos
+      ? `<span style="cursor:pointer; color:var(--accent); font-size:11px; margin-right:5px;" onclick="alternarExpandirCronograma('${idExpansivel}')">${expandido ? '▾' : '▸'}</span>`
+      : '';
+
+    return `
+      <div style="margin-bottom:${nivel === 0 ? 16 : 12}px; padding-left:${paddingEsquerda};">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+          <span style="font-size:${nivel === 0 ? 13 : 12}px; font-weight:${nivel === 0 ? 700 : 600}; color:var(--ink); ${temFilhos ? 'cursor:pointer;' : ''}" ${temFilhos ? `onclick="alternarExpandirCronograma('${idExpansivel}')"` : ''}>${setaExpandir}${a.nome}</span>
+          ${badgeDelta}
+        </div>
+        <div style="position:relative; height:${nivel === 0 ? 18 : 14}px; background:var(--paper-2); border-radius:4px;">
+          ${barraBase}${barraAtual}
+        </div>
+        <div style="font-size:10px; color:var(--text-soft); margin-top:3px;">
+          ${a.inicioPrevisto || '-'} → ${a.terminoPrevisto || '-'} · ${a.percentual}% concluído
+        </div>
+      </div>
+      ${filhosHtml}`;
+  }
+
+  let ganttHtml = `<div style="position:relative;">${linhaHojeHtml}`;
+  areas.forEach(area => {
+    ganttHtml += `<div style="font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin:18px 0 10px; padding-top:6px; border-top:1px solid var(--line);">${area}</div>`;
+    atividades.filter(a => a.area === area).forEach(a => {
+      ganttHtml += renderizarBarra(a, 0);
+    });
+  });
+  ganttHtml += `</div>`;
+
+  // ✅ curva S aproximada: % previsto acumulado (média simples entre as
+  // atividades macro, interpolação linear início→término) + um ponto real
+  // de hoje (usando o % geral informado no próprio PDF)
+  const pontosCurva = [];
+  const NUM_PONTOS = 20;
+  for (let i = 0; i <= NUM_PONTOS; i++) {
+    const dataAmostra = new Date(menorData.getTime() + (janelaTotal * i / NUM_PONTOS));
+    let somaProgresso = 0, contagem = 0;
+    atividades.forEach(a => {
+      const ini = parseDataCompleta(a.inicioPrevisto), fim = parseDataCompleta(a.terminoPrevisto);
+      if (!ini || !fim) return;
+      let progresso;
+      if (dataAmostra <= ini) progresso = 0;
+      else if (dataAmostra >= fim) progresso = 100;
+      else progresso = ((dataAmostra - ini) / (fim - ini)) * 100;
+      somaProgresso += progresso;
+      contagem++;
+    });
+    pontosCurva.push(contagem > 0 ? somaProgresso / contagem : 0);
+  }
+  const pontosSvg = pontosCurva.map((p, i) => `${(i / NUM_PONTOS) * 300},${100 - p}`).join(' ');
+  const xHoje = Math.max(0, Math.min(300, ((hoje - menorData) / janelaTotal) * 300));
+  const yHojeReal = 100 - CRONOGRAMA_GERAL_INFO.percentualGeralObra;
+
+  const curvaSHtml = `
+    <div style="margin:18px 0 6px; font-size:12px; font-weight:700; color:var(--ink);">Curva S (aproximada)</div>
+    <div style="font-size:10px; color:var(--text-soft); margin-bottom:8px;">Linha = % previsto acumulado ao longo do tempo. Ponto = % real de hoje.</div>
+    <svg viewBox="0 0 300 110" style="width:100%; height:auto; background:var(--paper-2); border-radius:6px;">
+      <polyline points="${pontosSvg}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <circle cx="${xHoje}" cy="${yHojeReal}" r="4" fill="#B23A3A"/>
+      <text x="${Math.min(Math.max(xHoje, 20), 260)}" y="${yHojeReal - 8}" font-size="9" fill="#B23A3A" text-anchor="middle">${CRONOGRAMA_GERAL_INFO.percentualGeralObra}% hoje</text>
+    </svg>
+  `;
+
+  const btnPdf = CRONOGRAMA_GERAL_INFO.pdfUrl
+    ? `<a href="${CRONOGRAMA_GERAL_INFO.pdfUrl}" target="_blank" style="display:flex; align-items:center; gap:6px; background:#1C2B28; color:var(--accent-bright); font-size:11px; font-weight:600; padding:8px 14px; border-radius:6px; text-decoration:none;">⬇ Baixar PDF</a>`
+    : `<span style="font-size:10.5px; color:#5f6b66;">PDF ainda não disponível</span>`;
+
+  return `
+    <div id="topo">
+      <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+      <div style="display:flex; align-items:center;">
+        <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+      </div>
+    </div>
+    <div class="heroNovo" style="background:var(--ink);">
+      <div class="eyebrow">Cronograma Geral</div>
+      <h1 style="font-size:24px; color:#fff;">${CRONOGRAMA_GERAL_INFO.titulo}</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="font-size:11px; color:#A9B7B1;">Corte em ${CRONOGRAMA_GERAL_INFO.corte}</span>
+        ${btnPdf}
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px;">
+          <div style="font-size:17px; font-weight:700; color:#fff;">${CRONOGRAMA_GERAL_INFO.percentualGeralObra}%</div>
+          <div style="font-size:9px; color:#A9B7B1;">concluído geral</div>
+        </div>
+        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px;">
+          <div style="font-size:17px; font-weight:700; color:#fff;">${atrasadas.length}/${atividades.length}</div>
+          <div style="font-size:9px; color:#A9B7B1;">atividades atrasadas</div>
+        </div>
+        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px;">
+          <div style="font-size:12px; font-weight:700; color:#fff; line-height:1.3;">${proximoMarco ? proximoMarco.nome : '-'}</div>
+          <div style="font-size:9px; color:#A9B7B1;">próximo marco${proximoMarco ? ' · ' + proximoMarco.terminoPrevisto : ''}</div>
+        </div>
+      </div>
+    </div>
+    <section class="secaoNova">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; gap:14px; font-size:10.5px; color:var(--text-soft);">
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:12px; height:4px; border:1.5px dashed var(--line); display:inline-block;"></span>Linha de base</span>
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:12px; height:4px; background:var(--accent); border-radius:2px; display:inline-block;"></span>Previsto atual</span>
+        </div>
+        <span onclick="alternarLinhaBaseCronograma()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:var(--accent); cursor:pointer; text-decoration:underline;">
+          ${mostrarLinhaBaseCronograma ? 'ocultar linha de base' : 'mostrar linha de base'}
+        </span>
+      </div>
+
+      ${ganttHtml}
+
+      ${curvaSHtml}
+
+      <div class="caixaBusca" style="position:relative; margin-top:16px;">
+        <input type="text" id="inputBuscaC" placeholder="Pergunte algo... ex: o que mudou no replanejamento?"
+               oninput="mostrarSugestoes('C')" onfocus="mostrarSugestoes('C')"
+               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma()">
+        <button class="btnBusca" onclick="buscarInteligenteCronograma()">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaC" style="display:none;"></div>
+      </div>
+      <div id="resultadoBuscaC"></div>
+    </section>
+  `;
+}
+
+let mostrarLinhaBaseCronograma = true;
+let cronogramaExpandido = {};
+
+function alternarLinhaBaseCronograma() {
+  mostrarLinhaBaseCronograma = !mostrarLinhaBaseCronograma;
+  document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
+}
+
+function alternarExpandirCronograma(id) {
+  cronogramaExpandido[id] = !cronogramaExpandido[id];
+  document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
+}
+
+// ---------------------------------------------------------------------
+// PERGUNTAS DO CRONOGRAMA GERAL
+// ---------------------------------------------------------------------
+function acharAtividadeCronogramaPorNome(termoOriginal) {
+  const termo = normalizarTexto(termoOriginal);
+  let encontrada = null;
+  CRONOGRAMA_GERAL_ATIVIDADES.forEach(a => {
+    const nomeNorm = normalizarTexto(a.nome);
+    if (termo.includes(nomeNorm) || nomeNorm.includes(termo)) encontrada = a;
+  });
+  return encontrada;
+}
+
+function montarRespostaDataAtividadeCronograma(termoOriginal, tipo) {
+  const atividade = acharAtividadeCronogramaPorNome(termoOriginal);
+  if (!atividade) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa atividade. As disponíveis são: ${CRONOGRAMA_GERAL_ATIVIDADES.map(a => a.nome).join(', ')}.</p>`;
+  }
+
+  const data = tipo === 'termino' ? atividade.terminoPrevisto : atividade.inicioPrevisto;
+  const label = tipo === 'termino' ? 'término previsto' : 'início previsto';
+  const dataBase = tipo === 'termino' ? atividade.terminoBase : atividade.inicioBase;
+  const delta = tipo === 'termino'
+    ? variacaoDias(atividade.terminoPrevisto, atividade.terminoBase)
+    : variacaoDias(atividade.inicioPrevisto, atividade.inicioBase);
+
+  let notaDelta = '';
+  if (delta !== null && delta !== 0) {
+    notaDelta = `<div style="font-size:11px; color:var(--text-soft); margin-top:6px;">${delta > 0 ? 'Atrasou' : 'Adiantou'} ${Math.abs(delta)} dia(s) em relação à linha de base (${dataBase}).</div>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">O ${label} de <b>${atividade.nome}</b> é <b>${data}</b>.${notaDelta}</div>`;
+}
+
+function montarRespostaMudancasCronograma() {
+  const alteradas = CRONOGRAMA_GERAL_ATIVIDADES
+    .map(a => ({ nome: a.nome, delta: variacaoDias(a.terminoPrevisto, a.terminoBase) }))
+    .filter(a => a.delta !== null && a.delta !== 0)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  if (alteradas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nenhuma atividade mudou de término em relação à linha de base.</p>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">O que mudou nesse replanejamento (término das atividades):</div>`;
+  alteradas.forEach(a => {
+    const cor = a.delta > 0 ? '#B23A3A' : '#4F7A2E';
+    const texto = a.delta > 0 ? `atrasou ${a.delta} dias` : `adiantou ${Math.abs(a.delta)} dias`;
+    html += `<div class="subtitulo2">${a.nome}: <span style="color:${cor}; font-weight:600;">${texto}</span></div>`;
+  });
+  return html;
+}
+
+function montarRespostaMaioresAlteracoesCronograma() {
+  const alteradas = CRONOGRAMA_GERAL_ATIVIDADES
+    .map(a => ({ nome: a.nome, delta: variacaoDias(a.terminoPrevisto, a.terminoBase) }))
+    .filter(a => a.delta !== null)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 5);
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Atividades com maior alteração de término:</div>`;
+  alteradas.forEach(a => {
+    const cor = a.delta > 0 ? '#B23A3A' : (a.delta < 0 ? '#4F7A2E' : 'var(--text-soft)');
+    const texto = a.delta === 0 ? 'sem alteração' : (a.delta > 0 ? `atrasou ${a.delta} dias` : `adiantou ${Math.abs(a.delta)} dias`);
+    html += `<div class="subtitulo2">${a.nome}: <span style="color:${cor}; font-weight:600;">${texto}</span></div>`;
+  });
+  return html;
+}
+
+// ✅ "o que falta pra concluir a obra" — usa a dependência real extraída
+// da coluna Predecessors do MS Project (ver CRONOGRAMA_GERAL_DEPENDENCIAS_CONCLUSAO)
+function montarRespostaDependenciasConclusao() {
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">A Conclusão Final da Obra só acontece depois que estas 6 atividades terminarem:</div>`;
+  CRONOGRAMA_GERAL_DEPENDENCIAS_CONCLUSAO.forEach(nome => {
+    const atividade = CRONOGRAMA_GERAL_ATIVIDADES.find(a => a.nome === nome);
+    if (!atividade) return;
+    const delta = variacaoDias(atividade.terminoPrevisto, atividade.terminoBase);
+    const cor = delta > 0 ? '#B23A3A' : (delta < 0 ? '#4F7A2E' : 'var(--text-soft)');
+    const textoDelta = delta === null ? '' : (delta === 0 ? ' · sem alteração' : delta > 0 ? ` · atrasou ${delta}d` : ` · adiantou ${Math.abs(delta)}d`);
+    html += `<div class="subtitulo2">${nome}: término ${atividade.terminoPrevisto}<span style="color:${cor};">${textoDelta}</span></div>`;
+  });
+  html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:8px;">(extraído da coluna "Predecessors" do MS Project)</div>`;
+  return html;
+}
+
+// ✅ "o que trava [atividade]" — mostra de quais outras macro-atividades
+// ela depende, usando o mapa completo de dependências
+function montarRespostaDependenciasAtividade(termoOriginal) {
+  const atividade = acharAtividadeCronogramaPorNome(termoOriginal);
+  if (!atividade) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa atividade. As disponíveis são: ${CRONOGRAMA_GERAL_ATIVIDADES.map(a => a.nome).join(', ')}.</p>`;
+  }
+
+  const deps = CRONOGRAMA_GERAL_DEPENDENCIAS[atividade.nome] || [];
+  if (deps.length === 0) {
+    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;"><b>${atividade.nome}</b> não depende de nenhuma outra atividade macro pra começar.</div>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;"><b>${atividade.nome}</b> depende de:</div>`;
+  deps.forEach(nomeDep => {
+    const dep = CRONOGRAMA_GERAL_ATIVIDADES.find(a => a.nome === nomeDep);
+    if (!dep) return;
+    const delta = variacaoDias(dep.terminoPrevisto, dep.terminoBase);
+    const cor = delta > 0 ? '#B23A3A' : (delta < 0 ? '#4F7A2E' : 'var(--text-soft)');
+    const textoDelta = delta === null ? '' : (delta === 0 ? ' · sem alteração' : delta > 0 ? ` · atrasou ${delta}d` : ` · adiantou ${Math.abs(delta)}d`);
+    html += `<div class="subtitulo2">${nomeDep}: término ${dep.terminoPrevisto}<span style="color:${cor};">${textoDelta}</span></div>`;
+  });
+  html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:8px;">(extraído da coluna "Predecessors" do MS Project)</div>`;
+  return html;
+}
+
+async function buscarInteligenteCronograma() {
+  const input = document.getElementById('inputBuscaC');
+  const resultado = document.getElementById('resultadoBuscaC');
+  const termoOriginal = input.value.trim();
+  const termo = normalizarTexto(termoOriginal);
+
+  if (!termo) return;
+
+  let html = '';
+
+  if (termo.includes('o que mudou') || termo.includes('mudancas') || termo.includes('o que foi alterado')) {
+    html = montarRespostaMudancasCronograma();
+  } else if (termo.includes('mais alteracao') || termo.includes('mais alteradas') || termo.includes('maior alteracao')) {
+    html = montarRespostaMaioresAlteracoesCronograma();
+  } else if (termo.includes('trava a conclusao') || termo.includes('falta pra concluir') || termo.includes('falta para concluir') || termo.includes('o que falta')) {
+    html = montarRespostaDependenciasConclusao();
+  } else if (termo.includes('trava') || termo.includes('depende de') || termo.includes('depende a')) {
+    html = montarRespostaDependenciasAtividade(termoOriginal);
+  } else if (termo.includes('termina') || termo.includes('termino') || termo.includes('acaba')) {
+    html = montarRespostaDataAtividadeCronograma(termoOriginal, 'termino');
+  } else if (termo.includes('inicia') || termo.includes('comeca') || termo.includes('inicio')) {
+    html = montarRespostaDataAtividadeCronograma(termoOriginal, 'inicio');
+  } else {
+    html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não entendi essa pergunta. Toque na caixinha pra ver as sugestões prontas.</p>`;
+  }
+
+  resultado.innerHTML = html;
+  document.getElementById('sugestoesBuscaC').style.display = 'none';
 }
 
 async function carregarFrentes() {
@@ -3240,13 +3725,23 @@ const SUGESTOES_BUSCA_S = [
   'O que está previsto do dia [data] até o dia [data]',
 ];
 
+// ✅ perguntas sugeridas na tela de CRONOGRAMA GERAL
+const SUGESTOES_BUSCA_C = [
+  'O que mudou nesse replanejamento',
+  'Quais atividades tiveram mais alteração de data',
+  'O que falta pra concluir a obra',
+  'O que trava a atividade [atividade]',
+  'Quando inicia a atividade [atividade]',
+  'Quando termina a atividade [atividade]',
+];
+
 let timeoutsSugestoes = {};
 let calendarioEstado = {};
 
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
   const container = document.getElementById('sugestoesBusca' + sufixo);
-  const lista = sufixo === 'F' ? SUGESTOES_BUSCA_F : SUGESTOES_BUSCA_S;
+  const lista = sufixo === 'F' ? SUGESTOES_BUSCA_F : sufixo === 'C' ? SUGESTOES_BUSCA_C : SUGESTOES_BUSCA_S;
   const termo = normalizarTexto(input.value.trim());
 
   const filtradas = termo
@@ -3273,12 +3768,32 @@ async function selecionarSugestao(sufixo, el) {
 
   if (textoCompleto.includes('[frente]')) {
     await mostrarListaFrentes(sufixo);
+  } else if (textoCompleto.includes('[atividade]')) {
+    mostrarListaAtividadesCronograma(sufixo);
   } else if (textoCompleto.includes('[data]')) {
     const qtdDatas = (textoCompleto.match(/\[data\]/g) || []).length;
     abrirCalendario(sufixo, qtdDatas > 1);
   } else {
     document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   }
+}
+
+// ✅ mostra as atividades do cronograma geral, pra completar "[atividade]"
+function mostrarListaAtividadesCronograma(sufixo) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const container = document.getElementById('sugestoesBusca' + sufixo);
+  container.innerHTML = CRONOGRAMA_GERAL_ATIVIDADES.map(a =>
+    `<div class="sugestaoItem" onmousedown="completarComAtividade('${sufixo}', this)">${a.nome}</div>`
+  ).join('');
+  container.style.display = 'block';
+}
+
+function completarComAtividade(sufixo, el) {
+  if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value.replace('[atividade]', el.textContent);
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
 }
 
 // ✅ depois de escolher um template com [frente], mostra as frentes que
