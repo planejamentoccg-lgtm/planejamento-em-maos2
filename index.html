@@ -2353,14 +2353,14 @@ const CRONOGRAMA_TODAS_ATIVIDADES = [
 // caminho mais longo que termina na Conclusão Final da Obra),
 // resumido em blocos por área
 const CRONOGRAMA_CAMINHO_CRITICO = [
-  { area: 'Mobilização da Obra', inicio: '18/08/2025', fim: '13/12/2025', qtdTarefas: 2 },
-  { area: 'Túnel de Via Trecho Oeste', inicio: '26/11/2025', fim: '07/01/2026', qtdTarefas: 2 },
-  { area: 'Estação Oeste', inicio: '08/01/2026', fim: '24/10/2026', qtdTarefas: 29 },
-  { area: 'Túnel de Interligação', inicio: '26/10/2026', fim: '03/11/2026', qtdTarefas: 2 },
-  { area: 'Estação Oeste', inicio: '04/11/2026', fim: '08/09/2027', qtdTarefas: 18 },
-  { area: 'Estação Sul', inicio: '09/09/2027', fim: '13/09/2028', qtdTarefas: 13 },
-  { area: 'Sistemas Estação Sul', inicio: '14/09/2028', fim: '07/12/2028', qtdTarefas: 1 },
-  { area: 'Marcos Contratuais', inicio: '07/12/2028', fim: '07/12/2028', qtdTarefas: 1 },
+  { area: 'Mobilização da Obra', inicio: '18/08/2025', fim: '13/12/2025', qtdTarefas: 2, primeiraTarefa: 'Canteiro M. Jacinta', ultimaTarefa: 'Canteiro Madre Jacinta' },
+  { area: 'Túnel de Via Trecho Oeste', inicio: '26/11/2025', fim: '07/01/2026', qtdTarefas: 2, primeiraTarefa: 'Trecho em seção típica', ultimaTarefa: 'Trecho em seção Variável' },
+  { area: 'Estação Oeste', inicio: '08/01/2026', fim: '24/10/2026', qtdTarefas: 29, primeiraTarefa: 'Limpeza e preparo das frentes', ultimaTarefa: "Escavação Cambotas CA'5 a 8 + CA13 a 18" },
+  { area: 'Túnel de Interligação', inicio: '26/10/2026', fim: '03/11/2026', qtdTarefas: 2, primeiraTarefa: 'Escavação para acerto e regularização espelho (OESTE)', ultimaTarefa: 'Escavação do alteamento + alargamento Cambota 01 à 03' },
+  { area: 'Estação Oeste', inicio: '04/11/2026', fim: '08/09/2027', qtdTarefas: 18, primeiraTarefa: '1o. Rebaixo Seção B - sem cambotas (A3 ao A2)', ultimaTarefa: 'Transição poço/estação' },
+  { area: 'Estação Sul', inicio: '09/09/2027', fim: '13/09/2028', qtdTarefas: 13, primeiraTarefa: 'Escavação até trecho de cambotas (entre eixos 6 e 7)', ultimaTarefa: 'Estrutura dos poços' },
+  { area: 'Sistemas Estação Sul', inicio: '14/09/2028', fim: '07/12/2028', qtdTarefas: 1, primeiraTarefa: 'Bandejamento', ultimaTarefa: 'Bandejamento' },
+  { area: 'Marcos Contratuais', inicio: '07/12/2028', fim: '07/12/2028', qtdTarefas: 1, primeiraTarefa: 'CONCLUSÃO FINAL DA OBRA', ultimaTarefa: 'CONCLUSÃO FINAL DA OBRA' },
 ];
 
 const CRONOGRAMA_GERAL_FILHOS = {
@@ -2445,25 +2445,24 @@ function variacaoDias(dataAtualStr, dataBaseStr) {
   return Math.round((a - b) / 86400000);
 }
 
-// ✅ ATRASO POR TENDÊNCIA — o que interessa pro dia a dia: quanto essa
-// atividade JÁ deveria estar concluída hoje (interpolação linear entre
-// início e término previstos) comparado com quanto está concluída de
-// verdade. Isso é diferente de "mudou a linha de base" — uma atividade
-// pode ter a MESMA data prevista de sempre e ainda assim estar
-// atrasada, se o ritmo de execução não está acompanhando.
-function calcularProgressoEsperadoHoje(atividade, hoje) {
-  const ini = parseDataCompleta(atividade.inicioPrevisto);
-  const fim = parseDataCompleta(atividade.terminoPrevisto);
-  if (!ini || !fim) return null;
-  if (hoje <= ini) return 0;
-  if (hoje >= fim) return 100;
-  return ((hoje - ini) / (fim - ini)) * 100;
+// ✅ duração em dias entre início e término (não confundir com a
+// variação de data — essa aqui mede quanto TEMPO a tarefa leva)
+function duracaoDias(inicioStr, terminoStr) {
+  const i = parseDataCompleta(inicioStr), t = parseDataCompleta(terminoStr);
+  if (!i || !t) return null;
+  return Math.round((t - i) / 86400000);
 }
 
-function calcularAtrasoTendencia(atividade, hoje) {
-  const esperado = calcularProgressoEsperadoHoje(atividade, hoje);
-  if (esperado === null) return null;
-  return { esperado: Math.round(esperado), real: atividade.percentual, gap: Math.round(atividade.percentual - esperado) };
+// ✅ variação de DURAÇÃO — quantos dias a mais ou a menos a tarefa
+// passou a levar, comparando a duração prevista atual com a duração da
+// linha de base. É diferente de "quando o término mudou": uma tarefa
+// pode ter o mesmo término mas ter ficado mais curta (começando depois)
+// ou mais longa.
+function variacaoDuracao(atividade) {
+  const durAtual = duracaoDias(atividade.inicioPrevisto, atividade.terminoPrevisto);
+  const durBase = duracaoDias(atividade.inicioBase, atividade.terminoBase);
+  if (durAtual === null || durBase === null) return null;
+  return durAtual - durBase;
 }
 
 function renderizarCronogramaGeral() {
@@ -2489,12 +2488,6 @@ function renderizarCronogramaGeral() {
     return ((data - menorData) / janelaTotal) * 100;
   }
 
-  // ✅ estatísticas do topo
-  const atrasadasTendencia = atividades.filter(a => {
-    const t = calcularAtrasoTendencia(a, hoje);
-    return t && a.percentual < 100 && t.gap < -3;
-  });
-
   const marcosContratuais = CRONOGRAMA_GERAL_FILHOS['Marcos Contratuais'] || [];
   let proximoMarco = null;
   marcosContratuais.forEach(m => {
@@ -2504,50 +2497,42 @@ function renderizarCronogramaGeral() {
     }
   });
 
-  // ✅ linha do "HOJE" — tracejada e discreta (pediram pra não ficar chamativa)
+  // ✅ linha do "HOJE" no Gantt — tracejada e discreta
   const posHoje = posicao(`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`);
   const linhaHojeHtml = (posHoje !== null && posHoje >= 0 && posHoje <= 100)
     ? `<div style="position:absolute; left:${posHoje}%; top:0; bottom:0; width:0; border-left:1.5px dashed #8A8378; z-index:2;"></div>
        <div style="position:absolute; left:${posHoje}%; top:-14px; transform:translateX(-50%); font-size:8.5px; font-weight:600; color:#8A8378; white-space:nowrap;">hoje</div>`
     : '';
 
-  // ✅ agrupa por área, na ordem em que a área aparece pela primeira vez
   const areas = [];
   atividades.forEach(a => { if (!areas.includes(a.area)) areas.push(a.area); });
 
   function renderizarBarra(a) {
     const pIni = posicao(a.inicioPrevisto), pFim = posicao(a.terminoPrevisto);
     const bIni = posicao(a.inicioBase), bFim = posicao(a.terminoBase);
-    const delta = variacaoDias(a.terminoPrevisto, a.terminoBase);
-    const trend = calcularAtrasoTendencia(a, hoje);
+    const deltaTermino = variacaoDias(a.terminoPrevisto, a.terminoBase);
+    const deltaDuracao = variacaoDuracao(a);
 
-    let badgeDelta = '';
-    if (delta === null) {
-      badgeDelta = `<span style="color:var(--text-soft); font-size:9.5px;">sem linha de base</span>`;
-    } else if (delta === 0) {
-      badgeDelta = `<span style="color:#4F7A2E; font-weight:600; font-size:9.5px;">término igual à linha de base</span>`;
-    } else if (delta > 0) {
-      badgeDelta = `<span style="color:#B23A3A; font-weight:600; font-size:9.5px;">término ${delta}d depois da linha de base</span>`;
-    } else {
-      badgeDelta = `<span style="color:#4F7A2E; font-weight:600; font-size:9.5px;">término ${Math.abs(delta)}d antes da linha de base</span>`;
+    // ✅ duas informações SEPARADAS e claras (pra não dar dupla
+    // interpretação): quanto o TÉRMINO deslocou vs. linha de base, e
+    // quanto a DURAÇÃO da tarefa mudou (ficou mais longa ou mais curta)
+    let textoTermino = 'Término: sem linha de base pra comparar';
+    let corTermino = 'var(--text-soft)';
+    if (deltaTermino !== null) {
+      if (deltaTermino === 0) { textoTermino = 'Término: igual à linha de base'; corTermino = '#4F7A2E'; }
+      else if (deltaTermino > 0) { textoTermino = `Término: ${deltaTermino} dias mais tarde que a linha de base`; corTermino = '#B23A3A'; }
+      else { textoTermino = `Término: ${Math.abs(deltaTermino)} dias mais cedo que a linha de base`; corTermino = '#4F7A2E'; }
     }
 
-    // ✅ selo de tendência (ritmo real x esperado hoje) — pedido explícito:
-    // atraso tem que ser baseado na tendência, não só na linha de base
-    let badgeTendencia = '';
-    if (a.percentual < 100 && trend) {
-      if (trend.gap < -3) {
-        badgeTendencia = `<span style="background:#F4D9D9; color:#B23A3A; font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px;">atrasada</span>`;
-      } else if (trend.gap > 3) {
-        badgeTendencia = `<span style="background:#DCEBC8; color:#4F7A2E; font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px;">adiantada</span>`;
-      } else {
-        badgeTendencia = `<span style="background:var(--paper-2); color:var(--text-soft); font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px;">no ritmo</span>`;
-      }
+    let textoDuracao = '';
+    if (deltaDuracao !== null && deltaDuracao !== 0) {
+      const cor = deltaDuracao > 0 ? '#B23A3A' : '#4F7A2E';
+      const texto = deltaDuracao > 0 ? `${deltaDuracao} dias a mais` : `${Math.abs(deltaDuracao)} dias a menos`;
+      textoDuracao = `<div style="font-size:9.5px; color:${cor}; margin-top:1px;">Duração da tarefa: ${texto} que a linha de base</div>`;
     }
 
-    // ✅ duas faixas empilhadas (não mais sobrepostas) — previsto atual
-    // em cima, linha de base embaixo, cor bem mais chamativa (âmbar) e
-    // sempre visível, do jeito que foi pedido
+    // ✅ duas faixas empilhadas — previsto atual em cima, linha de base
+    // embaixo (âmbar tracejado, bem visível, nunca escondida)
     const barraAtual = (pIni !== null && pFim !== null)
       ? `<div style="position:absolute; left:${pIni}%; width:${Math.max(pFim - pIni, 0.5)}%; top:0; height:9px; background:var(--accent); border-radius:3px; opacity:0.95;"></div>`
       : '';
@@ -2557,34 +2542,34 @@ function renderizarCronogramaGeral() {
 
     return `
       <div style="margin-bottom:20px; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; gap:8px;">
-          <span style="font-size:13px; font-weight:700; color:var(--ink);">${a.nome}</span>
-          ${badgeTendencia}
-        </div>
+        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${a.nome}</div>
         <div style="position:relative; height:19px;">
           ${barraAtual}${barraBase}
         </div>
         <div style="font-size:10px; color:var(--text-soft); margin-top:4px;">
-          Previsto: ${a.inicioPrevisto || '-'} → ${a.terminoPrevisto || '-'} · ${a.percentual}% concluído
+          Previsto: ${a.inicioPrevisto || '-'} → ${a.terminoPrevisto || '-'}
         </div>
         ${a.inicioBase ? `<div style="font-size:10px; color:#C77D22; margin-top:1px;">Linha de base: ${a.inicioBase} → ${a.terminoBase}</div>` : ''}
-        <div style="margin-top:3px;">${badgeDelta}</div>
+        <div style="font-size:9.5px; color:${corTermino}; margin-top:3px;">${textoTermino}</div>
+        ${textoDuracao}
       </div>`;
   }
 
   let ganttHtml = `<div style="position:relative;">${linhaHojeHtml}`;
   areas.forEach(area => {
-    ganttHtml += `<div style="font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin:20px 0 12px; padding-top:8px; border-top:1px solid var(--line);">${area}</div>`;
+    ganttHtml += `
+      <div style="background:var(--ink); border-radius:6px; padding:8px 12px; margin:22px 0 14px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent-bright); font-weight:700;">${area}</span>
+      </div>`;
     atividades.filter(a => a.area === area).forEach(a => {
       ganttHtml += renderizarBarra(a);
     });
   });
   ganttHtml += `</div>`;
 
-  // ✅ CURVA S — agora com DUAS linhas (linha de base e tendência/previsto
-  // atual), a linha inteira (passado + futuro), e marcação dos meses/anos
-  // pra dar pra se localizar. O objetivo é enxergar a "boca de jacaré"
-  // (o gargalo entre as duas linhas conforme o tempo passa).
+  // ✅ CURVA S — linha de base x tendência, linha inteira (passado +
+  // futuro), com marcação dos meses/anos. Sem bolinha de "hoje" (pedido
+  // explícito — não confiamos no % concluído da planilha pra marcar isso).
   const NUM_PONTOS = 40;
   function progressoMedioEm(dataAmostra, usarBase) {
     let soma = 0, contagem = 0;
@@ -2611,10 +2596,7 @@ function renderizarCronogramaGeral() {
   const escalaY = (p) => (svgH - margemBaixo) - (p * (svgH - margemBaixo) / 100);
   const pontosSvgPrevisto = pontosPrevisto.map((p, i) => `${(i / NUM_PONTOS) * svgW},${escalaY(p)}`).join(' ');
   const pontosSvgBase = pontosBase.map((p, i) => `${(i / NUM_PONTOS) * svgW},${escalaY(p)}`).join(' ');
-  const xHoje = Math.max(0, Math.min(svgW, ((hoje - menorData) / janelaTotal) * svgW));
-  const yHojeReal = escalaY(CRONOGRAMA_GERAL_INFO.percentualGeralObra);
 
-  // ✅ marcação de meses (a cada ~3 meses, pra não lotar a régua)
   let marcasHtml = '';
   const cursor = new Date(menorData.getFullYear(), menorData.getMonth(), 1);
   const MESES_ABREV3 = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -2638,13 +2620,10 @@ function renderizarCronogramaGeral() {
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:#C77D22; display:inline-block;"></span>Linha de base</span>
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:var(--accent); display:inline-block;"></span>Tendência (previsto atual)</span>
     </div>
-    <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; height:auto; background:var(--paper-2); border-radius:6px;">
+    <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none" style="width:100%; height:220px; background:var(--paper-2); border-radius:6px;">
       ${marcasHtml}
-      <polyline points="${pontosSvgBase}" fill="none" stroke="#C77D22" stroke-width="2.5" stroke-dasharray="6,4"/>
-      <polyline points="${pontosSvgPrevisto}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-      <line x1="${xHoje}" y1="0" x2="${xHoje}" y2="${svgH - margemBaixo}" stroke="#8A8378" stroke-width="1" stroke-dasharray="3,3"/>
-      <circle cx="${xHoje}" cy="${yHojeReal}" r="4" fill="#B23A3A"/>
-      <text x="${Math.min(Math.max(xHoje, 30), svgW - 30)}" y="${yHojeReal - 8}" font-size="10" fill="#B23A3A" text-anchor="middle">${CRONOGRAMA_GERAL_INFO.percentualGeralObra}% hoje</text>
+      <polyline points="${pontosSvgBase}" fill="none" stroke="#C77D22" stroke-width="2.5" stroke-dasharray="6,4" vector-effect="non-scaling-stroke"/>
+      <polyline points="${pontosSvgPrevisto}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
     </svg>
   `;
 
@@ -2666,21 +2645,11 @@ function renderizarCronogramaGeral() {
         <span style="font-size:11px; color:#A9B7B1;">Corte em ${CRONOGRAMA_GERAL_INFO.corte}</span>
         ${btnPdf}
       </div>
-      <div style="display:flex; gap:10px; margin-top:14px;">
-        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px; cursor:pointer;" onclick="abrirSubTelaCronograma('concluido')">
-          <div style="font-size:17px; font-weight:700; color:#fff;">${CRONOGRAMA_GERAL_INFO.percentualGeralObra}%</div>
-          <div style="font-size:9px; color:#A9B7B1;">concluído geral ›</div>
-        </div>
-        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px; cursor:pointer;" onclick="abrirSubTelaCronograma('atrasadas')">
-          <div style="font-size:17px; font-weight:700; color:#fff;">${atrasadasTendencia.length}/${atividades.length}</div>
-          <div style="font-size:9px; color:#A9B7B1;">atrasadas (tendência) ›</div>
-        </div>
-        <div style="flex:1; background:#1C2B28; border-radius:6px; padding:9px 10px; cursor:pointer;" onclick="abrirSubTelaCronograma('marcos')">
-          <div style="font-size:12px; font-weight:700; color:#fff; line-height:1.3;">${proximoMarco ? proximoMarco.nome : '-'}</div>
-          <div style="font-size:9px; color:#A9B7B1;">próximo marco ›</div>
-        </div>
+      <div style="margin-top:14px; background:#1C2B28; border-radius:6px; padding:10px 12px; cursor:pointer;" onclick="abrirSubTelaCronograma('marcos')">
+        <div style="font-size:13px; font-weight:700; color:#fff;">${proximoMarco ? proximoMarco.nome : '-'}</div>
+        <div style="font-size:9.5px; color:#A9B7B1; margin-top:2px;">próximo marco${proximoMarco ? ' · ' + proximoMarco.terminoPrevisto : ''} ›</div>
       </div>
-      <div style="margin-top:10px; background:#1C2B28; border-radius:6px; padding:9px 10px; cursor:pointer;" onclick="abrirSubTelaCronograma('critico')">
+      <div style="margin-top:8px; background:#1C2B28; border-radius:6px; padding:10px 12px; cursor:pointer;" onclick="abrirSubTelaCronograma('critico')">
         <span style="font-size:11px; color:var(--accent-bright); font-weight:700;">Ver caminho crítico completo ›</span>
       </div>
     </div>
@@ -2925,9 +2894,7 @@ function fecharSubTelaCronograma() {
 
 function renderizarSubTelaCronograma(tipo, parametro) {
   let titulo = '', conteudo = '';
-  if (tipo === 'concluido') { titulo = 'Concluído geral'; conteudo = conteudoDetalheConcluido(); }
-  else if (tipo === 'atrasadas') { titulo = 'Atividades atrasadas'; conteudo = conteudoDetalheAtrasadas(); }
-  else if (tipo === 'marcos') { titulo = 'Marcos contratuais'; conteudo = conteudoDetalheMarcos(); }
+  if (tipo === 'marcos') { titulo = 'Marcos contratuais'; conteudo = conteudoDetalheMarcos(); }
   else if (tipo === 'critico') { titulo = 'Caminho crítico'; conteudo = conteudoDetalheCaminhoCritico(); }
   else if (tipo === 'atividade') { titulo = parametro; conteudo = conteudoDetalheAtividade(parametro); }
 
@@ -2953,108 +2920,6 @@ function renderizarSubTelaCronograma(tipo, parametro) {
 }
 
 // ✅ Concluído geral — real vs. esperado hoje, e status de cada atividade
-function conteudoDetalheConcluido() {
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-  const atividades = CRONOGRAMA_GERAL_ATIVIDADES;
-
-  let somaEsperado = 0, contagem = 0;
-  atividades.forEach(a => {
-    const esp = calcularProgressoEsperadoHoje(a, hoje);
-    if (esp !== null) { somaEsperado += esp; contagem++; }
-  });
-  const esperadoGeral = contagem > 0 ? Math.round(somaEsperado / contagem) : null;
-
-  let html = `
-    <div style="display:flex; gap:10px; margin-bottom:18px;">
-      <div style="flex:1; background:var(--paper-2); border-radius:8px; padding:14px;">
-        <div style="font-size:22px; font-weight:700; color:var(--ink);">${CRONOGRAMA_GERAL_INFO.percentualGeralObra}%</div>
-        <div style="font-size:10.5px; color:var(--text-soft);">concluído real (informado no replanejamento)</div>
-      </div>
-      <div style="flex:1; background:var(--paper-2); border-radius:8px; padding:14px;">
-        <div style="font-size:22px; font-weight:700; color:var(--ink);">${esperadoGeral !== null ? esperadoGeral + '%' : '-'}</div>
-        <div style="font-size:10.5px; color:var(--text-soft);">previsto pra hoje (pelas datas)</div>
-      </div>
-    </div>
-    <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:10px;">Por atividade:</div>
-  `;
-
-  atividades.forEach(a => {
-    const trend = calcularAtrasoTendencia(a, hoje);
-    const concluida = a.percentual >= 100;
-    let statusTexto, statusCor;
-    if (concluida) {
-      const deltaTermino = variacaoDias(a.terminoPrevisto, a.terminoBase);
-      if (deltaTermino === null) { statusTexto = 'Concluída (sem linha de base pra comparar)'; statusCor = 'var(--text-soft)'; }
-      else if (deltaTermino > 0) { statusTexto = `Concluída ${deltaTermino} dias depois da linha de base`; statusCor = '#B23A3A'; }
-      else if (deltaTermino < 0) { statusTexto = `Concluída ${Math.abs(deltaTermino)} dias antes da linha de base`; statusCor = '#4F7A2E'; }
-      else { statusTexto = 'Concluída exatamente na data da linha de base'; statusCor = '#4F7A2E'; }
-    } else if (trend && trend.gap < -3) {
-      statusTexto = `${Math.abs(trend.gap)} pontos atrás do ritmo esperado`;
-      statusCor = '#B23A3A';
-    } else if (trend && trend.gap > 3) {
-      statusTexto = `${trend.gap} pontos à frente do ritmo esperado`;
-      statusCor = '#4F7A2E';
-    } else {
-      statusTexto = 'No ritmo esperado';
-      statusCor = 'var(--text-soft)';
-    }
-
-    html += `
-      <div style="border-bottom:1px solid var(--line); padding:10px 0; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
-        <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--ink);">
-          <span>${a.nome}</span><span>${a.percentual}%</span>
-        </div>
-        <div style="font-size:11px; color:${statusCor}; margin-top:2px;">${statusTexto}</div>
-      </div>
-    `;
-  });
-
-  return html;
-}
-
-// ✅ Atividades atrasadas — por TENDÊNCIA (ritmo real x esperado), não
-// por ter mudado a linha de base
-function conteudoDetalheAtrasadas() {
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-  const atividades = CRONOGRAMA_GERAL_ATIVIDADES;
-
-  const comTrend = atividades
-    .map(a => ({ a, trend: calcularAtrasoTendencia(a, hoje) }))
-    .filter(x => x.trend && x.a.percentual < 100)
-    .sort((x, y) => x.trend.gap - y.trend.gap);
-
-  const atrasadas = comTrend.filter(x => x.trend.gap < -3);
-  const noRitmo = comTrend.filter(x => x.trend.gap >= -3);
-
-  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:16px; line-height:1.4;">
-    Esse atraso é calculado pela <b>tendência</b>: o quanto a atividade já deveria estar pronta hoje (pelas datas previstas) comparado com o quanto está pronta de verdade. É diferente de "mudou a linha de base" — uma atividade pode estar no mesmo prazo de sempre e ainda assim estar atrasada, se o ritmo não está acompanhando.
-  </div>`;
-
-  if (atrasadas.length === 0) {
-    html += `<p style="font-size:13px; color:var(--text-soft);">Nenhuma atividade está atrasada em relação ao ritmo esperado.</p>`;
-  } else {
-    html += `<div style="font-size:12px; font-weight:700; color:#B23A3A; margin-bottom:8px;">Atrasadas (${atrasadas.length}):</div>`;
-    atrasadas.forEach(x => {
-      html += `
-        <div style="border-bottom:1px solid var(--line); padding:10px 0; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${x.a.nome.replace(/'/g, "\\'")}')">
-          <div style="font-size:12.5px; font-weight:700; color:var(--ink);">${x.a.nome}</div>
-          <div style="font-size:11px; color:#B23A3A; margin-top:2px;">Deveria estar em ${x.trend.esperado}% hoje, está em ${x.trend.real}% — ${Math.abs(x.trend.gap)} pontos atrás</div>
-        </div>
-      `;
-    });
-  }
-
-  if (noRitmo.length > 0) {
-    html += `<div style="font-size:12px; font-weight:700; color:var(--ink); margin:18px 0 8px;">No ritmo (${noRitmo.length}):</div>`;
-    noRitmo.forEach(x => {
-      html += `<div class="subtitulo2">${x.a.nome}: ${x.trend.real}% (esperado ${x.trend.esperado}%)</div>`;
-    });
-  }
-
-  return html;
-}
-
-// ✅ Marcos contratuais — cumprido ou não, e variação vs. linha de base
 function conteudoDetalheMarcos() {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const marcos = CRONOGRAMA_GERAL_FILHOS['Marcos Contratuais'] || [];
@@ -3086,16 +2951,42 @@ function conteudoDetalheMarcos() {
 // ✅ Caminho crítico — sequência real calculada a partir das
 // Predecessoras do MS Project
 function conteudoDetalheCaminhoCritico() {
-  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:16px; line-height:1.4;">
-    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Calculado rastreando as dependências reais do MS Project, do início ao fim.
+  const blocos = CRONOGRAMA_CAMINHO_CRITICO;
+  const primeiroBloco = blocos[0], ultimoBloco = blocos[blocos.length - 1];
+  const inicioTotal = parseDataCompleta(primeiroBloco.inicio);
+  const fimTotal = parseDataCompleta(ultimoBloco.fim);
+  const duracaoTotal = (fimTotal - inicioTotal) || 1;
+
+  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px; line-height:1.4;">
+    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Calculado rastreando as dependências reais do MS Project, do início ao fim (68 tarefas, resumidas em ${blocos.length} passagens por área).
   </div>`;
-  CRONOGRAMA_CAMINHO_CRITICO.forEach((b, i) => {
+
+  // ✅ barra de visão geral (proporcional à duração de cada passagem)
+  html += `<div style="display:flex; height:10px; border-radius:5px; overflow:hidden; margin-bottom:20px;">`;
+  blocos.forEach((b, i) => {
+    const dIni = parseDataCompleta(b.inicio), dFim = parseDataCompleta(b.fim);
+    const largura = Math.max(((dFim - dIni) / duracaoTotal) * 100, 1);
+    const cor = i % 2 === 0 ? 'var(--accent)' : '#8FB84B';
+    html += `<div style="width:${largura}%; background:${cor};" title="${b.area}"></div>`;
+  });
+  html += `</div>`;
+
+  blocos.forEach((b, i) => {
+    const proximaArea = i < blocos.length - 1 ? blocos[i + 1].area : null;
     html += `
-      <div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);">
-        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--accent); font-weight:700; width:18px;">${i + 1}</div>
-        <div style="flex:1;">
-          <div style="font-size:12.5px; font-weight:700; color:var(--ink);">${b.area}</div>
-          <div style="font-size:11px; color:var(--text-soft); margin-top:2px;">${b.inicio} → ${b.fim} · ${b.qtdTarefas} tarefa(s) nessa passagem</div>
+      <div style="display:flex; gap:12px; padding-bottom:${i < blocos.length - 1 ? '18' : '10'}px;">
+        <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--accent-bright); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">${i + 1}</div>
+          ${i < blocos.length - 1 ? `<div style="width:2px; flex:1; background:var(--line); margin:4px 0;"></div>` : ''}
+        </div>
+        <div style="flex:1; padding-bottom:6px;">
+          <div style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}</div>
+          <div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${b.inicio} → ${b.fim} · ${b.qtdTarefas} tarefa(s) críticas aqui</div>
+          <div style="background:var(--paper-2); border-radius:6px; padding:8px 10px; margin-top:6px;">
+            <div style="font-size:10.5px; color:var(--ink);"><b>Entra por:</b> ${b.primeiraTarefa}</div>
+            <div style="font-size:10.5px; color:var(--ink); margin-top:3px;"><b>Fecha essa passagem:</b> ${b.ultimaTarefa}</div>
+          </div>
+          ${proximaArea ? `<div style="font-size:10px; color:#B23A3A; margin-top:6px;">⚠ Se atrasar aqui, trava o início de <b>${proximaArea}</b></div>` : `<div style="font-size:10px; color:#4F7A2E; margin-top:6px;">🏁 Última passagem — leva direto à conclusão final da obra</div>`}
         </div>
       </div>
     `;
@@ -3103,9 +2994,11 @@ function conteudoDetalheCaminhoCritico() {
   return html;
 }
 
-// ✅ Detalhe de uma atividade macro específica — o "toque pra abrir"
-// virou uma tela própria, com o que está atrasado, prestes a iniciar,
-// em andamento e concluído dentro dela
+// ✅ Detalhe de uma atividade macro específica — sem usar % concluído
+// (não é considerado confiável); mostra as duas métricas separadas:
+// variação de duração e variação de término vs. linha de base. O que
+// está "em andamento"/"concluído"/"a iniciar" agora é calculado pelas
+// DATAS previstas (não pelo %).
 function conteudoDetalheAtividade(nomeAtividade) {
   const atividade = CRONOGRAMA_GERAL_ATIVIDADES.find(a => a.nome === nomeAtividade);
   if (!atividade) return `<p style="font-size:13px; color:var(--text-soft);">Atividade não encontrada.</p>`;
@@ -3113,18 +3006,38 @@ function conteudoDetalheAtividade(nomeAtividade) {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const filhos = CRONOGRAMA_GERAL_FILHOS[nomeAtividade] || [];
   const deps = CRONOGRAMA_GERAL_DEPENDENCIAS[nomeAtividade] || [];
-  const delta = variacaoDias(atividade.terminoPrevisto, atividade.terminoBase);
+  const deltaTermino = variacaoDias(atividade.terminoPrevisto, atividade.terminoBase);
+  const deltaDuracao = variacaoDuracao(atividade);
+
+  let textoDuracao = 'sem linha de base';
+  let corDuracao = 'var(--text-soft)';
+  if (deltaDuracao !== null) {
+    if (deltaDuracao === 0) { textoDuracao = 'igual à linha de base'; corDuracao = 'var(--ink)'; }
+    else if (deltaDuracao > 0) { textoDuracao = `+${deltaDuracao} dias`; corDuracao = '#B23A3A'; }
+    else { textoDuracao = `${deltaDuracao} dias`; corDuracao = '#4F7A2E'; }
+  }
+
+  let textoTermino = 'sem linha de base';
+  let corTermino = 'var(--text-soft)';
+  if (deltaTermino !== null) {
+    if (deltaTermino === 0) { textoTermino = 'no prazo da linha de base'; corTermino = '#4F7A2E'; }
+    else if (deltaTermino > 0) { textoTermino = `${deltaTermino}d mais tarde`; corTermino = '#B23A3A'; }
+    else { textoTermino = `${Math.abs(deltaTermino)}d mais cedo`; corTermino = '#4F7A2E'; }
+  }
 
   let html = `
     <div style="display:flex; gap:10px; margin-bottom:14px;">
       <div style="flex:1; background:var(--paper-2); border-radius:8px; padding:12px;">
-        <div style="font-size:20px; font-weight:700; color:var(--ink);">${atividade.percentual}%</div>
-        <div style="font-size:10px; color:var(--text-soft);">concluído</div>
+        <div style="font-size:16px; font-weight:700; color:${corDuracao};">${textoDuracao}</div>
+        <div style="font-size:9.5px; color:var(--text-soft); margin-top:2px;">variação na duração da tarefa</div>
       </div>
       <div style="flex:1; background:var(--paper-2); border-radius:8px; padding:12px;">
-        <div style="font-size:13px; font-weight:700; color:var(--ink);">${atividade.terminoPrevisto}</div>
-        <div style="font-size:10px; color:var(--text-soft);">término previsto${delta ? ` (${delta > 0 ? '+' : ''}${delta}d vs. linha de base)` : ''}</div>
+        <div style="font-size:16px; font-weight:700; color:${corTermino};">${textoTermino}</div>
+        <div style="font-size:9.5px; color:var(--text-soft); margin-top:2px;">término vs. linha de base</div>
       </div>
+    </div>
+    <div style="font-size:11px; color:var(--text-soft); margin-bottom:16px;">
+      Previsto: ${atividade.inicioPrevisto} → ${atividade.terminoPrevisto}${atividade.inicioBase ? ` · Linha de base: ${atividade.inicioBase} → ${atividade.terminoBase}` : ''}
     </div>
   `;
 
@@ -3137,27 +3050,41 @@ function conteudoDetalheAtividade(nomeAtividade) {
     return html;
   }
 
-  const atrasadas = filhos.filter(f => {
-    const t = calcularAtrasoTendencia(f, hoje);
-    return t && f.percentual < 100 && t.gap < -3;
+  // ✅ classificação por DATA (não por %): concluída = já passou do
+  // término previsto; em andamento = hoje está entre início e término;
+  // a iniciar = ainda não chegou no início previsto
+  const concluidas = filhos.filter(f => parseDataCompleta(f.terminoPrevisto) < hoje);
+  const emAndamento = filhos.filter(f => {
+    const ini = parseDataCompleta(f.inicioPrevisto), fim = parseDataCompleta(f.terminoPrevisto);
+    return ini <= hoje && fim >= hoje;
   });
-  const emAndamento = filhos.filter(f => f.percentual > 0 && f.percentual < 100 && !atrasadas.includes(f));
-  const aIniciar = filhos.filter(f => f.percentual === 0 && parseDataCompleta(f.inicioPrevisto) > hoje);
-  const concluidas = filhos.filter(f => f.percentual >= 100);
+  const aIniciar = filhos.filter(f => parseDataCompleta(f.inicioPrevisto) > hoje);
 
-  function listaBloco(titulo, lista, cor) {
+  function cartaoItem(f, corBorda) {
+    const delta = variacaoDias(f.terminoPrevisto, f.terminoBase);
+    let notaDelta = '';
+    if (delta !== null && delta !== 0) {
+      const cor = delta > 0 ? '#B23A3A' : '#4F7A2E';
+      notaDelta = ` · <span style="color:${cor};">término ${delta > 0 ? '+' : ''}${delta}d vs. base</span>`;
+    }
+    return `
+      <div style="border-left:3px solid ${corBorda}; background:var(--paper-2); border-radius:0 6px 6px 0; padding:8px 10px; margin-bottom:6px;">
+        <div style="font-size:11.5px; font-weight:700; color:var(--ink);">${f.nome}</div>
+        <div style="font-size:10px; color:var(--text-soft); margin-top:2px;">${f.inicioPrevisto} → ${f.terminoPrevisto}${notaDelta}</div>
+      </div>
+    `;
+  }
+
+  function secaoBloco(titulo, lista, cor) {
     if (lista.length === 0) return '';
-    let h = `<div style="font-size:12px; font-weight:700; color:${cor}; margin:16px 0 8px;">${titulo} (${lista.length}):</div>`;
-    lista.forEach(f => {
-      h += `<div class="subtitulo2">${f.nome}: ${f.inicioPrevisto} → ${f.terminoPrevisto} (${f.percentual}%)</div>`;
-    });
+    let h = `<div style="font-size:12px; font-weight:700; color:${cor}; margin:16px 0 8px;">${titulo} (${lista.length})</div>`;
+    lista.forEach(f => { h += cartaoItem(f, cor); });
     return h;
   }
 
-  html += listaBloco('Atrasadas (tendência)', atrasadas, '#B23A3A');
-  html += listaBloco('Em andamento', emAndamento, 'var(--ink)');
-  html += listaBloco('Prestes a iniciar', aIniciar, 'var(--accent)');
-  html += listaBloco('Concluídas', concluidas, '#4F7A2E');
+  html += secaoBloco('Em andamento', emAndamento, 'var(--accent)');
+  html += secaoBloco('Prestes a iniciar', aIniciar, '#4A90D9');
+  html += secaoBloco('Já deveria estar concluída', concluidas, '#8A8378');
 
   return html;
 }
