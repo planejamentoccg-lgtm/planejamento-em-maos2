@@ -2365,68 +2365,69 @@ const CRONOGRAMA_CAMINHO_CRITICO = [
 
 const CRONOGRAMA_GERAL_FILHOS = {
   'Marcos Contratuais': [
-    { nome: 'Conclusão das escavações da Estação OESTE', percentual: 0, inicioPrevisto: '16/04/2027', terminoPrevisto: '16/04/2027', inicioBase: '15/04/2027', terminoBase: '15/04/2027' },
-    { nome: 'Conclusão das escavações da Estação SUL', percentual: 0, inicioPrevisto: '05/02/2028', terminoPrevisto: '05/02/2028', inicioBase: null, terminoBase: null },
-    { nome: 'Conclusão do revestimento Secundário Estação e Poços', percentual: 0, inicioPrevisto: '21/06/2028', terminoPrevisto: '21/06/2028', inicioBase: '16/11/2027', terminoBase: '16/11/2027' },
-    { nome: 'Conclusão da Via Permanente', percentual: 0, inicioPrevisto: '15/05/2028', terminoPrevisto: '15/05/2028', inicioBase: '27/07/2028', terminoBase: '27/07/2028' },
-    { nome: 'Liberação da SSR / SSA / STC', percentual: 0, inicioPrevisto: '08/03/2027', terminoPrevisto: '08/03/2027', inicioBase: '17/12/2027', terminoBase: '17/12/2027' },
-    { nome: 'Conclusão Final da Obra', percentual: 0, inicioPrevisto: '07/12/2028', terminoPrevisto: '07/12/2028', inicioBase: null, terminoBase: null },
+    { nome: 'Conclusão das escavações da Estação OESTE', inicioPrevisto: '16/04/2027', terminoPrevisto: '16/04/2027', inicioBase: '15/04/2027', terminoBase: '15/04/2027', trava: [] },
+    { nome: 'Conclusão das escavações da Estação SUL', inicioPrevisto: '05/02/2028', terminoPrevisto: '05/02/2028', inicioBase: null, terminoBase: null, trava: [] },
+    { nome: 'Conclusão do revestimento Secundário Estação e Poços', inicioPrevisto: '21/06/2028', terminoPrevisto: '21/06/2028', inicioBase: '16/11/2027', terminoBase: '16/11/2027', trava: [] },
+    { nome: 'Conclusão da Via Permanente', inicioPrevisto: '15/05/2028', terminoPrevisto: '15/05/2028', inicioBase: '27/07/2028', terminoBase: '27/07/2028', trava: [] },
+    { nome: 'Liberação da SSR / SSA / STC', inicioPrevisto: '08/03/2027', terminoPrevisto: '08/03/2027', inicioBase: '17/12/2027', terminoBase: '17/12/2027', trava: [] },
+    { nome: 'Conclusão Final da Obra', inicioPrevisto: '07/12/2028', terminoPrevisto: '07/12/2028', inicioBase: null, terminoBase: null, trava: [] },
   ],
   'Mobilização da Obra': [
-    { nome: 'Mobilização da equipe', percentual: 100, inicioPrevisto: '28/05/2025', terminoPrevisto: '17/07/2025', inicioBase: '28/05/2025', terminoBase: '24/07/2025' },
-    { nome: 'Projeto', percentual: 68, inicioPrevisto: '27/06/2025', terminoPrevisto: '14/04/2027', inicioBase: '28/05/2025', terminoBase: '21/02/2026' },
-    { nome: 'Infraestrutura de Obra', percentual: 100, inicioPrevisto: '11/06/2025', terminoPrevisto: '13/12/2025', inicioBase: '26/07/2025', terminoBase: '23/09/2025' },
-    { nome: 'Licenças e Autorizações', percentual: 100, inicioPrevisto: '02/06/2025', terminoPrevisto: '21/11/2025', inicioBase: '26/06/2025', terminoBase: '17/11/2025' },
-    { nome: 'Adequação dos Canteiros de Obra', percentual: 100, inicioPrevisto: '02/06/2025', terminoPrevisto: '19/01/2026', inicioBase: '26/06/2025', terminoBase: '16/09/2025' },
+    { nome: 'Mobilização da equipe', inicioPrevisto: '28/05/2025', terminoPrevisto: '17/07/2025', inicioBase: '28/05/2025', terminoBase: '24/07/2025', trava: [] },
+    { nome: 'Projeto', inicioPrevisto: '27/06/2025', terminoPrevisto: '14/04/2027', inicioBase: '28/05/2025', terminoBase: '21/02/2026', trava: ['Estação Oeste', 'Estação Sul', 'Obras de Superfície', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'] },
+    { nome: 'Infraestrutura de Obra', inicioPrevisto: '11/06/2025', terminoPrevisto: '13/12/2025', inicioBase: '26/07/2025', terminoBase: '23/09/2025', trava: [] },
+    { nome: 'Licenças e Autorizações', inicioPrevisto: '02/06/2025', terminoPrevisto: '21/11/2025', inicioBase: '26/06/2025', terminoBase: '17/11/2025', trava: [] },
+    { nome: 'Adequação dos Canteiros de Obra', inicioPrevisto: '02/06/2025', terminoPrevisto: '19/01/2026', inicioBase: '26/06/2025', terminoBase: '16/09/2025', trava: ['Estação Gávea', 'Túnel Madre Jacinta', 'Túnel de Via Trecho Oeste'] },
   ],
   'Obras de Superfície': [
-    { nome: 'Fundações', percentual: 0, inicioPrevisto: '24/08/2027', terminoPrevisto: '07/01/2028', inicioBase: '20/11/2026', terminoBase: '03/04/2027' },
-    { nome: 'Subsolo - Canais de Ventilação', percentual: 0, inicioPrevisto: '07/01/2028', terminoPrevisto: '22/06/2028', inicioBase: null, terminoBase: null },
-    { nome: 'Estrutura', percentual: 0, inicioPrevisto: '22/06/2028', terminoPrevisto: '19/07/2028', inicioBase: '03/04/2027', terminoBase: '03/05/2027' },
-    { nome: 'Laje Piso Cobertura', percentual: 0, inicioPrevisto: '20/07/2028', terminoPrevisto: '28/09/2028', inicioBase: '04/05/2027', terminoBase: '01/06/2027' },
-    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '18/08/2028', terminoPrevisto: '17/10/2028', inicioBase: '02/06/2027', terminoBase: '29/07/2027' },
-    { nome: 'Bandejamentos', percentual: 0, inicioPrevisto: '05/09/2028', terminoPrevisto: '27/10/2028', inicioBase: '18/06/2027', terminoBase: '09/08/2027' },
-    { nome: 'Urbanização', percentual: 0, inicioPrevisto: '23/08/2028', terminoPrevisto: '22/11/2028', inicioBase: '01/06/2027', terminoBase: '25/09/2027' },
+    { nome: 'Fundações', inicioPrevisto: '24/08/2027', terminoPrevisto: '07/01/2028', inicioBase: '20/11/2026', terminoBase: '03/04/2027', trava: [] },
+    { nome: 'Subsolo - Canais de Ventilação', inicioPrevisto: '07/01/2028', terminoPrevisto: '22/06/2028', inicioBase: null, terminoBase: null, trava: [] },
+    { nome: 'Estrutura', inicioPrevisto: '22/06/2028', terminoPrevisto: '19/07/2028', inicioBase: '03/04/2027', terminoBase: '03/05/2027', trava: [] },
+    { nome: 'Laje Piso Cobertura', inicioPrevisto: '20/07/2028', terminoPrevisto: '28/09/2028', inicioBase: '04/05/2027', terminoBase: '01/06/2027', trava: [] },
+    { nome: 'Acabamentos', inicioPrevisto: '18/08/2028', terminoPrevisto: '17/10/2028', inicioBase: '02/06/2027', terminoBase: '29/07/2027', trava: [] },
+    { nome: 'Bandejamentos', inicioPrevisto: '05/09/2028', terminoPrevisto: '27/10/2028', inicioBase: '18/06/2027', terminoBase: '09/08/2027', trava: [] },
+    { nome: 'Urbanização', inicioPrevisto: '23/08/2028', terminoPrevisto: '22/11/2028', inicioBase: '01/06/2027', terminoBase: '25/09/2027', trava: [] },
   ],
   'Túnel de Via Trecho Oeste': [
-    { nome: 'Escavação da Rolha (60 m)', percentual: 100, inicioPrevisto: '26/11/2025', terminoPrevisto: '13/06/2026', inicioBase: '09/10/2026', terminoBase: '14/11/2026' },
-    { nome: 'Túnel de via', percentual: 0, inicioPrevisto: '17/04/2027', terminoPrevisto: '17/06/2027', inicioBase: '16/11/2026', terminoBase: '31/01/2028' },
-    { nome: 'Via Permanente', percentual: 2, inicioPrevisto: '23/09/2025', terminoPrevisto: '15/05/2028', inicioBase: '19/01/2027', terminoBase: '29/12/2027' },
-    { nome: 'Passagem de Emergência entre Vias PK 7.858', percentual: 0, inicioPrevisto: '27/06/2026', terminoPrevisto: '13/08/2026', inicioBase: '18/11/2025', terminoBase: '21/01/2026' },
-    { nome: 'Passagem de Emergência entre Vias PK 80.071', percentual: 0, inicioPrevisto: '15/09/2026', terminoPrevisto: '26/11/2026', inicioBase: '22/01/2026', terminoBase: '09/04/2026' },
-    { nome: 'Passagem de Emergência entre Vias PK 8.240', percentual: 0, inicioPrevisto: '14/08/2026', terminoPrevisto: '26/10/2026', inicioBase: '26/03/2026', terminoBase: '09/06/2026' },
-    { nome: 'Reservatório de água No.4', percentual: 0, inicioPrevisto: '27/11/2026', terminoPrevisto: '17/12/2026', inicioBase: '28/05/2026', terminoBase: '18/06/2026' },
-    { nome: 'SSR 04', percentual: 9, inicioPrevisto: '26/05/2026', terminoPrevisto: '08/03/2027', inicioBase: '17/08/2026', terminoBase: '26/05/2027' },
+    { nome: 'Escavação da Rolha (60 m)', inicioPrevisto: '26/11/2025', terminoPrevisto: '13/06/2026', inicioBase: '09/10/2026', terminoBase: '14/11/2026', trava: ['Estação Oeste', 'Estação Sul', 'Marcos Contratuais'] },
+    { nome: 'Túnel de via', inicioPrevisto: '17/04/2027', terminoPrevisto: '17/06/2027', inicioBase: '16/11/2026', terminoBase: '31/01/2028', trava: [] },
+    { nome: 'Via Permanente', inicioPrevisto: '23/09/2025', terminoPrevisto: '15/05/2028', inicioBase: '19/01/2027', terminoBase: '29/12/2027', trava: ['Marcos Contratuais'] },
+    { nome: 'Passagem de Emergência entre Vias PK 7.858', inicioPrevisto: '27/06/2026', terminoPrevisto: '13/08/2026', inicioBase: '18/11/2025', terminoBase: '21/01/2026', trava: [] },
+    { nome: 'Passagem de Emergência entre Vias PK 80.071', inicioPrevisto: '15/09/2026', terminoPrevisto: '26/11/2026', inicioBase: '22/01/2026', terminoBase: '09/04/2026', trava: [] },
+    { nome: 'Passagem de Emergência entre Vias PK 8.240', inicioPrevisto: '14/08/2026', terminoPrevisto: '26/10/2026', inicioBase: '26/03/2026', terminoBase: '09/06/2026', trava: [] },
+    { nome: 'Reservatório de água No.4', inicioPrevisto: '27/11/2026', terminoPrevisto: '17/12/2026', inicioBase: '28/05/2026', terminoBase: '18/06/2026', trava: [] },
+    { nome: 'SSR 04', inicioPrevisto: '26/05/2026', terminoPrevisto: '08/03/2027', inicioBase: '17/08/2026', terminoBase: '26/05/2027', trava: ['Marcos Contratuais'] },
   ],
   'Estação Sul': [
-    { nome: 'Escavação a Fogo', percentual: 16, inicioPrevisto: '08/01/2026', terminoPrevisto: '05/02/2028', inicioBase: '27/01/2026', terminoBase: '03/07/2026' },
-    { nome: 'Obras Civis da Estação Sul', percentual: 0, inicioPrevisto: '04/02/2028', terminoPrevisto: '25/10/2028', inicioBase: '04/07/2026', terminoBase: '02/04/2027' },
+    { nome: 'Escavação a Fogo', inicioPrevisto: '08/01/2026', terminoPrevisto: '05/02/2028', inicioBase: '27/01/2026', terminoBase: '03/07/2026', trava: ['Marcos Contratuais'] },
+    { nome: 'Obras Civis da Estação Sul', inicioPrevisto: '04/02/2028', terminoPrevisto: '25/10/2028', inicioBase: '04/07/2026', terminoBase: '02/04/2027', trava: ['Marcos Contratuais', 'Obras de Superfície', 'Sistemas Estação Sul'] },
   ],
   'Estação Oeste': [
-    { nome: 'Escavação a Fogo', percentual: 55, inicioPrevisto: '08/01/2026', terminoPrevisto: '16/04/2027', inicioBase: '27/01/2026', terminoBase: '17/10/2026' },
-    { nome: 'Obras Civis da Estação Oeste', percentual: 0, inicioPrevisto: '17/04/2027', terminoPrevisto: '05/10/2028', inicioBase: '19/10/2026', terminoBase: '11/12/2027' },
+    { nome: 'Escavação a Fogo', inicioPrevisto: '08/01/2026', terminoPrevisto: '16/04/2027', inicioBase: '27/01/2026', terminoBase: '17/10/2026', trava: ['Estação Sul', 'Marcos Contratuais', 'Obras de Superfície', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'] },
+    { nome: 'Obras Civis da Estação Oeste', inicioPrevisto: '17/04/2027', terminoPrevisto: '05/10/2028', inicioBase: '19/10/2026', terminoBase: '11/12/2027', trava: ['Estação Sul', 'Marcos Contratuais', 'Obras de Superfície', 'Sistemas Estação Oeste', 'Túnel Madre Jacinta', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'] },
+    { nome: 'Calota Alargamento Região do Poço (Apêndice)', inicioPrevisto: '12/05/2026', terminoPrevisto: '24/10/2026', inicioBase: '15/05/2026', terminoBase: '27/06/2026', trava: ['Túnel de Interligação'] },
   ],
   'Túnel de Interligação': [
-    { nome: 'Alteamento', percentual: 54, inicioPrevisto: '20/04/2026', terminoPrevisto: '03/11/2026', inicioBase: null, terminoBase: null },
-    { nome: 'Escavação a Fogo Túnel de interligação', percentual: 0, inicioPrevisto: '24/11/2026', terminoPrevisto: '30/03/2027', inicioBase: '29/07/2026', terminoBase: '04/11/2026' },
-    { nome: 'Revestimento Secundário', percentual: 0, inicioPrevisto: '07/05/2027', terminoPrevisto: '01/09/2027', inicioBase: null, terminoBase: null },
-    { nome: 'Estruturas', percentual: 0, inicioPrevisto: '13/10/2027', terminoPrevisto: '17/05/2028', inicioBase: '23/02/2027', terminoBase: '08/09/2027' },
-    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '23/03/2028', terminoPrevisto: '15/07/2028', inicioBase: '04/08/2027', terminoBase: '08/12/2027' },
-    { nome: 'Sistemas', percentual: 0, inicioPrevisto: '17/06/2028', terminoPrevisto: '27/09/2028', inicioBase: '02/10/2027', terminoBase: '12/01/2028' },
+    { nome: 'Alteamento', inicioPrevisto: '20/04/2026', terminoPrevisto: '03/11/2026', inicioBase: null, terminoBase: null, trava: ['Estação Oeste', 'Estação Sul'] },
+    { nome: 'Escavação a Fogo Túnel de interligação', inicioPrevisto: '24/11/2026', terminoPrevisto: '30/03/2027', inicioBase: '29/07/2026', terminoBase: '04/11/2026', trava: ['Marcos Contratuais', 'Túnel de Ligação entre Plataformas'] },
+    { nome: 'Revestimento Secundário', inicioPrevisto: '07/05/2027', terminoPrevisto: '01/09/2027', inicioBase: null, terminoBase: null, trava: ['Marcos Contratuais'] },
+    { nome: 'Estruturas', inicioPrevisto: '13/10/2027', terminoPrevisto: '17/05/2028', inicioBase: '23/02/2027', terminoBase: '08/09/2027', trava: ['Túnel de Ligação entre Plataformas'] },
+    { nome: 'Acabamentos', inicioPrevisto: '23/03/2028', terminoPrevisto: '15/07/2028', inicioBase: '04/08/2027', terminoBase: '08/12/2027', trava: [] },
+    { nome: 'Sistemas', inicioPrevisto: '17/06/2028', terminoPrevisto: '27/09/2028', inicioBase: '02/10/2027', terminoBase: '12/01/2028', trava: ['Marcos Contratuais'] },
   ],
   'Túnel de Ligação entre Plataformas': [
-    { nome: 'Escavação à Fogo', percentual: 0, inicioPrevisto: '30/01/2027', terminoPrevisto: '07/04/2027', inicioBase: '06/10/2026', terminoBase: '17/10/2026' },
-    { nome: 'Revestimento Secundário Sul', percentual: 0, inicioPrevisto: '19/05/2027', terminoPrevisto: '26/08/2027', inicioBase: null, terminoBase: null },
-    { nome: 'Revestimento Secundário Norte', percentual: 0, inicioPrevisto: '07/05/2027', terminoPrevisto: '29/06/2027', inicioBase: null, terminoBase: null },
-    { nome: 'Obras Civis', percentual: 0, inicioPrevisto: '25/11/2027', terminoPrevisto: '07/01/2028', inicioBase: '04/08/2027', terminoBase: '08/09/2027' },
-    { nome: 'Acabamentos', percentual: 0, inicioPrevisto: '08/01/2028', terminoPrevisto: '24/02/2028', inicioBase: '09/09/2027', terminoBase: '26/10/2027' },
-    { nome: 'Bandejamento', percentual: 0, inicioPrevisto: '25/02/2028', terminoPrevisto: '20/03/2028', inicioBase: '27/10/2027', terminoBase: '18/11/2027' },
+    { nome: 'Escavação à Fogo', inicioPrevisto: '30/01/2027', terminoPrevisto: '07/04/2027', inicioBase: '06/10/2026', terminoBase: '17/10/2026', trava: ['Marcos Contratuais'] },
+    { nome: 'Revestimento Secundário Sul', inicioPrevisto: '19/05/2027', terminoPrevisto: '26/08/2027', inicioBase: null, terminoBase: null, trava: ['Marcos Contratuais'] },
+    { nome: 'Revestimento Secundário Norte', inicioPrevisto: '07/05/2027', terminoPrevisto: '29/06/2027', inicioBase: null, terminoBase: null, trava: ['Marcos Contratuais', 'Túnel de Interligação'] },
+    { nome: 'Obras Civis', inicioPrevisto: '25/11/2027', terminoPrevisto: '07/01/2028', inicioBase: '04/08/2027', terminoBase: '08/09/2027', trava: [] },
+    { nome: 'Acabamentos', inicioPrevisto: '08/01/2028', terminoPrevisto: '24/02/2028', inicioBase: '09/09/2027', terminoBase: '26/10/2027', trava: [] },
+    { nome: 'Bandejamento', inicioPrevisto: '25/02/2028', terminoPrevisto: '20/03/2028', inicioBase: '27/10/2027', terminoBase: '18/11/2027', trava: ['Marcos Contratuais'] },
   ],
   'Túnel Madre Jacinta': [
-    { nome: 'Túnel de Serviço Madre Jacinta', percentual: 59, inicioPrevisto: '04/08/2025', terminoPrevisto: '27/07/2026', inicioBase: '24/09/2025', terminoBase: '16/01/2026' },
-    { nome: 'Ventilação Primária Emboque', percentual: 0, inicioPrevisto: '14/08/2028', terminoPrevisto: '18/08/2028', inicioBase: '30/12/2027', terminoBase: '08/05/2028' },
-    { nome: 'Desmontagem do Canteiro', percentual: 0, inicioPrevisto: '18/08/2028', terminoPrevisto: '10/10/2028', inicioBase: '24/04/2028', terminoBase: '09/06/2028' },
-    { nome: 'Urbanização do Entorno', percentual: 0, inicioPrevisto: '12/09/2028', terminoPrevisto: '25/10/2028', inicioBase: '18/05/2028', terminoBase: '30/06/2028' },
+    { nome: 'Túnel de Serviço Madre Jacinta', inicioPrevisto: '04/08/2025', terminoPrevisto: '27/07/2026', inicioBase: '24/09/2025', terminoBase: '16/01/2026', trava: [] },
+    { nome: 'Ventilação Primária Emboque', inicioPrevisto: '14/08/2028', terminoPrevisto: '18/08/2028', inicioBase: '30/12/2027', terminoBase: '08/05/2028', trava: [] },
+    { nome: 'Desmontagem do Canteiro', inicioPrevisto: '18/08/2028', terminoPrevisto: '10/10/2028', inicioBase: '24/04/2028', terminoBase: '09/06/2028', trava: [] },
+    { nome: 'Urbanização do Entorno', inicioPrevisto: '12/09/2028', terminoPrevisto: '25/10/2028', inicioBase: '18/05/2028', terminoBase: '30/06/2028', trava: ['Marcos Contratuais'] },
   ],
 };
 
@@ -2540,9 +2541,39 @@ function renderizarCronogramaGeral() {
       ? `<div style="position:absolute; left:${bIni}%; width:${Math.max(bFim - bIni, 0.5)}%; top:12px; height:7px; background:repeating-linear-gradient(90deg, #C77D22, #C77D22 4px, transparent 4px, transparent 7px); border-radius:3px;"></div>`
       : '';
 
+    // ✅ botão "+" pra expandir as sub-frentes SEM sair da tela — mostra
+    // o que cada uma trava (ou deixa claro que não trava nada fora
+    // dessa área), pra não precisar entrar em outra tela só pra ver isso
+    const filhos = CRONOGRAMA_GERAL_FILHOS[a.nome] || [];
+    const temFilhos = filhos.length > 0;
+    const idExpansivel = 'gexp_' + a.nome.replace(/[^a-zA-Z0-9]/g, '');
+    const expandido = cronogramaExpandidoMacro[idExpansivel];
+
+    let filhosHtml = '';
+    if (temFilhos && expandido) {
+      filhosHtml = `<div style="margin-top:10px; padding-left:12px; border-left:2px solid var(--line);">`;
+      filhos.forEach(f => {
+        const travaTexto = f.trava.length > 0
+          ? `<span style="color:#B23A3A; font-weight:600;">trava: ${f.trava.join(', ')}</span>`
+          : `<span style="color:var(--text-soft);">não trava nada fora dessa área</span>`;
+        filhosHtml += `
+          <div style="margin-bottom:9px;">
+            <div style="font-size:11.5px; font-weight:700; color:var(--ink);">${f.nome}</div>
+            <div style="font-size:9.5px; color:var(--text-soft); margin-top:1px;">${f.inicioPrevisto} → ${f.terminoPrevisto}</div>
+            <div style="font-size:9.5px; margin-top:2px;">${travaTexto}</div>
+          </div>
+        `;
+      });
+      filhosHtml += `</div>`;
+    }
+
+    const botaoExpandir = temFilhos
+      ? `<span onclick="event.stopPropagation(); alternarExpandirMacroCronograma('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-right:7px; display:inline-block; width:16px;">${expandido ? '−' : '+'}</span>`
+      : '';
+
     return `
       <div style="margin-bottom:20px; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
-        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${a.nome}</div>
+        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${botaoExpandir}${a.nome}</div>
         <div style="position:relative; height:19px;">
           ${barraAtual}${barraBase}
         </div>
@@ -2552,13 +2583,14 @@ function renderizarCronogramaGeral() {
         ${a.inicioBase ? `<div style="font-size:10px; color:#C77D22; margin-top:1px;">Linha de base: ${a.inicioBase} → ${a.terminoBase}</div>` : ''}
         <div style="font-size:9.5px; color:${corTermino}; margin-top:3px;">${textoTermino}</div>
         ${textoDuracao}
+        ${filhosHtml}
       </div>`;
   }
 
   let ganttHtml = `<div style="position:relative;">${linhaHojeHtml}`;
   areas.forEach(area => {
     ganttHtml += `
-      <div style="background:var(--ink); border-radius:6px; padding:8px 12px; margin:22px 0 14px;">
+      <div style="background:var(--painel-1); border-radius:6px; padding:8px 12px; margin:22px 0 14px;">
         <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent-bright); font-weight:700;">${area}</span>
       </div>`;
     atividades.filter(a => a.area === area).forEach(a => {
@@ -2613,6 +2645,18 @@ function renderizarCronogramaGeral() {
     mesIndice++;
   }
 
+  // ✅ linhas de referência horizontal (0/25/50/75/100%) — sem isso não
+  // dava pra saber onde exatamente cada linha estava chegando
+  let gradeYHtml = '';
+  [0, 25, 50, 75, 100].forEach(p => {
+    const y = escalaY(p);
+    gradeYHtml += `<line x1="0" y1="${y}" x2="${svgW}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    gradeYHtml += `<text x="4" y="${y - 3}" font-size="8.5" fill="var(--text-soft)">${p}%</text>`;
+  });
+
+  // ✅ marca a data final da obra bem visível, pra dar pra ver onde ela termina
+  const fimObraStr = `${String(maiorData.getDate()).padStart(2,'0')}/${String(maiorData.getMonth()+1).padStart(2,'0')}/${maiorData.getFullYear()}`;
+
   const curvaSHtml = `
     <div style="margin:22px 0 6px; font-size:12px; font-weight:700; color:var(--ink);">Curva S — linha de base x tendência atual</div>
     <div style="font-size:10px; color:var(--text-soft); margin-bottom:8px;">O gargalo entre as duas linhas (a "boca de jacaré") mostra o quanto o ritmo real se afastou do planejado originalmente.</div>
@@ -2620,11 +2664,14 @@ function renderizarCronogramaGeral() {
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:#C77D22; display:inline-block;"></span>Linha de base</span>
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:var(--accent); display:inline-block;"></span>Tendência (previsto atual)</span>
     </div>
-    <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none" style="width:100%; height:220px; background:var(--paper-2); border-radius:6px;">
+    <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none" style="width:100%; height:240px; background:var(--paper-2); border-radius:6px;">
+      ${gradeYHtml}
       ${marcasHtml}
       <polyline points="${pontosSvgBase}" fill="none" stroke="#C77D22" stroke-width="2.5" stroke-dasharray="6,4" vector-effect="non-scaling-stroke"/>
       <polyline points="${pontosSvgPrevisto}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+      <line x1="${svgW - 1}" y1="0" x2="${svgW - 1}" y2="${svgH - margemBaixo}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2,2" opacity="0.4"/>
     </svg>
+    <div style="font-size:9.5px; color:var(--text-soft); text-align:right; margin-top:4px;">Conclusão prevista: ${fimObraStr}</div>
   `;
 
   const btnPdf = CRONOGRAMA_GERAL_INFO.pdfUrl
@@ -2638,7 +2685,7 @@ function renderizarCronogramaGeral() {
         <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
       </div>
     </div>
-    <div class="heroNovo" style="background:var(--ink);">
+    <div class="heroNovo">
       <div class="eyebrow">Cronograma Geral</div>
       <h1 style="font-size:24px; color:#fff;">${CRONOGRAMA_GERAL_INFO.titulo}</h1>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
@@ -2677,9 +2724,15 @@ function renderizarCronogramaGeral() {
 }
 
 let mostrarLinhaBaseCronograma = true;
+let cronogramaExpandidoMacro = {};
 
 function alternarLinhaBaseCronograma() {
   mostrarLinhaBaseCronograma = !mostrarLinhaBaseCronograma;
+  document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
+}
+
+function alternarExpandirMacroCronograma(id) {
+  cronogramaExpandidoMacro[id] = !cronogramaExpandidoMacro[id];
   document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
 }
 
@@ -2976,7 +3029,7 @@ function conteudoDetalheCaminhoCritico() {
     html += `
       <div style="display:flex; gap:12px; padding-bottom:${i < blocos.length - 1 ? '18' : '10'}px;">
         <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
-          <div style="width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--accent-bright); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">${i + 1}</div>
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--painel-1); color:var(--accent-bright); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">${i + 1}</div>
           ${i < blocos.length - 1 ? `<div style="width:2px; flex:1; background:var(--line); margin:4px 0;"></div>` : ''}
         </div>
         <div style="flex:1; padding-bottom:6px;">
@@ -3061,11 +3114,16 @@ function conteudoDetalheAtividade(nomeAtividade) {
   const aIniciar = filhos.filter(f => parseDataCompleta(f.inicioPrevisto) > hoje);
 
   function cartaoItem(f, corBorda) {
-    const delta = variacaoDias(f.terminoPrevisto, f.terminoBase);
+    const deltaTermino = variacaoDias(f.terminoPrevisto, f.terminoBase);
+    const deltaDuracao = variacaoDuracao(f);
     let notaDelta = '';
-    if (delta !== null && delta !== 0) {
-      const cor = delta > 0 ? '#B23A3A' : '#4F7A2E';
-      notaDelta = ` · <span style="color:${cor};">término ${delta > 0 ? '+' : ''}${delta}d vs. base</span>`;
+    if (deltaTermino !== null && deltaTermino !== 0) {
+      const cor = deltaTermino > 0 ? '#B23A3A' : '#4F7A2E';
+      notaDelta += ` · <span style="color:${cor};">término ${deltaTermino > 0 ? '+' : ''}${deltaTermino}d vs. base</span>`;
+    }
+    if (deltaDuracao !== null && deltaDuracao !== 0) {
+      const cor = deltaDuracao > 0 ? '#B23A3A' : '#4F7A2E';
+      notaDelta += ` · <span style="color:${cor};">duração ${deltaDuracao > 0 ? '+' : ''}${deltaDuracao}d vs. base</span>`;
     }
     return `
       <div style="border-left:3px solid ${corBorda}; background:var(--paper-2); border-radius:0 6px 6px 0; padding:8px 10px; margin-bottom:6px;">
