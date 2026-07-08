@@ -2363,6 +2363,85 @@ const CRONOGRAMA_CAMINHO_CRITICO = [
   { area: 'Marcos Contratuais', inicio: '07/12/2028', fim: '07/12/2028', qtdTarefas: 1, primeiraTarefa: 'CONCLUSÃO FINAL DA OBRA', ultimaTarefa: 'CONCLUSÃO FINAL DA OBRA' },
 ];
 
+
+const CRONOGRAMA_GERAL_FILHOS_TRAVA = {
+  'Marcos Contratuais': {
+    'Conclusão das escavações da Estação OESTE': { trava: [], travadaPor: ['Estação Oeste', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'] },
+    'Conclusão das escavações da Estação SUL': { trava: [], travadaPor: ['Estação Sul'] },
+    'Conclusão do revestimento Secundário Estação e Poços': { trava: [], travadaPor: ['Estação Oeste', 'Estação Sul', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas'] },
+    'Conclusão da Via Permanente': { trava: [], travadaPor: ['Túnel de Via Trecho Oeste'] },
+    'Liberação da SSR / SSA / STC': { trava: [], travadaPor: ['Túnel de Via Trecho Oeste'] },
+    'Conclusão Final da Obra': { trava: [], travadaPor: ['Obras de Superfície', 'Sistemas Estação Oeste', 'Sistemas Estação Sul', 'Túnel Madre Jacinta', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas'] },
+  },
+  'Mobilização da Obra': {
+    'Mobilização da equipe': { trava: [], travadaPor: ['Ordem de Início'] },
+    'Projeto': { trava: ['Estação Oeste', 'Estação Sul', 'Obras de Superfície', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'], travadaPor: [] },
+    'Infraestrutura de Obra': { trava: ['Túnel Madre Jacinta', 'Túnel de Via Trecho Oeste'], travadaPor: [] },
+    'Licenças e Autorizações': { trava: [], travadaPor: ['Ordem de Início'] },
+    'Adequação dos Canteiros de Obra': { trava: ['Estação Gávea', 'Túnel Madre Jacinta', 'Túnel de Via Trecho Oeste'], travadaPor: [] },
+  },
+  'Obras de Superfície': {
+    'Fundações': { trava: [], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+    'Subsolo - Canais de Ventilação': { trava: [], travadaPor: [] },
+    'Estrutura': { trava: [], travadaPor: ['Estação Oeste', 'Estação Sul'] },
+    'Laje Piso Cobertura': { trava: [], travadaPor: [] },
+    'Acabamentos': { trava: [], travadaPor: [] },
+    'Bandejamentos': { trava: [], travadaPor: [] },
+    'Urbanização': { trava: ['Marcos Contratuais'], travadaPor: ['Mobilização da Obra'] },
+  },
+  'Túnel de Via Trecho Oeste': {
+    'Escavação da Rolha (60 m)': { trava: ['Estação Oeste', 'Estação Sul', 'Marcos Contratuais'], travadaPor: ['Estação Gávea', 'Estação Oeste', 'Mobilização da Obra'] },
+    'Túnel de via': { trava: [], travadaPor: ['Estação Oeste'] },
+    'Via Permanente': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra', 'Túnel Madre Jacinta'] },
+    'Passagem de Emergência entre Vias PK 7.858': { trava: [], travadaPor: ['Mobilização da Obra'] },
+    'Passagem de Emergência entre Vias PK 80.071': { trava: [], travadaPor: [] },
+    'Passagem de Emergência entre Vias PK 8.240': { trava: [], travadaPor: ['Mobilização da Obra'] },
+    'Reservatório de água No.4': { trava: [], travadaPor: [] },
+    'SSR 04': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+  },
+  'Estação Sul': {
+    'Escavação a Fogo': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Interligação', 'Túnel de Via Trecho Oeste'] },
+    'Obras Civis da Estação Sul': { trava: ['Marcos Contratuais', 'Obras de Superfície', 'Sistemas Estação Sul'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+  },
+  'Estação Oeste': {
+    'Escavação a Fogo': { trava: ['Estação Sul', 'Marcos Contratuais', 'Obras de Superfície', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'], travadaPor: ['Mobilização da Obra', 'Túnel de Interligação', 'Túnel de Via Trecho Oeste'] },
+    'Obras Civis da Estação Oeste': { trava: ['Estação Sul', 'Marcos Contratuais', 'Obras de Superfície', 'Sistemas Estação Oeste', 'Túnel Madre Jacinta', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'], travadaPor: ['Mobilização da Obra'] },
+  },
+  'Túnel de Interligação': {
+    'Alteamento': { trava: ['Estação Oeste', 'Estação Sul'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+    'Escavação a Fogo Túnel de interligação': { trava: ['Marcos Contratuais', 'Túnel de Ligação entre Plataformas'], travadaPor: ['Estação Oeste'] },
+    'Revestimento Secundário': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Ligação entre Plataformas'] },
+    'Estruturas': { trava: ['Túnel de Ligação entre Plataformas'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+    'Acabamentos': { trava: [], travadaPor: ['Mobilização da Obra'] },
+    'Sistemas': { trava: ['Marcos Contratuais'], travadaPor: [] },
+  },
+  'Túnel de Ligação entre Plataformas': {
+    'Escavação à Fogo': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+    'Revestimento Secundário Sul': { trava: ['Marcos Contratuais'], travadaPor: ['Estação Oeste', 'Mobilização da Obra'] },
+    'Revestimento Secundário Norte': { trava: ['Marcos Contratuais', 'Túnel de Interligação'], travadaPor: ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Interligação'] },
+    'Obras Civis': { trava: [], travadaPor: ['Estação Oeste', 'Mobilização da Obra', 'Túnel de Interligação'] },
+    'Acabamentos': { trava: [], travadaPor: ['Mobilização da Obra'] },
+    'Bandejamento': { trava: ['Marcos Contratuais'], travadaPor: [] },
+  },
+  'Túnel Madre Jacinta': {
+    'Túnel de Serviço Madre Jacinta': { trava: ['Túnel de Via Trecho Oeste'], travadaPor: ['Mobilização da Obra'] },
+    'Ventilação Primária Emboque': { trava: [], travadaPor: ['Estação Oeste'] },
+    'Desmontagem do Canteiro': { trava: [], travadaPor: [] },
+    'Urbanização do Entorno': { trava: ['Marcos Contratuais'], travadaPor: [] },
+  },
+};
+
+// ✅ detalhe mais fundo de Estação Oeste > Escavação a Fogo — as
+// frentes de verdade (Sentido São Conrado, Sentido Carioca, Apêndice,
+// Rebaixo, Rabicho), cada uma com o que trava E o que é travada por
+const CRONOGRAMA_ESTACAO_OESTE_DETALHE = [
+  { nome: 'Sentido São Conrado (FRENTE OESTE)', inicioPrevisto: '09/01/2026', terminoPrevisto: '02/05/2026', trava: ['Túnel de Via Trecho Oeste'], travadaPor: ['Mobilização da Obra'] },
+  { nome: 'Sentido Carioca (FRENTE NORTE)', inicioPrevisto: '12/01/2026', terminoPrevisto: '11/05/2026', trava: [], travadaPor: [] },
+  { nome: 'Calota Alargamento Região do Poço (Apêndice)', inicioPrevisto: '12/05/2026', terminoPrevisto: '24/10/2026', trava: ['Túnel de Interligação'], travadaPor: [] },
+  { nome: 'Rebaixo', inicioPrevisto: '14/05/2026', terminoPrevisto: '16/04/2027', trava: ['Estação Sul', 'Marcos Contratuais', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'], travadaPor: ['Túnel de Interligação', 'Túnel de Via Trecho Oeste'] },
+  { nome: 'Rabicho pós estação (20m)', inicioPrevisto: '05/01/2027', terminoPrevisto: '09/04/2027', trava: ['Marcos Contratuais', 'Obras de Superfície', 'Túnel de Via Trecho Oeste'], travadaPor: [] },
+];
+
 const CRONOGRAMA_GERAL_FILHOS = {
   'Marcos Contratuais': [
     { nome: 'Conclusão das escavações da Estação OESTE', inicioPrevisto: '16/04/2027', terminoPrevisto: '16/04/2027', inicioBase: '15/04/2027', terminoBase: '15/04/2027', trava: [] },
@@ -2541,39 +2620,9 @@ function renderizarCronogramaGeral() {
       ? `<div style="position:absolute; left:${bIni}%; width:${Math.max(bFim - bIni, 0.5)}%; top:12px; height:7px; background:repeating-linear-gradient(90deg, #C77D22, #C77D22 4px, transparent 4px, transparent 7px); border-radius:3px;"></div>`
       : '';
 
-    // ✅ botão "+" pra expandir as sub-frentes SEM sair da tela — mostra
-    // o que cada uma trava (ou deixa claro que não trava nada fora
-    // dessa área), pra não precisar entrar em outra tela só pra ver isso
-    const filhos = CRONOGRAMA_GERAL_FILHOS[a.nome] || [];
-    const temFilhos = filhos.length > 0;
-    const idExpansivel = 'gexp_' + a.nome.replace(/[^a-zA-Z0-9]/g, '');
-    const expandido = cronogramaExpandidoMacro[idExpansivel];
-
-    let filhosHtml = '';
-    if (temFilhos && expandido) {
-      filhosHtml = `<div style="margin-top:10px; padding-left:12px; border-left:2px solid var(--line);">`;
-      filhos.forEach(f => {
-        const travaTexto = f.trava.length > 0
-          ? `<span style="color:#B23A3A; font-weight:600;">trava: ${f.trava.join(', ')}</span>`
-          : `<span style="color:var(--text-soft);">não trava nada fora dessa área</span>`;
-        filhosHtml += `
-          <div style="margin-bottom:9px;">
-            <div style="font-size:11.5px; font-weight:700; color:var(--ink);">${f.nome}</div>
-            <div style="font-size:9.5px; color:var(--text-soft); margin-top:1px;">${f.inicioPrevisto} → ${f.terminoPrevisto}</div>
-            <div style="font-size:9.5px; margin-top:2px;">${travaTexto}</div>
-          </div>
-        `;
-      });
-      filhosHtml += `</div>`;
-    }
-
-    const botaoExpandir = temFilhos
-      ? `<span onclick="event.stopPropagation(); alternarExpandirMacroCronograma('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-right:7px; display:inline-block; width:16px;">${expandido ? '−' : '+'}</span>`
-      : '';
-
     return `
       <div style="margin-bottom:20px; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
-        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${botaoExpandir}${a.nome}</div>
+        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${a.nome}</div>
         <div style="position:relative; height:19px;">
           ${barraAtual}${barraBase}
         </div>
@@ -2583,7 +2632,6 @@ function renderizarCronogramaGeral() {
         ${a.inicioBase ? `<div style="font-size:10px; color:#C77D22; margin-top:1px;">Linha de base: ${a.inicioBase} → ${a.terminoBase}</div>` : ''}
         <div style="font-size:9.5px; color:${corTermino}; margin-top:3px;">${textoTermino}</div>
         ${textoDuracao}
-        ${filhosHtml}
       </div>`;
   }
 
@@ -3003,6 +3051,18 @@ function conteudoDetalheMarcos() {
 
 // ✅ Caminho crítico — sequência real calculada a partir das
 // Predecessoras do MS Project
+function linhaDependenciaCritico(nome, trava, travadaPor, aninhado) {
+  const travaTxt = trava.length > 0 ? trava.join(', ') : 'nada fora dessa área';
+  const travadaPorTxt = travadaPor.length > 0 ? travadaPor.join(', ') : 'nada fora dessa área';
+  return `
+    <div style="margin-bottom:10px; ${aninhado ? 'padding-left:12px; border-left:2px dashed var(--line);' : ''}">
+      <div style="font-size:${aninhado ? '11' : '11.5'}px; font-weight:700; color:var(--ink);">${nome}</div>
+      <div style="font-size:9.5px; margin-top:2px;"><span style="color:#B23A3A; font-weight:600;">Trava:</span> <span style="color:var(--text-soft);">${travaTxt}</span></div>
+      <div style="font-size:9.5px; margin-top:1px;"><span style="color:#4A90D9; font-weight:600;">É travada por:</span> <span style="color:var(--text-soft);">${travadaPorTxt}</span></div>
+    </div>
+  `;
+}
+
 function conteudoDetalheCaminhoCritico() {
   const blocos = CRONOGRAMA_CAMINHO_CRITICO;
   const primeiroBloco = blocos[0], ultimoBloco = blocos[blocos.length - 1];
@@ -3011,7 +3071,7 @@ function conteudoDetalheCaminhoCritico() {
   const duracaoTotal = (fimTotal - inicioTotal) || 1;
 
   let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px; line-height:1.4;">
-    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Calculado rastreando as dependências reais do MS Project, do início ao fim (68 tarefas, resumidas em ${blocos.length} passagens por área).
+    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Toque no "+" de cada passagem pra ver as sub-frentes e o que cada uma trava e é travada por.
   </div>`;
 
   // ✅ barra de visão geral (proporcional à duração de cada passagem)
@@ -3026,6 +3086,34 @@ function conteudoDetalheCaminhoCritico() {
 
   blocos.forEach((b, i) => {
     const proximaArea = i < blocos.length - 1 ? blocos[i + 1].area : null;
+    const idExpansivel = 'cc_' + i + '_' + b.area.replace(/[^a-zA-Z0-9]/g, '');
+    const expandido = cronogramaExpandidoMacro[idExpansivel];
+    const filhosArea = CRONOGRAMA_GERAL_FILHOS_TRAVA[b.area] || {};
+    const temFilhos = Object.keys(filhosArea).length > 0;
+
+    let detalheHtml = '';
+    if (temFilhos && expandido) {
+      detalheHtml = `<div style="margin-top:10px; padding-left:10px; border-left:2px solid var(--line);">`;
+      Object.keys(filhosArea).forEach(nomeFilho => {
+        const info = filhosArea[nomeFilho];
+        detalheHtml += linhaDependenciaCritico(nomeFilho, info.trava, info.travadaPor, false);
+
+        // ✅ Estação Oeste > Escavação a Fogo tem MUITA coisa dentro —
+        // mostra as frentes de verdade (Sentido São Conrado, Sentido
+        // Carioca, Apêndice, Rebaixo, Rabicho), aninhadas
+        if (b.area === 'Estação Oeste' && nomeFilho === 'Escavação a Fogo') {
+          CRONOGRAMA_ESTACAO_OESTE_DETALHE.forEach(f => {
+            detalheHtml += linhaDependenciaCritico(f.nome, f.trava, f.travadaPor, true);
+          });
+        }
+      });
+      detalheHtml += `</div>`;
+    }
+
+    const botaoExpandir = temFilhos
+      ? `<span onclick="alternarExpandirMacroCronograma('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-left:8px;">${expandido ? '−' : '+'}</span>`
+      : '';
+
     html += `
       <div style="display:flex; gap:12px; padding-bottom:${i < blocos.length - 1 ? '18' : '10'}px;">
         <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
@@ -3033,13 +3121,17 @@ function conteudoDetalheCaminhoCritico() {
           ${i < blocos.length - 1 ? `<div style="width:2px; flex:1; background:var(--line); margin:4px 0;"></div>` : ''}
         </div>
         <div style="flex:1; padding-bottom:6px;">
-          <div style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}</div>
+          <div style="display:flex; align-items:center;">
+            <span style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}</span>
+            ${botaoExpandir}
+          </div>
           <div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${b.inicio} → ${b.fim} · ${b.qtdTarefas} tarefa(s) críticas aqui</div>
           <div style="background:var(--paper-2); border-radius:6px; padding:8px 10px; margin-top:6px;">
             <div style="font-size:10.5px; color:var(--ink);"><b>Entra por:</b> ${b.primeiraTarefa}</div>
             <div style="font-size:10.5px; color:var(--ink); margin-top:3px;"><b>Fecha essa passagem:</b> ${b.ultimaTarefa}</div>
           </div>
           ${proximaArea ? `<div style="font-size:10px; color:#B23A3A; margin-top:6px;">⚠ Se atrasar aqui, trava o início de <b>${proximaArea}</b></div>` : `<div style="font-size:10px; color:#4F7A2E; margin-top:6px;">🏁 Última passagem — leva direto à conclusão final da obra</div>`}
+          ${detalheHtml}
         </div>
       </div>
     `;
