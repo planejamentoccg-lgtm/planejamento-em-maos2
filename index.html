@@ -2784,6 +2784,14 @@ function alternarExpandirMacroCronograma(id) {
   document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
 }
 
+// ✅ o "+" do caminho crítico vive dentro da SUB-TELA, não na tela
+// principal — precisa atualizar o container certo, senão parece que
+// não acontece nada quando toca
+function alternarExpandirCaminhoCritico(id) {
+  cronogramaExpandidoMacro[id] = !cronogramaExpandidoMacro[id];
+  document.getElementById('subTelaCronograma').innerHTML = renderizarSubTelaCronograma('critico');
+}
+
 // ---------------------------------------------------------------------
 // PERGUNTAS DO CRONOGRAMA GERAL
 // ---------------------------------------------------------------------
@@ -3071,7 +3079,7 @@ function conteudoDetalheCaminhoCritico() {
   const duracaoTotal = (fimTotal - inicioTotal) || 1;
 
   let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px; line-height:1.4;">
-    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Toque no "+" de cada passagem pra ver as sub-frentes e o que cada uma trava e é travada por.
+    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Toque no "+" de cada passagem pra ver as sub-frentes e o que cada uma trava e é travada por. Uma mesma área pode aparecer mais de uma vez — não é duplicata, é o caminho saindo pra outra área e voltando pra essa depois.
   </div>`;
 
   // ✅ barra de visão geral (proporcional à duração de cada passagem)
@@ -3090,6 +3098,13 @@ function conteudoDetalheCaminhoCritico() {
     const expandido = cronogramaExpandidoMacro[idExpansivel];
     const filhosArea = CRONOGRAMA_GERAL_FILHOS_TRAVA[b.area] || {};
     const temFilhos = Object.keys(filhosArea).length > 0;
+
+    // ✅ se a mesma área aparece mais de uma vez no caminho (o caminho
+    // crítico "sai" pra outra área e depois "volta"), deixa isso claro
+    // — não é duplicata, é o caminho passando por ali de novo mesmo
+    const ocorrenciasAntes = blocos.slice(0, i).filter(x => x.area === b.area).length;
+    const totalOcorrencias = blocos.filter(x => x.area === b.area).length;
+    const rotuloPassagem = totalOcorrencias > 1 ? ` (${ocorrenciasAntes + 1}ª passagem)` : '';
 
     let detalheHtml = '';
     if (temFilhos && expandido) {
@@ -3111,7 +3126,7 @@ function conteudoDetalheCaminhoCritico() {
     }
 
     const botaoExpandir = temFilhos
-      ? `<span onclick="alternarExpandirMacroCronograma('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-left:8px;">${expandido ? '−' : '+'}</span>`
+      ? `<span onclick="alternarExpandirCaminhoCritico('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-left:8px;">${expandido ? '−' : '+'}</span>`
       : '';
 
     html += `
@@ -3122,7 +3137,7 @@ function conteudoDetalheCaminhoCritico() {
         </div>
         <div style="flex:1; padding-bottom:6px;">
           <div style="display:flex; align-items:center;">
-            <span style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}</span>
+            <span style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}${rotuloPassagem ? `<span style="font-size:10px; font-weight:600; color:var(--text-soft);">${rotuloPassagem}</span>` : ''}</span>
             ${botaoExpandir}
           </div>
           <div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${b.inicio} → ${b.fim} · ${b.qtdTarefas} tarefa(s) críticas aqui</div>
