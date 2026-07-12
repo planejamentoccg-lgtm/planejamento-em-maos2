@@ -2119,6 +2119,7 @@ async function mostrarTelaProximasSemanas() {
     window.semanasCarregadas = true;
     await carregarProximasSemanas();
   }
+  carregarContadorNotif(); // ✅ sincroniza o sino toda vez que essa tela abre
 }
 
 function mostrarTelaCronograma() {
@@ -2133,6 +2134,7 @@ function mostrarTelaCronograma() {
     container.innerHTML = renderizarCronogramaGeral();
     atualizarIconeTema();
   }
+  carregarContadorNotif(); // ✅ sincroniza o sino toda vez que essa tela abre
 }
 
 // ---------------------------------------------------------------------
@@ -3271,7 +3273,6 @@ const SUGESTOES_CAMINHO_CRITICO = [
 
 const SUGESTOES_ATIVIDADE_DETALHE = [
   'O que está previsto para o dia [data] até o dia [data]',
-  'O que é considerado caminho crítico nesta frente?',
 ];
 
 function renderizarSubTelaCronograma(tipo, parametro) {
@@ -3561,18 +3562,43 @@ function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
-  itens.slice(0, 50).forEach(i => {
-    html += `<div class="subtitulo2"><span style="color:var(--accent);">[${i[5]}]</span> ${i[1]}: ${i[2]} → ${i[3]}</div>`;
+  // ✅ agrupa por área — bem menos confuso que uma lista corrida de 445
+  // itens possíveis, e dá pra ver de cara em quais frentes tem coisa
+  // acontecendo naquele período
+  const porArea = {};
+  const ordemAreas = [];
+  itens.slice(0, 80).forEach(i => {
+    const area = i[5];
+    if (!porArea[area]) { porArea[area] = []; ordemAreas.push(area); }
+    porArea[area].push(i);
   });
-  if (itens.length > 50) {
-    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 50}. Tenta um período menor pra ver tudo listado.</div>`;
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 12px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} — ${itens.length} item(ns) em ${ordemAreas.length} área(s):</div>`;
+
+  ordemAreas.forEach(area => {
+    html += `<div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.05em; text-transform:uppercase; color:var(--accent); font-weight:700; margin:12px 0 6px;">${area}</div>`;
+    porArea[area].forEach(i => {
+      const nivel = i[4];
+      const corItem = nivel <= 4 ? 'var(--ink)' : 'var(--text-soft)';
+      const pesoItem = nivel <= 4 ? '700' : '500';
+      const recuo = Math.max(0, (nivel - 3)) * 10;
+      html += `<div style="padding-left:${recuo}px; margin-bottom:5px;">
+        <span style="font-size:12px; font-weight:${pesoItem}; color:${corItem};">${i[1]}</span>
+        <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${i[2]} → ${i[3]}</div>
+      </div>`;
+    });
+  });
+
+  if (itens.length > 80) {
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:10px;">...e mais ${itens.length - 80}. Tenta um período menor pra ver tudo.</div>`;
   }
   return html;
 }
 
 // ✅ mesma pergunta, mas dentro da tela de uma atividade específica —
-// só olha as tarefas daquela área
+// já vem filtrada pra uma área só, então organiza por nível hierárquico
+// (item principal x sub-tarefa em cores/pesos diferentes) em vez de
+// agrupar por área de novo
 function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) {
   const datas = extrairDuasDatasCompletas(termoOriginal);
   if (!datas) {
@@ -3591,9 +3617,21 @@ function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) 
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto pra ${nomeAtividade} entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 12px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
+
   itens.forEach(i => {
-    html += `<div class="subtitulo2">${i[1]}: ${i[2]} → ${i[3]}</div>`;
+    const nivel = i[4];
+    // ✅ itens mais "principais" (nível mais raso) em verde-destaque e
+    // negrito; sub-tarefas mais fundas ficam em cinza e recuadas — fica
+    // claro visualmente o que é item e o que é subitem
+    const cor = nivel <= 4 ? 'var(--accent)' : 'var(--text-soft)';
+    const peso = nivel <= 4 ? '700' : '500';
+    const tamanho = nivel <= 4 ? '12.5px' : '11.5px';
+    const recuo = Math.max(0, (nivel - 3)) * 12;
+    html += `<div style="padding-left:${recuo}px; margin-bottom:6px; ${nivel > 4 ? 'border-left:2px solid var(--line); padding-left:' + (recuo + 8) + 'px;' : ''}">
+      <span style="font-size:${tamanho}; font-weight:${peso}; color:${cor};">${i[1]}</span>
+      <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${i[2]} → ${i[3]}</div>
+    </div>`;
   });
   return html;
 }
@@ -3693,11 +3731,7 @@ async function buscarInteligenteCronograma(sufixo) {
       html = montarRespostaCaminhoCriticoMes(termoOriginal);
     }
   } else if (sufixo === 'CD' && subTelaCronogramaTipo === 'atividade') {
-    if (termo.includes('caminho critico')) {
-      html = montarRespostaCaminhoCriticoDaFrente(subTelaCronogramaParametro);
-    } else {
-      html = montarRespostaPrevistoIntervaloAtividade(subTelaCronogramaParametro, termoOriginal);
-    }
+    html = montarRespostaPrevistoIntervaloAtividade(subTelaCronogramaParametro, termoOriginal);
   } else {
     html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não entendi essa pergunta. Toque na caixinha pra ver as sugestões prontas.</p>`;
   }
@@ -3866,6 +3900,7 @@ async function mostrarTelaFrentesConcluidas() {
   esconderTelasPrincipais();
   document.getElementById("telaFrentesConcluidas").style.display = "block";
   await carregarFrentesConcluidas();
+  carregarContadorNotif(); // ✅ sincroniza o sino toda vez que essa tela abre
 }
 
 async function carregarFrentesConcluidas() {
@@ -4710,6 +4745,7 @@ function voltarParaTelaAtual() {
   document.getElementById("lista").style.display = telaAtual === 'frentes' ? "block" : "none";
   document.getElementById("telaProximasSemanas").style.display = telaAtual === 'semanas' ? "block" : "none";
   document.getElementById("telaCronograma").style.display = telaAtual === 'cronograma' ? "block" : "none";
+  document.getElementById("telaFrentesConcluidas").style.display = "none";
 }
 
 function voltar() {
@@ -4975,14 +5011,7 @@ function abrirGantt() {
   }
 
   const minDate = new Date(Math.min(...tarefas.map(t => t.inicio)));
-  // ✅ "Six Week" = janela de 6 semanas (42 dias) a partir do início real
-  // dos dados — não é uma data fixa, recalcula sozinho toda vez que a
-  // planilha for atualizada. Tarefas que passam disso (tipo Via
-  // Permanente) ganham um aviso de continuação, em vez de esticar o
-  // gráfico inteiro e fazer tudo mais parecer "parado".
-  const maxDateJanela = new Date(minDate.getTime() + 41 * 86400000);
-  const maxDateReal = new Date(Math.max(...tarefas.map(t => t.termino)));
-  const maxDate = maxDateJanela < maxDateReal ? maxDateJanela : maxDateReal;
+  const maxDate = new Date(Math.max(...tarefas.map(t => t.termino)));
   const totalDias = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
 
   // ✅ agrupa por frente, mantendo a ordem em que apareceram
@@ -5032,11 +5061,9 @@ function abrirGantt() {
 
     porFrente[nomeFrente].forEach(t => {
       const offsetDias = Math.round((t.inicio - minDate) / 86400000);
-      const terminoVisivel = t.termino > maxDate ? maxDate : t.termino;
-      const duracaoDias = Math.round((terminoVisivel - t.inicio) / 86400000) + 1;
+      const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
       const left = pctPorDia(offsetDias);
       const width = Math.max(1.2, pctPorDia(duracaoDias));
-      const continuaDepois = t.termino > maxDate;
 
       linhasHtml += `
         <div class="ganttLinhaH">
@@ -5045,9 +5072,8 @@ function abrirGantt() {
             ${t.nome}
           </div>
           <div class="ganttTrilhaH">
-            <div class="ganttBarraH" style="left:${left}%; width:${width}%; ${continuaDepois ? 'border-top-right-radius:0; border-bottom-right-radius:0;' : ''}"
-                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}${continuaDepois ? ' (continua na próxima Six Week)' : ''}"></div>
-            ${continuaDepois ? `<div style="position:absolute; left:calc(${left}% + ${width}%); top:0; bottom:0; display:flex; align-items:center; font-size:10px; color:var(--text-soft);">›</div>` : ''}
+            <div class="ganttBarraH" style="left:${left}%; width:${width}%;"
+                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
           </div>
         </div>
       `;
@@ -5236,6 +5262,21 @@ function completarComFrente(sufixo, el) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
   const input = document.getElementById('inputBusca' + sufixo);
   input.value = input.value.replace('[frente]', el.textContent);
+
+  // ✅ se a pergunta também tem [data] ou [mes] além de [frente], abre o
+  // calendário certo automaticamente em seguida — sem isso, a pergunta
+  // ficava com o campo de data sem preencher
+  if (input.value.includes('[data]')) {
+    const qtdDatas = (input.value.match(/\[data\]/g) || []).length;
+    abrirCalendario(sufixo, qtdDatas > 1);
+    return;
+  }
+  if (input.value.includes('[mes]')) {
+    const qtdMeses = (input.value.match(/\[mes\]/g) || []).length;
+    abrirCalendarioMes(sufixo, qtdMeses > 1);
+    return;
+  }
+
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   input.focus();
 }
@@ -6046,6 +6087,12 @@ async function montarRespostaContagemDetonacoesFrentePeriodo(termo, periodo) {
 }
 
 // ✅ "quanto falta pra terminar a frente X" — usa o avanço por etapa
+// ✅ formata números com 2 casas decimais e vírgula (padrão BR) — sem
+// isso, contas com decimais tipo 100 - 95.29 viravam "4.710000000001"
+function formatarNumeroBR(n) {
+  return Number(n).toFixed(2).replace('.', ',');
+}
+
 async function montarRespostaQuantoFalta(termo) {
   const frente = await acharFrentePorNome(termo);
   if (!frente) {
@@ -6065,8 +6112,8 @@ async function montarRespostaQuantoFalta(termo) {
     const falta = Math.max(0, previsto - realizado);
     if (falta > 0) temAlgumaFalta = true;
     const cor = falta > 0 ? 'var(--ink)' : '#4F7A2E';
-    const texto = falta > 0 ? `faltam <b>${falta}m</b>` : 'concluída';
-    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${realizado}m de ${previsto}m)</div>`;
+    const texto = falta > 0 ? `faltam <b>${formatarNumeroBR(falta)}m</b>` : 'concluída';
+    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${formatarNumeroBR(realizado)}m de ${formatarNumeroBR(previsto)}m)</div>`;
   });
   if (!temAlgumaFalta) {
     html += `<div style="font-size:11px; color:#4F7A2E; margin-top:8px;">Todas as etapas estão concluídas.</div>`;
