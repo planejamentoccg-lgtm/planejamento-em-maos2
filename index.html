@@ -1413,7 +1413,7 @@ body.tema-escuro .iconeIndicador{
 .calDiaSelecionado{ background:var(--accent); color:#fff; font-weight:600; }
 .calDiaIntervalo{ background:var(--paper-2); }
 
-#resultadoBuscaF, #resultadoBuscaS, #resultadoBuscaC, #resultadoBuscaCD{
+#resultadoBuscaF, #resultadoBuscaS, #resultadoBuscaC, #resultadoBuscaCD, #resultadoBuscaFC{
   position:relative;
   padding-top:4px;
 }
@@ -1727,6 +1727,7 @@ body.tema-escuro .iconeIndicador{
   <div id="lista"></div>
   <div id="telaProximasSemanas" style="display:none;"></div>
   <div id="telaCronograma" style="display:none;"></div>
+  <div id="telaFrentesConcluidas" style="display:none;"></div>
   <div id="subTelaCronograma" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:var(--paper); z-index:40; overflow-y:auto;"></div>
 
   <div id="bannerInstalarApp" style="display:none;">
@@ -1749,7 +1750,7 @@ body.tema-escuro .iconeIndicador{
       <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/>
       </svg>
-      <span>Semanas</span>
+      <span>Six Week</span>
     </div>
     <div class="navItem" id="navItemCronograma" onclick="mostrarTelaCronograma()">
       <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -1803,7 +1804,7 @@ body.tema-escuro .iconeIndicador{
       <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
     </div>
   <div class="heroNovo" style="width:100%;">
-      <div class="eyebrow">Próximas Semanas</div>
+      <div class="eyebrow">Six Week</div>
       <h1 id="tituloSemanaDetalhe" style="font-size:26px; margin-bottom:0;">Carregando...</h1>
     </div>
 
@@ -2352,6 +2353,78 @@ const CRONOGRAMA_TODAS_ATIVIDADES = [
 // de todas as 458 linhas do MS Project (não é aproximação — é o
 // caminho mais longo que termina na Conclusão Final da Obra),
 // resumido em blocos por área
+// caminho crítico completo — 68 tarefas, do início ao fim, cada uma com o caminho completo (breadcrumb)
+const CRONOGRAMA_CAMINHO_CRITICO_COMPLETO = [
+  { id: 87, nome: 'Canteiro M. Jacinta', inicio: '18/08/2025', termino: '13/12/2025', caminho: ['MOBILIZAÇÃO DA OBRA', 'Infraesturura de Obra (Estacionamento PUC e Madre Jacinta)', 'Ar Comprimido', 'Canteiro M. Jacinta'] },
+  { id: 126, nome: 'Canteiro Madre Jacinta', inicio: '13/12/2025', termino: '13/12/2025', caminho: ['MOBILIZAÇÃO DA OBRA', 'Adequação dos Canteiros de Obra', 'Conclusão Dos Canteiros e rede de utilidades', 'Canteiro Madre Jacinta'] },
+  { id: 152, nome: 'Trecho em seção típica', inicio: '26/11/2025', termino: '09/12/2025', caminho: ['TÚNEL DE VIA TRECHO OESTE', 'Escavação da Rolha (60 m)', 'Escavação Tunel Piloto', 'Trecho em seção típica'] },
+  { id: 153, nome: 'Trecho em seção Variável', inicio: '10/12/2025', termino: '07/01/2026', caminho: ['TÚNEL DE VIA TRECHO OESTE', 'Escavação da Rolha (60 m)', 'Escavação Tunel Piloto', 'Trecho em seção Variável'] },
+  { id: 267, nome: 'Limpeza e preparo das frentes', inicio: '08/01/2026', termino: '13/01/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Limpeza e preparo das frentes'] },
+  { id: 288, nome: 'Demolição para colocação pé da cambota nova seção', inicio: '12/01/2026', termino: '07/03/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Demolição para colocação pé da cambota nova seção'] },
+  { id: 289, nome: '1o, Lance de Enfilagens/marcha a vante SD - Seção A', inicio: '19/01/2026', termino: '22/01/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', '1o, Lance de Enfilagens/marcha a vante SD - Seção A'] },
+  { id: 290, nome: 'Escavação Side Drift Seção A (CA23 a CA 26)', inicio: '23/01/2026', termino: '30/01/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Escavação Side Drift Seção A (CA23 a CA 26)'] },
+  { id: 291, nome: '2o, Lance de Enfilagens/marcha a vante SD - Seção A', inicio: '30/01/2026', termino: '31/01/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', '2o, Lance de Enfilagens/marcha a vante SD - Seção A'] },
+  { id: 292, nome: 'Escavação Side Drift Seção A (CA27 a CA 30)', inicio: '02/02/2026', termino: '06/02/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Escavação Side Drift Seção A (CA27 a CA 30)'] },
+  { id: 293, nome: '3o, Lance de Enfilagens/marcha a vante SD - Seção A', inicio: '13/02/2026', termino: '14/03/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', '3o, Lance de Enfilagens/marcha a vante SD - Seção A'] },
+  { id: 294, nome: 'Escavação Alargamento Seção A (CA31 a CA38)', inicio: '16/03/2026', termino: '25/03/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Escavação Alargamento Seção A (CA31 a CA38)'] },
+  { id: 295, nome: '4o, Lance de Enfilagens SD - Seção A - Marcha avante', inicio: '26/03/2026', termino: '30/03/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', '4o, Lance de Enfilagens SD - Seção A - Marcha avante'] },
+  { id: 296, nome: 'EscavaçãoSide-Drift Seção A (CA38 a CA41)', inicio: '31/03/2026', termino: '08/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'EscavaçãoSide-Drift Seção A (CA38 a CA41)'] },
+  { id: 307, nome: 'Pregagem Paralisação sinal Seção A', inicio: '09/04/2026', termino: '10/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Alargamento (Lado Direito)', 'Pregagem Paralisação sinal Seção A'] },
+  { id: 308, nome: 'Escavação Side-Drift Seção D (CC1a a CC2a)', inicio: '11/04/2026', termino: '11/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Alargamento (Lado Direito)', 'Escavação Side-Drift Seção D (CC1a a CC2a)'] },
+  { id: 297, nome: 'Escavação Alargamento - trecho com cambotas Seção D (CC1a à CC2a)', inicio: '11/04/2026', termino: '11/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Escavação Alargamento - trecho com cambotas Seção D (CC1a à CC2a)'] },
+  { id: 298, nome: 'Escavação Piloto - trecho sem cambotas Seção D', inicio: '13/04/2026', termino: '29/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Side-Drift (Lado Esquerdo)', 'Escavação Piloto - trecho sem cambotas Seção D'] },
+  { id: 309, nome: 'Escavação Alargamento - trecho sem cambotas Seção D', inicio: '15/04/2026', termino: '30/04/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Alargamento (Lado Direito)', 'Escavação Alargamento - trecho sem cambotas Seção D'] },
+  { id: 310, nome: 'Pregagem Espelho Final da Estação', inicio: '02/05/2026', termino: '11/05/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Sentido Carioca (FRENTE NORTE)', 'Calota Alargamento (Lado Direito)', 'Pregagem Espelho Final da Estação'] },
+  { id: 312, nome: 'Enfilagens - Emboque', inicio: '12/05/2026', termino: '28/05/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Enfilagens - Emboque'] },
+  { id: 315, nome: 'Escavação Cambotas 01 à 07', inicio: '02/06/2026', termino: '25/06/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Escavação', 'Escavação Cambotas 01 à 07'] },
+  { id: 316, nome: 'Execução 2o. Lance de enfilagens', inicio: '26/06/2026', termino: '04/07/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Escavação', 'Execução 2o. Lance de enfilagens'] },
+  { id: 317, nome: 'Escavação Cambotas 08 à 16 ate final', inicio: '06/07/2026', termino: '23/07/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Escavação', 'Escavação Cambotas 08 à 16 ate final'] },
+  { id: 318, nome: 'Escavação Arco Invertido completo', inicio: '24/07/2026', termino: '03/08/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Escavação', 'Escavação Arco Invertido completo'] },
+  { id: 319, nome: 'Pregagem parede de paralisação', inicio: '04/08/2026', termino: '08/08/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Escavação', 'Pregagem parede de paralisação'] },
+  { id: 321, nome: 'Armação e concretagem do arco invertido', inicio: '10/08/2026', termino: '20/08/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Execução do reforço túnel Apendice', 'Armação e concretagem do arco invertido'] },
+  { id: 322, nome: 'Execução da parede de fundo em Concreto Projetado + Tirantes', inicio: '21/08/2026', termino: '29/08/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Execução do reforço túnel Apendice', 'Execução da parede de fundo em Concreto Projetado + Tirantes'] },
+  { id: 323, nome: 'Armação, tela e concreto projetado das paredes e abóbada', inicio: '31/08/2026', termino: '18/09/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Execução do reforço túnel Apendice', 'Armação, tela e concreto projetado das paredes e abóbada'] },
+  { id: 326, nome: 'Escavação trecho Variáveal', inicio: '19/09/2026', termino: '25/09/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Alargamento do Trapézio da estação', 'Escavação Lado JOC', 'Escavação trecho Variáveal'] },
+  { id: 330, nome: 'Escavação trecho Variáveal (CA21 a 18)', inicio: '19/09/2026', termino: '24/09/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Alargamento do Trapézio da estação', 'Escavação Lado CRC', 'Escavação trecho Variáveal (CA21 a 18)'] },
+  { id: 331, nome: 'Enfilagens', inicio: '25/09/2026', termino: '10/10/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Alargamento do Trapézio da estação', 'Escavação Lado CRC', 'Enfilagens'] },
+  { id: 332, nome: 'Escavação Cambotas CA\'5 a 8 + CA13 a 18', inicio: '13/10/2026', termino: '24/10/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Calota Alargamento Região do Poço (APENDICE)', 'Alargamento do Trapézio da estação', 'Escavação Lado CRC', 'Escavação Cambotas CA\'5 a 8 + CA13 a 18'] },
+  { id: 397, nome: 'Escavação para acerto e regularização espelho (OESTE)', inicio: '26/10/2026', termino: '27/10/2026', caminho: ['ESTAÇÃO GÁVEA', 'TÚNEL DE INTERLIGAÇÃO', 'Alteamento', 'Escavação para acerto e regularização espelho (OESTE)'] },
+  { id: 398, nome: 'Escavação do alteamento + alargamento Cambota 01 à 03', inicio: '28/10/2026', termino: '03/11/2026', caminho: ['ESTAÇÃO GÁVEA', 'TÚNEL DE INTERLIGAÇÃO', 'Alteamento', 'Escavação do alteamento + alargamento Cambota 01 à 03'] },
+  { id: 338, nome: '1o. Rebaixo Seção B - sem cambotas (A3 ao A2)', inicio: '04/11/2026', termino: '09/11/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', '1o. Rebaixo Seção B - sem cambotas (A3 ao A2)'] },
+  { id: 339, nome: '1o. Rebaixo Seção A - com cambotas (A2 ao A1)', inicio: '10/11/2026', termino: '11/11/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', '1o. Rebaixo Seção A - com cambotas (A2 ao A1)'] },
+  { id: 340, nome: '1o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)', inicio: '12/11/2026', termino: '23/11/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', '1o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)'] },
+  { id: 341, nome: '1o. Rebaixo Seção A - com cambotas (CA13 ao CA38)', inicio: '24/11/2026', termino: '07/12/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', '1o. Rebaixo Seção A - com cambotas (CA13 ao CA38)'] },
+  { id: 342, nome: '1o. Rebaixo Seção D - sem cambotas (Final)', inicio: '08/12/2026', termino: '18/12/2026', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', '1o. Rebaixo Seção D - sem cambotas (Final)'] },
+  { id: 343, nome: 'Pregagem 1o. Rebaixo', inicio: '19/12/2026', termino: '04/01/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '1o. Rebaixo', 'Pregagem 1o. Rebaixo'] },
+  { id: 352, nome: 'Escavação do Caixão Central', inicio: '05/01/2027', termino: '03/02/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', 'Escavação do Caixão Central'] },
+  { id: 353, nome: '2o. Rebaixo Seção C - com cambotas (C15 ao C1) - Segmento 6', inicio: '08/01/2027', termino: '22/01/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção C - com cambotas (C15 ao C1) - Segmento 6'] },
+  { id: 354, nome: '2o. Rebaixo Seção A - com cambotas (A12 ao A3) - Segmento 6', inicio: '23/01/2027', termino: '29/01/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção A - com cambotas (A12 ao A3) - Segmento 6'] },
+  { id: 355, nome: '2o. Rebaixo Seção B - sem cambotas (A3 ao A2)', inicio: '30/01/2027', termino: '04/02/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção B - sem cambotas (A3 ao A2)'] },
+  { id: 356, nome: '2o. Rebaixo Seção A - com cambotas (A2 ao A1)', inicio: '05/02/2027', termino: '10/02/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção A - com cambotas (A2 ao A1)'] },
+  { id: 357, nome: '2o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)', inicio: '11/02/2027', termino: '22/02/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)'] },
+  { id: 358, nome: '2o. Rebaixo Seção A - com cambotas (CA13 ao CA38)', inicio: '23/02/2027', termino: '08/03/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção A - com cambotas (CA13 ao CA38)'] },
+  { id: 359, nome: '2o. Rebaixo Seção D - sem cambotas (Final)', inicio: '09/03/2027', termino: '19/03/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', '2o. Rebaixo', 'Escavação 2o. Rebaixo completo', '2o. Rebaixo Seção D - sem cambotas (Final)'] },
+  { id: 361, nome: 'Invert', inicio: '20/03/2027', termino: '16/04/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Escavação a Fogo', 'Rebaixo', 'Invert'] },
+  { id: 370, nome: 'Revestimento Secundário Piso - Invert', inicio: '17/04/2027', termino: '18/05/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Obras Civis da Estação Oeste', 'Revestimento Secundário - Corpo da Estação', 'Revestimento Secundário Piso - Invert'] },
+  { id: 371, nome: 'Revestimento Segundário paredes / Abóbada', inicio: '19/05/2027', termino: '09/08/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Obras Civis da Estação Oeste', 'Revestimento Secundário - Corpo da Estação', 'Revestimento Segundário paredes / Abóbada'] },
+  { id: 372, nome: 'Transição poço/estação', inicio: '10/08/2027', termino: '08/09/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO OESTE', 'Obras Civis da Estação Oeste', 'Revestimento Secundário - Corpo da Estação', 'Transição poço/estação'] },
+  { id: 230, nome: 'Escavação até trecho de cambotas (entre eixos 6 e 7)', inicio: '09/09/2027', termino: '24/09/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido General Osório', 'Calota Alargamento', 'Escavação até trecho de cambotas (entre eixos 6 e 7)'] },
+  { id: 240, nome: 'Escavação até trecho de cambotas (eixo 15)', inicio: '09/09/2027', termino: '05/10/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Calota Alargamento', 'Escavação até trecho de cambotas (eixo 15)'] },
+  { id: 241, nome: 'Lance de Enfilagens', inicio: '06/10/2027', termino: '20/10/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Calota Alargamento', 'Lance de Enfilagens'] },
+  { id: 244, nome: 'Enfilagens', inicio: '21/10/2027', termino: '18/11/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Calota Alargamento', 'Alargamento na Região do Poço', 'Enfilagens'] },
+  { id: 245, nome: 'Escavação', inicio: '19/11/2027', termino: '04/12/2027', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Calota Alargamento', 'Alargamento na Região do Poço', 'Escavação'] },
+  { id: 247, nome: '1o. Rebaixo na região do Poço', inicio: '06/12/2027', termino: '06/01/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Rebaixo', '1o. Rebaixo na região do Poço'] },
+  { id: 248, nome: '1o. Rebaixo', inicio: '07/01/2028', termino: '31/01/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Rebaixo', '1o. Rebaixo'] },
+  { id: 249, nome: 'Pregagem 1o. Rebaixo', inicio: '01/02/2028', termino: '03/02/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Escavação a Fogo', 'Sentido Uruguai', 'Rebaixo', 'Pregagem 1o. Rebaixo'] },
+  { id: 252, nome: 'Revestimento Secundário Piso - Invert', inicio: '04/02/2028', termino: '07/03/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Obras Civis da Estação Sul', 'Revestimento Secundário - Corpo da Estação', 'Revestimento Secundário Piso - Invert'] },
+  { id: 253, nome: 'Revestimento Segundário paredes / Abóbada', inicio: '08/03/2028', termino: '01/04/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Obras Civis da Estação Sul', 'Revestimento Secundário - Corpo da Estação', 'Revestimento Segundário paredes / Abóbada'] },
+  { id: 254, nome: 'Transição poço/estação', inicio: '03/04/2028', termino: '20/04/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Obras Civis da Estação Sul', 'Revestimento Secundário - Corpo da Estação', 'Transição poço/estação'] },
+  { id: 256, nome: 'Revestimento Secundário - Poço', inicio: '22/04/2028', termino: '21/06/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Obras Civis da Estação Sul', 'Revestimento Secundário - Poço', 'Revestimento Secundário - Poço'] },
+  { id: 258, nome: 'Estrutura dos poços', inicio: '22/06/2028', termino: '13/09/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'Obras Civis da Estação Sul', 'Estruturas', 'Estrutura dos poços'] },
+  { id: 263, nome: 'Bandejamento', inicio: '14/09/2028', termino: '07/12/2028', caminho: ['ESTAÇÃO GÁVEA', 'ESTAÇÃO SUL', 'SISTEMAS ESTAÇÃO SUL', 'Poço Sul', 'Bandejamento'] },
+  { id: 8, nome: 'CONCLUSÃO FINAL DA OBRA', inicio: '07/12/2028', termino: '07/12/2028', caminho: ['MARCOS CONTRATUAIS', 'CONCLUSÃO FINAL DA OBRA'] },
+];
+
 const CRONOGRAMA_CAMINHO_CRITICO = [
   { area: 'Mobilização da Obra', inicio: '18/08/2025', fim: '13/12/2025', qtdTarefas: 2, primeiraTarefa: 'Canteiro M. Jacinta', ultimaTarefa: 'Canteiro Madre Jacinta' },
   { area: 'Túnel de Via Trecho Oeste', inicio: '26/11/2025', fim: '07/01/2026', qtdTarefas: 2, primeiraTarefa: 'Trecho em seção típica', ultimaTarefa: 'Trecho em seção Variável' },
@@ -2363,6 +2436,159 @@ const CRONOGRAMA_CAMINHO_CRITICO = [
   { area: 'Marcos Contratuais', inicio: '07/12/2028', fim: '07/12/2028', qtdTarefas: 1, primeiraTarefa: 'CONCLUSÃO FINAL DA OBRA', ultimaTarefa: 'CONCLUSÃO FINAL DA OBRA' },
 ];
 
+
+// árvore completa — 445 tarefas: id, nome, inicio, termino, nivel, area
+const CRONOGRAMA_ARVORE_COMPLETA = [
+  [2,'MARCOS CONTRATUAIS','08/03/2027','07/12/2028',2,'Marcos Contratuais'],[3,'Conclusão das escavações da Estação OESTE','16/04/2027','16/04/2027',3,'Marcos Contratuais'],[4,'Conclusão das escavações da Estação SUL','05/02/2028','05/02/2028',3,'Marcos Contratuais'],
+  [5,'Conclusão do revestimento Secundário Estação e Poços','21/06/2028','21/06/2028',3,'Marcos Contratuais'],[6,'Conclusão da Via Permanente','15/05/2028','15/05/2028',3,'Marcos Contratuais'],[7,'Liberação da SSR / SSA / STC','08/03/2027','08/03/2027',3,'Marcos Contratuais'],
+  [8,'CONCLUSÃO FINAL DA OBRA','07/12/2028','07/12/2028',3,'Marcos Contratuais'],[10,'ORDEM DE INICIO','28/05/2025','28/05/2025',2,'Ordem de Início'],[11,'EMISSÃO DA ORDEM DE INÍCIO','28/05/2025','28/05/2025',3,'Ordem de Início'],
+  [13,'MOBILIZAÇÃO DA OBRA','28/05/2025','14/04/2027',2,'Mobilização da Obra'],[14,'Mobilização da equipe','28/05/2025','17/07/2025',3,'Mobilização da Obra'],[15,'Projeto','27/06/2025','14/04/2027',3,'Mobilização da Obra'],
+  [16,'Execução do projeto Básico (Consolidação do Conceitual)','10/10/2025','13/02/2026',4,'Mobilização da Obra'],[17,'Escavações e revestimentos - Consolidação','10/10/2025','28/01/2026',5,'Mobilização da Obra'],[18,'Arquitetura - Consolidação','21/10/2025','13/02/2026',5,'Mobilização da Obra'],
+  [20,'Execução do projeto executivo','27/06/2025','14/04/2027',4,'Mobilização da Obra'],[21,'Escavações e revestimentos','27/06/2025','06/11/2026',5,'Mobilização da Obra'],[22,'Avaliação de Riscos dos Edifícios','27/06/2025','24/07/2025',6,'Mobilização da Obra'],
+  [23,'Curvas de Iso Recalque e Mapas de Distorção','27/06/2025','18/07/2025',6,'Mobilização da Obra'],[24,'Instrumentação','27/06/2025','18/07/2025',6,'Mobilização da Obra'],[25,'Relatório Técnico - Esgotamento da água interna de inundação','27/06/2025','18/07/2025',6,'Mobilização da Obra'],
+  [26,'Poço Piloto Oeste','19/10/2026','23/10/2026',6,'Mobilização da Obra'],[27,'Secundário','19/10/2026','23/10/2026',7,'Mobilização da Obra'],[28,'Poço Piloto Sul','19/10/2026','23/10/2026',6,'Mobilização da Obra'],
+  [29,'Secundário','19/10/2026','23/10/2026',7,'Mobilização da Obra'],[30,'Túnel Corpo Estação Oeste','31/10/2025','06/11/2026',6,'Mobilização da Obra'],[31,'Primário','31/10/2025','04/09/2026',7,'Mobilização da Obra'],
+  [32,'Secundário','20/03/2026','06/11/2026',7,'Mobilização da Obra'],[33,'Túnel Corpo Estação Sul','19/12/2025','18/08/2026',6,'Mobilização da Obra'],[34,'Primário','19/12/2025','26/03/2026',7,'Mobilização da Obra'],
+  [35,'Secundário','07/08/2026','18/08/2026',7,'Mobilização da Obra'],[36,'Túnel de Interligação','14/11/2025','10/08/2026',6,'Mobilização da Obra'],[37,'Primário','14/11/2025','03/07/2026',7,'Mobilização da Obra'],
+  [38,'Secundário','05/08/2026','10/08/2026',7,'Mobilização da Obra'],[39,'Túnel de ligação entre plataformas','09/07/2026','24/09/2026',6,'Mobilização da Obra'],[40,'Primário','09/07/2026','14/07/2026',7,'Mobilização da Obra'],
+  [41,'Secundário','14/09/2026','24/09/2026',7,'Mobilização da Obra'],[42,'Túnel do Operador (entrada da Estação)','25/11/2025','27/07/2026',6,'Mobilização da Obra'],[43,'Primário','25/11/2025','26/06/2026',7,'Mobilização da Obra'],
+  [44,'Secundário','15/07/2026','27/07/2026',7,'Mobilização da Obra'],[45,'Túnel de Via - faltante','10/10/2025','11/09/2026',6,'Mobilização da Obra'],[46,'Primário','10/10/2025','26/06/2026',7,'Mobilização da Obra'],
+  [47,'Secundário','31/08/2026','11/09/2026',7,'Mobilização da Obra'],[48,'SSR-04 / STCC-08 / SSA-07','09/05/2026','12/06/2026',6,'Mobilização da Obra'],[49,'Primário','09/05/2026','14/05/2026',7,'Mobilização da Obra'],
+  [50,'Secundário','08/06/2026','12/06/2026',7,'Mobilização da Obra'],[51,'Estruturas Internas','15/09/2025','14/04/2027',5,'Mobilização da Obra'],[52,'Poço Piloto Oeste','23/01/2027','03/02/2027',6,'Mobilização da Obra'],
+  [53,'Poço Piloto Sul','23/01/2027','03/02/2027',6,'Mobilização da Obra'],[54,'Tunel Corpo da estação Oeste','03/03/2027','11/03/2027',6,'Mobilização da Obra'],[55,'Túnel de Interligação','17/11/2026','09/12/2026',6,'Mobilização da Obra'],
+  [56,'Túnel de ligação entre plataformas','05/10/2026','09/10/2026',6,'Mobilização da Obra'],[57,'Túnel do Operador (entrada da Estação)','13/01/2027','18/01/2027',6,'Mobilização da Obra'],[58,'SSR-04 / STCC-08 / SSA-07','15/07/2026','20/07/2026',6,'Mobilização da Obra'],
+  [59,'Passagem de Emergência','15/09/2025','10/10/2025',6,'Mobilização da Obra'],[60,'Edificio de Acesso','11/03/2027','14/04/2027',6,'Mobilização da Obra'],[61,'Via Permanente','28/02/2026','14/04/2027',5,'Mobilização da Obra'],
+  [62,'Trecho Estação','09/04/2027','14/04/2027',6,'Mobilização da Obra'],[63,'Túnel de Via','28/02/2026','30/10/2026',6,'Mobilização da Obra'],[64,'Passarela de Emergência e Bandejamento','12/03/2026','13/05/2026',6,'Mobilização da Obra'],
+  [65,'Arquitetura','11/06/2026','13/04/2027',5,'Mobilização da Obra'],[66,'Executivo e acabamentos','11/06/2026','07/12/2026',6,'Mobilização da Obra'],[67,'Comunicação Visual','20/11/2026','01/12/2026',6,'Mobilização da Obra'],
+  [68,'Paisagiso e Reurbanização','09/12/2026','16/01/2027',6,'Mobilização da Obra'],[69,'Instalações Hidrosanitárias','15/03/2027','13/04/2027',6,'Mobilização da Obra'],[71,'Infraesturura de Obra (Estacionamento PUC e Madre Jacinta)','11/06/2025','13/12/2025',3,'Mobilização da Obra'],
+  [72,'Energia','11/06/2025','29/11/2025',4,'Mobilização da Obra'],[73,'Canteito PUC','11/06/2025','02/09/2025',5,'Mobilização da Obra'],[74,'Subestação Elétrica Canteiro PUC','20/06/2025','02/09/2025',6,'Mobilização da Obra'],
+  [75,'Mobilização / Instalação Gerador Canteiro PUC','11/06/2025','15/07/2025',6,'Mobilização da Obra'],[76,'Rede de Média Tensão PUC','08/07/2025','18/08/2025',6,'Mobilização da Obra'],[77,'Canteiro M. Jacinta','10/07/2025','29/11/2025',5,'Mobilização da Obra'],
+  [78,'Subestação Elétrica','10/07/2025','29/11/2025',6,'Mobilização da Obra'],[79,'Rede de Média Tensão M. Jacinta','10/07/2025','29/11/2025',6,'Mobilização da Obra'],[80,'Água','16/06/2025','27/08/2025',4,'Mobilização da Obra'],
+  [81,'Canteiro PUC','16/06/2025','27/08/2025',5,'Mobilização da Obra'],[82,'Canteiro M. Jacinta','16/06/2025','27/08/2025',5,'Mobilização da Obra'],[83,'Ventilação','12/07/2025','07/11/2025',4,'Mobilização da Obra'],
+  [84,'Canteiro M. Jacinta','12/07/2025','07/11/2025',5,'Mobilização da Obra'],[85,'Ar Comprimido','18/08/2025','13/12/2025',4,'Mobilização da Obra'],[86,'Canteiro PUC','18/08/2025','13/12/2025',5,'Mobilização da Obra'],
+  [87,'Canteiro M. Jacinta','18/08/2025','13/12/2025',5,'Mobilização da Obra'],[88,'Licenças e Autorizações','02/06/2025','21/11/2025',3,'Mobilização da Obra'],[89,'Licença Exercito / DFAE / Georio / Prefeitura','26/06/2025','21/11/2025',4,'Mobilização da Obra'],
+  [90,'Vistorias das edificações lindeiras','02/06/2025','04/11/2025',4,'Mobilização da Obra'],[91,'Adequação dos Canteiros de Obra','02/06/2025','19/01/2026',3,'Mobilização da Obra'],[92,'Adequação Canteiro Madre Jacinta','27/06/2025','15/08/2025',4,'Mobilização da Obra'],
+  [93,'Refeitório','27/06/2025','13/08/2025',5,'Mobilização da Obra'],[94,'Vestiário','30/06/2025','15/08/2025',5,'Mobilização da Obra'],[95,'Escritório','30/06/2025','09/08/2025',5,'Mobilização da Obra'],
+  [96,'Área de Vivência','21/07/2025','13/08/2025',5,'Mobilização da Obra'],[97,'Industrial','02/07/2025','06/08/2025',5,'Mobilização da Obra'],[98,'Barracão Industrial','02/07/2025','06/08/2025',5,'Mobilização da Obra'],
+  [99,'Barracão Manutenção','02/07/2025','06/08/2025',5,'Mobilização da Obra'],[100,'Adequação Canteiro Gávea','02/06/2025','19/01/2026',4,'Mobilização da Obra'],[101,'Canteiro Administrativo','02/06/2025','08/08/2025',5,'Mobilização da Obra'],
+  [102,'Pavimento Térreo','02/06/2025','06/08/2025',6,'Mobilização da Obra'],[103,'Pavimento 1','02/06/2025','24/06/2025',6,'Mobilização da Obra'],[104,'Pavimento 2','02/06/2025','08/08/2025',6,'Mobilização da Obra'],
+  [105,'Pavimento 3','02/06/2025','08/08/2025',6,'Mobilização da Obra'],[106,'Escritório Metrorio (18)','02/06/2025','20/06/2025',5,'Mobilização da Obra'],[107,'Anexo 1 (9) - Escolinha e Espera','16/06/2025','19/08/2025',5,'Mobilização da Obra'],
+  [108,'Anexo 2 (8) - RH','02/06/2025','03/06/2025',5,'Mobilização da Obra'],[109,'Anexo 3 (7) - Depósito','02/06/2025','30/06/2025',5,'Mobilização da Obra'],[110,'Anexo 4 (6) - Topografia','02/06/2025','05/06/2025',5,'Mobilização da Obra'],
+  [111,'Anexo 5 e 6 (4 e 5) - Qualidade','02/06/2025','10/09/2025',5,'Mobilização da Obra'],[112,'Anexo 7 ao 10 (1, 2 e 3) - Medicina','02/06/2025','22/08/2025',5,'Mobilização da Obra'],[113,'Retirada Cobertura Poços','02/06/2025','15/08/2025',5,'Mobilização da Obra'],
+  [114,'Manutenção Pórticos','09/06/2025','19/01/2026',5,'Mobilização da Obra'],[115,'Reforma Transformadores','10/07/2025','29/11/2025',5,'Mobilização da Obra'],[116,'Retirada material ANEXO 1 (RT) (9)','02/06/2025','04/06/2025',5,'Mobilização da Obra'],
+  [117,'Retirada material ANEXO 3 (RT) (7)','17/06/2025','20/06/2025',5,'Mobilização da Obra'],[118,'Retirada material Galpão 1 (MT) (15)','25/08/2025','02/09/2025',5,'Mobilização da Obra'],[119,'Retirada material Galpão 2 (MT) (17a)','18/06/2025','09/07/2025',5,'Mobilização da Obra'],
+  [120,'Retirada material Galpão 3 (MT) (17b)','20/06/2025','01/07/2025',5,'Mobilização da Obra'],[121,'Retirada material Galpão 4 (MT) (14a)','16/06/2025','20/06/2025',5,'Mobilização da Obra'],[122,'Retirada material Galpão 5 (MT) (14b)','07/07/2025','29/08/2025',5,'Mobilização da Obra'],
+  [123,'Tapume','20/06/2025','24/07/2025',5,'Mobilização da Obra'],[124,'Conclusão Dos Canteiros e rede de utilidades','13/12/2025','19/01/2026',4,'Mobilização da Obra'],[125,'Canteiro PUC','19/01/2026','19/01/2026',5,'Mobilização da Obra'],
+  [126,'Canteiro Madre Jacinta','13/12/2025','13/12/2025',5,'Mobilização da Obra'],[128,'OBRAS DE SUPERFÍCIE','24/08/2027','22/11/2028',2,'Obras de Superfície'],[129,'Fundações','24/08/2027','07/01/2028',3,'Obras de Superfície'],
+  [130,'Estacas','24/08/2027','05/11/2027',4,'Obras de Superfície'],[131,'Blocos','05/11/2027','07/01/2028',4,'Obras de Superfície'],[132,'Subsolo - Canais de Ventilação','07/01/2028','22/06/2028',3,'Obras de Superfície'],
+  [133,'Estruturas de contenção','07/01/2028','18/02/2028',4,'Obras de Superfície'],[134,'Demolição e escavações','18/02/2028','07/03/2028',4,'Obras de Superfície'],[135,'Laje de fundo','07/03/2028','28/03/2028',4,'Obras de Superfície'],
+  [136,'Pilares e Paredes','28/03/2028','23/05/2028',4,'Obras de Superfície'],[137,'Laje Elev.+10,79','23/05/2028','22/06/2028',4,'Obras de Superfície'],[138,'Estrutura','22/06/2028','19/07/2028',3,'Obras de Superfície'],
+  [139,'Pilares','22/06/2028','05/07/2028',4,'Obras de Superfície'],[140,'Vigas','06/07/2028','19/07/2028',4,'Obras de Superfície'],[141,'Laje Piso Cobertura','20/07/2028','28/09/2028',3,'Obras de Superfície'],
+  [142,'Montagem Steel Deck','20/07/2028','03/08/2028',4,'Obras de Superfície'],[143,'Montagem armação e concretagem','04/08/2028','17/08/2028',4,'Obras de Superfície'],[144,'Casa de Maquinas e Reservatório elev. +15,83','18/08/2028','28/09/2028',4,'Obras de Superfície'],
+  [145,'Acabamentos','18/08/2028','17/10/2028',3,'Obras de Superfície'],[146,'Bandejamentos','05/09/2028','27/10/2028',3,'Obras de Superfície'],[147,'Ubanização','23/08/2028','22/11/2028',3,'Obras de Superfície'],
+  [149,'TÚNEL DE VIA TRECHO OESTE','23/09/2025','15/05/2028',2,'Túnel de Via Trecho Oeste'],[150,'Escavação da Rolha (60 m)','26/11/2025','13/06/2026',3,'Túnel de Via Trecho Oeste'],[151,'Escavação Tunel Piloto','26/11/2025','07/01/2026',4,'Túnel de Via Trecho Oeste'],
+  [152,'Trecho em seção típica','26/11/2025','09/12/2025',5,'Túnel de Via Trecho Oeste'],[153,'Trecho em seção Variável','10/12/2025','07/01/2026',5,'Túnel de Via Trecho Oeste'],[154,'Alargamento','04/05/2026','07/05/2026',4,'Túnel de Via Trecho Oeste'],
+  [155,'Pregagem Tunel do Operador','08/05/2026','13/05/2026',4,'Túnel de Via Trecho Oeste'],[156,'1o. Rebaixo','14/05/2026','25/05/2026',4,'Túnel de Via Trecho Oeste'],[157,'2o. Rebaixo','12/06/2026','13/06/2026',4,'Túnel de Via Trecho Oeste'],
+  [158,'Túnel de via','17/04/2027','17/06/2027',3,'Túnel de Via Trecho Oeste'],[159,'Limpeza e aplicação de poroso no túnel','17/04/2027','17/06/2027',4,'Túnel de Via Trecho Oeste'],[160,'Via Permanente','23/09/2025','15/05/2028',3,'Túnel de Via Trecho Oeste'],
+  [161,'Trecho SCR - Tunel de Serviço MJ','23/09/2025','15/01/2027',4,'Túnel de Via Trecho Oeste'],[162,'Arrumação dos Trilhos estocados','23/09/2025','06/10/2025',5,'Túnel de Via Trecho Oeste'],[163,'Limpeza e aplicação de concreto poroso','27/07/2026','16/11/2026',5,'Túnel de Via Trecho Oeste'],
+  [164,'Canaletas laterais','07/08/2026','27/11/2026',5,'Túnel de Via Trecho Oeste'],[165,'Montagem da grade e concretagem da via','03/09/2026','04/01/2027',5,'Túnel de Via Trecho Oeste'],[166,'Passarelas de emergencia','16/09/2026','15/01/2027',5,'Túnel de Via Trecho Oeste'],
+  [167,'Trecho do Rabicho, estação até AMV','14/01/2028','12/02/2028',4,'Túnel de Via Trecho Oeste'],[168,'Montagem da grade e concretagem da via','14/01/2028','12/02/2028',5,'Túnel de Via Trecho Oeste'],[169,'Montagem do AMV','14/02/2028','04/03/2028',4,'Túnel de Via Trecho Oeste'],
+  [170,'Montagem da grade e AMV','14/02/2028','04/03/2028',5,'Túnel de Via Trecho Oeste'],[171,'Trecho Estação Gávea - Tunel de Serviço MJ - Via 1','03/11/2027','19/01/2028',4,'Túnel de Via Trecho Oeste'],[172,'Limpeza e aplicação de concreto poroso','03/11/2027','07/12/2027',5,'Túnel de Via Trecho Oeste'],
+  [173,'Canaletas laterais','16/11/2027','17/12/2027',5,'Túnel de Via Trecho Oeste'],[174,'Montagem da grade e concretagem da via','27/11/2027','07/01/2028',5,'Túnel de Via Trecho Oeste'],[175,'Passarelas de emergencia','09/12/2027','19/01/2028',5,'Túnel de Via Trecho Oeste'],
+  [176,'Trecho Estação Gávea - Tunel de Serviço MJ - Via 2','06/03/2028','15/05/2028',4,'Túnel de Via Trecho Oeste'],[177,'Limpeza e aplicação de concreto poroso','06/03/2028','06/04/2028',5,'Túnel de Via Trecho Oeste'],[178,'Canaletas laterais','17/03/2028','19/04/2028',5,'Túnel de Via Trecho Oeste'],
+  [179,'Montagem da grade e concretagem da via','29/03/2028','03/05/2028',5,'Túnel de Via Trecho Oeste'],[180,'Passarelas de emergencia','10/04/2028','15/05/2028',5,'Túnel de Via Trecho Oeste'],[182,'Passagem de Emergencia entre Vias PK 7.858 (14)','27/06/2026','13/08/2026',3,'Túnel de Via Trecho Oeste'],
+  [183,'Revisão de toda instalação que estava 100% (alguns itens foram retirados para utilização)','27/06/2026','13/08/2026',4,'Túnel de Via Trecho Oeste'],[184,'Passagem de Emergencia entre Vias PK 80.071 (enfrente SSR 05) (16)','15/09/2026','26/11/2026',3,'Túnel de Via Trecho Oeste'],[185,'Limpeza','15/09/2026','19/09/2026',4,'Túnel de Via Trecho Oeste'],
+  [186,'Estrutura de concreto','21/09/2026','15/10/2026',4,'Túnel de Via Trecho Oeste'],[187,'Nivel Porão (Elev. Variável)','21/09/2026','26/09/2026',5,'Túnel de Via Trecho Oeste'],[188,'Nivel Circulação (Elev. Variável)','28/09/2026','15/10/2026',5,'Túnel de Via Trecho Oeste'],
+  [189,'Acabamentos','16/10/2026','14/11/2026',4,'Túnel de Via Trecho Oeste'],[190,'Bandejamento','16/11/2026','26/11/2026',4,'Túnel de Via Trecho Oeste'],[191,'Passagem de Emergencia entre Vias PK 8.240 (15)','14/08/2026','26/10/2026',3,'Túnel de Via Trecho Oeste'],
+  [192,'Limpeza','14/08/2026','19/08/2026',4,'Túnel de Via Trecho Oeste'],[193,'Estrutura de concreto','20/08/2026','14/09/2026',4,'Túnel de Via Trecho Oeste'],[194,'Nivel Porão (Elev. Variável)','20/08/2026','26/08/2026',5,'Túnel de Via Trecho Oeste'],
+  [195,'Nivel Circulação (Elev. Variável)','27/08/2026','14/09/2026',5,'Túnel de Via Trecho Oeste'],[196,'Acabamentos','15/09/2026','14/10/2026',4,'Túnel de Via Trecho Oeste'],[197,'Bandejamento','15/10/2026','26/10/2026',4,'Túnel de Via Trecho Oeste'],
+  [198,'Reservatório de agua No. 4 final do bitunel sentido chegando na Gávea (Obras Civis Já Executadas)','27/11/2026','17/12/2026',3,'Túnel de Via Trecho Oeste'],[199,'Acabamentos (inclusive impermeabilização)','27/11/2026','17/12/2026',4,'Túnel de Via Trecho Oeste'],[200,'SSR 04','26/05/2026','08/03/2027',3,'Túnel de Via Trecho Oeste'],
+  [201,'Escavação em Rocha (ampliação para STC 08 e SSA-07)','26/05/2026','21/07/2026',4,'Túnel de Via Trecho Oeste'],[202,'Calota','26/05/2026','13/06/2026',5,'Túnel de Via Trecho Oeste'],[203,'Prolongamento + Alteamento','26/05/2026','13/06/2026',6,'Túnel de Via Trecho Oeste'],
+  [204,'Rebaixo','29/06/2026','09/07/2026',5,'Túnel de Via Trecho Oeste'],[205,'Prolongamento da SSR','29/06/2026','02/07/2026',6,'Túnel de Via Trecho Oeste'],[206,'Conferencia e acertos','03/07/2026','09/07/2026',6,'Túnel de Via Trecho Oeste'],
+  [207,'Revestimento Secundário','10/07/2026','21/07/2026',5,'Túnel de Via Trecho Oeste'],[208,'Estrutura de concreto','04/08/2026','07/12/2026',4,'Túnel de Via Trecho Oeste'],[209,'Fundação','04/08/2026','01/09/2026',5,'Túnel de Via Trecho Oeste'],
+  [210,'Até nível -38,88','02/09/2026','26/10/2026',5,'Túnel de Via Trecho Oeste'],[211,'Até nível -34,33','27/10/2026','07/12/2026',5,'Túnel de Via Trecho Oeste'],[212,'Acabamentos','08/12/2026','03/02/2027',4,'Túnel de Via Trecho Oeste'],
+  [213,'Bandejamento','04/02/2027','08/03/2027',4,'Túnel de Via Trecho Oeste'],[215,'ESTAÇÃO GÁVEA','16/06/2025','07/12/2028',2,'Estação Gávea'],[216,'Drenagem dos Poços','16/06/2025','20/11/2025',3,'Estação Gávea'],
+  [217,'Mobilização equipamentos / Execução dos poços','16/06/2025','13/08/2025',4,'Estação Gávea'],[218,'Bombeamento dos poços','14/08/2025','07/11/2025',4,'Estação Gávea'],[219,'Inspeção e avaliação técnica das estruturas','08/11/2025','20/11/2025',4,'Estação Gávea'],
+  [220,'ESTAÇÃO SUL','08/01/2026','07/12/2028',3,'Estação Sul'],[221,'Escavação a Fogo','08/01/2026','05/02/2028',4,'Estação Sul'],[222,'Limpeza e preparo das frentes','08/01/2026','19/01/2026',5,'Estação Sul'],
+  [223,'Rebaixo Invert Variável','29/05/2026','18/07/2026',5,'Estação Sul'],[224,'Execução do Invert - GOS','29/05/2026','27/06/2026',6,'Estação Sul'],[225,'Pregagem Invert - GOS','23/06/2026','27/06/2026',6,'Estação Sul'],
+  [226,'Execução do Invert - URU','29/06/2026','09/07/2026',6,'Estação Sul'],[227,'Pregagem Invert - URU','10/07/2026','18/07/2026',6,'Estação Sul'],[228,'Sentido General Osório','09/09/2027','05/02/2028',5,'Estação Sul'],
+  [229,'Calota Alargamento','09/09/2027','03/11/2027',6,'Estação Sul'],[230,'Escavação até trecho de cambotas (entre eixos 6 e 7)','09/09/2027','24/09/2027',7,'Estação Sul'],[231,'Lance de Enfilagens','25/09/2027','08/10/2027',7,'Estação Sul'],
+  [232,'Escavação trecho Camboteado (entre eixos 5 e 6)','09/10/2027','19/10/2027',7,'Estação Sul'],[233,'Escavação trecho sem cambotas (entre eixos 5 e 3)','20/10/2027','27/10/2027',7,'Estação Sul'],[234,'Pregagem Espelho Final da Estação - Calota','28/10/2027','03/11/2027',7,'Estação Sul'],
+  [235,'Primeiro Rebaixo','07/01/2028','05/02/2028',6,'Estação Sul'],[236,'1o. Rebaixo','07/01/2028','02/02/2028',7,'Estação Sul'],[237,'Pregagem 1o. Rebaixo','03/02/2028','05/02/2028',7,'Estação Sul'],
+  [238,'Sentido Uruguai','09/09/2027','03/02/2028',5,'Estação Sul'],[239,'Calota Alargamento','09/09/2027','04/12/2027',6,'Estação Sul'],[240,'Escavação até trecho de cambotas (eixo 15)','09/09/2027','05/10/2027',7,'Estação Sul'],
+  [241,'Lance de Enfilagens','06/10/2027','20/10/2027',7,'Estação Sul'],[242,'Pregagem Espelho final da Estação','21/10/2027','23/10/2027',7,'Estação Sul'],[243,'Alargamento na Região do Poço','21/10/2027','04/12/2027',7,'Estação Sul'],
+  [244,'Enfilagens','21/10/2027','18/11/2027',8,'Estação Sul'],[245,'Escavação','19/11/2027','04/12/2027',8,'Estação Sul'],[246,'Rebaixo','06/12/2027','03/02/2028',6,'Estação Sul'],
+  [247,'1o. Rebaixo na região do Poço','06/12/2027','06/01/2028',7,'Estação Sul'],[248,'1o. Rebaixo','07/01/2028','31/01/2028',7,'Estação Sul'],[249,'Pregagem 1o. Rebaixo','01/02/2028','03/02/2028',7,'Estação Sul'],
+  [250,'Obras Civis da Estação Sul','04/02/2028','25/10/2028',4,'Estação Sul'],[251,'Revestimento Secundário - Corpo da Estação','04/02/2028','20/04/2028',5,'Estação Sul'],[252,'Revestimento Secundário Piso - Invert','04/02/2028','07/03/2028',6,'Estação Sul'],
+  [253,'Revestimento Segundário paredes / Abóbada','08/03/2028','01/04/2028',6,'Estação Sul'],[254,'Transição poço/estação','03/04/2028','20/04/2028',6,'Estação Sul'],[255,'Revestimento Secundário - Poço','22/04/2028','21/06/2028',5,'Estação Sul'],
+  [256,'Revestimento Secundário - Poço','22/04/2028','21/06/2028',6,'Estação Sul'],[257,'Estruturas','22/06/2028','13/09/2028',5,'Estação Sul'],[258,'Estrutura dos poços','22/06/2028','13/09/2028',6,'Estação Sul'],
+  [259,'Acabamentos','28/07/2028','25/10/2028',5,'Estação Sul'],[260,'Poço Sul','28/07/2028','25/10/2028',6,'Estação Sul'],[261,'SISTEMAS ESTAÇÃO SUL','14/09/2028','07/12/2028',4,'Sistemas Estação Sul'],
+  [262,'Poço Sul','14/09/2028','07/12/2028',5,'Sistemas Estação Sul'],[263,'Bandejamento','14/09/2028','07/12/2028',6,'Sistemas Estação Sul'],[265,'ESTAÇÃO OESTE','08/01/2026','05/10/2028',3,'Estação Oeste'],
+  [266,'Escavação a Fogo','08/01/2026','16/04/2027',4,'Estação Oeste'],[267,'Limpeza e preparo das frentes','08/01/2026','13/01/2026',5,'Estação Oeste'],[268,'Sentido São Conrado (FRENTE OESTE)','09/01/2026','02/05/2026',5,'Estação Oeste'],
+  [269,'Meia Seção','09/01/2026','02/05/2026',6,'Estação Oeste'],[270,'Acerto do alargamento para emboque da CA3','09/01/2026','13/01/2026',7,'Estação Oeste'],[271,'Demolição para colocação pé da cambota nova seção','17/03/2026','02/04/2026',7,'Estação Oeste'],
+  [272,'1o. Lance enfilagem/marcha vante para inicio das escavação alargamento Seção A (Marcha a vante)','14/01/2026','19/01/2026',7,'Estação Oeste'],[273,'Escavação Alargamento da Seção A, CA3','21/01/2026','23/01/2026',7,'Estação Oeste'],[274,'2o. Lance enfilagem/marcha vante para inicio das escavação alargamento Seção A (Marcha a vante)','24/01/2026','19/02/2026',7,'Estação Oeste'],
+  [275,'Escavação Alargamento da Seção A, até prox Trat. Teto (CA4-CA5)','20/02/2026','23/02/2026',7,'Estação Oeste'],[276,'3o. Lance de enfilagens meia seção completa','24/02/2026','27/02/2026',7,'Estação Oeste'],[277,'Escavação Alargamento da Seção A, até igualar com SD (CA6-CA10)','28/02/2026','07/03/2026',7,'Estação Oeste'],
+  [278,'Escavação em meia seção até concluir seção A (CA10 a CA12)','09/03/2026','12/03/2026',7,'Estação Oeste'],[279,'Tratamento Parede de paralisação Seção A','13/03/2026','17/03/2026',7,'Estação Oeste'],[280,'3o. Lance de enfilagens meia seção - Seção C','18/03/2026','25/03/2026',7,'Estação Oeste'],
+  [281,'Escavação em Meia Seção até próxima enfilagem - Seção C (CC1 A CC6)','30/03/2026','07/04/2026',7,'Estação Oeste'],[282,'4o. Lance de Enfilagens meia Seção - Seção C','08/04/2026','13/04/2026',7,'Estação Oeste'],[283,'Escavação em Meia Seção - Seção C (CC7 A CC13)','14/04/2026','24/04/2026',7,'Estação Oeste'],
+  [284,'Escavação trecho sem cambotas Seção D (CC14 ao Inicio da Estação)','25/04/2026','28/04/2026',7,'Estação Oeste'],[285,'Tratamento Parede de paralisação Seção D','29/04/2026','02/05/2026',7,'Estação Oeste'],[286,'Sentido Carioca (FRENTE NORTE)','12/01/2026','11/05/2026',5,'Estação Oeste'],
+  [287,'Calota Side-Drift (Lado Esquerdo)','12/01/2026','11/05/2026',6,'Estação Oeste'],[288,'Demolição para colocação pé da cambota nova seção','12/01/2026','07/03/2026',7,'Estação Oeste'],[289,'1o, Lance de Enfilagens/marcha a vante SD - Seção A','19/01/2026','22/01/2026',7,'Estação Oeste'],
+  [290,'Escavação Side Drift Seção A (CA23 a CA 26)','23/01/2026','30/01/2026',7,'Estação Oeste'],[291,'2o, Lance de Enfilagens/marcha a vante SD - Seção A','30/01/2026','31/01/2026',7,'Estação Oeste'],[292,'Escavação Side Drift Seção A (CA27 a CA 30)','02/02/2026','06/02/2026',7,'Estação Oeste'],
+  [293,'3o, Lance de Enfilagens/marcha a vante SD - Seção A','13/02/2026','14/03/2026',7,'Estação Oeste'],[294,'Escavação Alargamento Seção A (CA31 a CA38)','16/03/2026','25/03/2026',7,'Estação Oeste'],[295,'4o, Lance de Enfilagens SD - Seção A - Marcha avante','26/03/2026','30/03/2026',7,'Estação Oeste'],
+  [296,'EscavaçãoSide-Drift Seção A (CA38 a CA41)','31/03/2026','08/04/2026',7,'Estação Oeste'],[297,'Escavação Alargamento - trecho com cambotas Seção D (CC1a à CC2a)','11/04/2026','11/04/2026',7,'Estação Oeste'],[298,'Escavação Piloto - trecho sem cambotas Seção D','13/04/2026','29/04/2026',7,'Estação Oeste'],
+  [299,'Tratamento Parede de paralisação Seção D','02/05/2026','11/05/2026',7,'Estação Oeste'],[300,'Calota Alargamento (Lado Direito)','23/01/2026','11/05/2026',6,'Estação Oeste'],[301,'1o, Lance de Enfilagens/marcha avante Alarg. - Seção A','23/01/2026','26/01/2026',7,'Estação Oeste'],
+  [302,'Escavação Alargamento até completar a Seção A (CA23 a CA28)','09/02/2026','24/02/2026',7,'Estação Oeste'],[303,'Escavação Alargamento até completar a Seção A (CA28 a CA30)','25/02/2026','26/02/2026',7,'Estação Oeste'],[304,'Escavação Side-Drift Seçã0 A (CA31 a CA33)','27/02/2026','04/03/2026',7,'Estação Oeste'],
+  [305,'2o, Lance de Enfilagens Alarg. - Seção A','05/03/2026','13/03/2026',7,'Estação Oeste'],[306,'Escavação Side-Drift Seção A (C33 a CA41)','14/03/2026','07/04/2026',7,'Estação Oeste'],[307,'Pregagem Paralisação sinal Seção A','09/04/2026','10/04/2026',7,'Estação Oeste'],
+  [308,'Escavação Side-Drift Seção D (CC1a a CC2a)','11/04/2026','11/04/2026',7,'Estação Oeste'],[309,'Escavação Alargamento - trecho sem cambotas Seção D','15/04/2026','30/04/2026',7,'Estação Oeste'],[310,'Pregagem Espelho Final da Estação','02/05/2026','11/05/2026',7,'Estação Oeste'],
+  [311,'Calota Alargamento Região do Poço (APENDICE)','12/05/2026','24/10/2026',5,'Estação Oeste'],[312,'Enfilagens - Emboque','12/05/2026','28/05/2026',6,'Estação Oeste'],[313,'Demolição Revestimento do Poço','29/05/2026','01/06/2026',6,'Estação Oeste'],
+  [314,'Escavação','02/06/2026','08/08/2026',6,'Estação Oeste'],[315,'Escavação Cambotas 01 à 07','02/06/2026','25/06/2026',7,'Estação Oeste'],[316,'Execução 2o. Lance de enfilagens','26/06/2026','04/07/2026',7,'Estação Oeste'],
+  [317,'Escavação Cambotas 08 à 16 ate final','06/07/2026','23/07/2026',7,'Estação Oeste'],[318,'Escavação Arco Invertido completo','24/07/2026','03/08/2026',7,'Estação Oeste'],[319,'Pregagem parede de paralisação','04/08/2026','08/08/2026',7,'Estação Oeste'],
+  [320,'Execução do reforço túnel Apendice','10/08/2026','18/09/2026',6,'Estação Oeste'],[321,'Armação e concretagem do arco invertido','10/08/2026','20/08/2026',7,'Estação Oeste'],[322,'Execução da parede de fundo em Concreto Projetado + Tirantes','21/08/2026','29/08/2026',7,'Estação Oeste'],
+  [323,'Armação, tela e concreto projetado das paredes e abóbada','31/08/2026','18/09/2026',7,'Estação Oeste'],[324,'Alargamento do Trapézio da estação','19/09/2026','24/10/2026',6,'Estação Oeste'],[325,'Escavação Lado JOC','19/09/2026','21/10/2026',7,'Estação Oeste'],
+  [326,'Escavação trecho Variáveal','19/09/2026','25/09/2026',8,'Estação Oeste'],[327,'Enfilagens','26/09/2026','09/10/2026',8,'Estação Oeste'],[328,'Escavação Cambotas CA\'1 a 4 + CA1 a 2','10/10/2026','21/10/2026',8,'Estação Oeste'],
+  [329,'Escavação Lado CRC','19/09/2026','24/10/2026',7,'Estação Oeste'],[330,'Escavação trecho Variáveal (CA21 a 18)','19/09/2026','24/09/2026',8,'Estação Oeste'],[331,'Enfilagens','25/09/2026','10/10/2026',8,'Estação Oeste'],
+  [332,'Escavação Cambotas CA\'5 a 8 + CA13 a 18','13/10/2026','24/10/2026',8,'Estação Oeste'],[333,'Rebaixo','14/05/2026','16/04/2027',5,'Estação Oeste'],[334,'1o. Rebaixo','14/05/2026','04/01/2027',6,'Estação Oeste'],
+  [335,'1o. Rebaixo rampado, em paralelo Apendice+Interligação (caixão Central)','14/05/2026','12/06/2026',7,'Estação Oeste'],[336,'1o. Rebaixo Seção C - com cambotas (C15 ao C1)','25/05/2026','03/06/2026',7,'Estação Oeste'],[337,'1o. Rebaixo Seção A - com cambotas (A12 ao A3)','05/06/2026','10/06/2026',7,'Estação Oeste'],
+  [338,'1o. Rebaixo Seção B - sem cambotas (A3 ao A2)','04/11/2026','09/11/2026',7,'Estação Oeste'],[339,'1o. Rebaixo Seção A - com cambotas (A2 ao A1)','10/11/2026','11/11/2026',7,'Estação Oeste'],[340,'1o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)','12/11/2026','23/11/2026',7,'Estação Oeste'],
+  [341,'1o. Rebaixo Seção A - com cambotas (CA13 ao CA38)','24/11/2026','07/12/2026',7,'Estação Oeste'],[342,'1o. Rebaixo Seção D - sem cambotas (Final)','08/12/2026','18/12/2026',7,'Estação Oeste'],[343,'Pregagem 1o. Rebaixo','19/12/2026','04/01/2027',7,'Estação Oeste'],
+  [344,'2o. Rebaixo','15/06/2026','25/03/2027',6,'Estação Oeste'],[345,'Escavação Segundio Rebaixo (Segmento 5) - Lado Direito','15/06/2026','02/07/2026',7,'Estação Oeste'],[346,'2o. Rebaixo Seção C - com cambotas (C15 ao C1) - seg 5 - LD','15/06/2026','24/06/2026',8,'Estação Oeste'],
+  [347,'2o. Rebaixo Seção A - com cambotas (A12 ao A3) - seg 5 - LD','25/06/2026','02/07/2026',8,'Estação Oeste'],[348,'Escavação Segundio Rebaixo (Segmento 5) - Lado Esquerdo','09/07/2026','28/07/2026',7,'Estação Oeste'],[349,'2o. Rebaixo Seção C - com cambotas (C15 ao C1) - seg 5 - LE','09/07/2026','18/07/2026',8,'Estação Oeste'],
+  [350,'2o. Rebaixo Seção A - com cambotas (A12 ao A3) - seg 5 - LE','20/07/2026','28/07/2026',8,'Estação Oeste'],[351,'Escavação 2o. Rebaixo completo','05/01/2027','19/03/2027',7,'Estação Oeste'],[352,'Escavação do Caixão Central','05/01/2027','03/02/2027',8,'Estação Oeste'],
+  [353,'2o. Rebaixo Seção C - com cambotas (C15 ao C1) - Segmento 6','08/01/2027','22/01/2027',8,'Estação Oeste'],[354,'2o. Rebaixo Seção A - com cambotas (A12 ao A3) - Segmento 6','23/01/2027','29/01/2027',8,'Estação Oeste'],[355,'2o. Rebaixo Seção B - sem cambotas (A3 ao A2)','30/01/2027','04/02/2027',8,'Estação Oeste'],
+  [356,'2o. Rebaixo Seção A - com cambotas (A2 ao A1)','05/02/2027','10/02/2027',8,'Estação Oeste'],[357,'2o. Rebaixo Seção A\' - com cambotas (CA\' 4 a CA\' 8)','11/02/2027','22/02/2027',8,'Estação Oeste'],[358,'2o. Rebaixo Seção A - com cambotas (CA13 ao CA38)','23/02/2027','08/03/2027',8,'Estação Oeste'],
+  [359,'2o. Rebaixo Seção D - sem cambotas (Final)','09/03/2027','19/03/2027',8,'Estação Oeste'],[360,'Pregagem 2o. Rebaixo','20/03/2027','25/03/2027',7,'Estação Oeste'],[361,'Invert','20/03/2027','16/04/2027',6,'Estação Oeste'],
+  [362,'Rabicho pós estação (20m)','05/01/2027','09/04/2027',5,'Estação Oeste'],[363,'Escavação','05/01/2027','09/04/2027',6,'Estação Oeste'],[364,'Enfilagens','05/01/2027','15/01/2027',7,'Estação Oeste'],
+  [365,'Meia Seção Camboteada','16/01/2027','23/01/2027',7,'Estação Oeste'],[366,'Meia Seção Sem cambotas','25/01/2027','02/02/2027',7,'Estação Oeste'],[367,'Rebaixo','27/03/2027','09/04/2027',7,'Estação Oeste'],
+  [368,'Obras Civis da Estação Oeste','17/04/2027','05/10/2028',4,'Estação Oeste'],[369,'Revestimento Secundário - Corpo da Estação','17/04/2027','29/09/2027',5,'Estação Oeste'],[370,'Revestimento Secundário Piso - Invert','17/04/2027','18/05/2027',6,'Estação Oeste'],
+  [371,'Revestimento Segundário paredes / Abóbada','19/05/2027','09/08/2027',6,'Estação Oeste'],[372,'Transição poço/estação','10/08/2027','08/09/2027',6,'Estação Oeste'],[373,'Enchimento do Invert','09/09/2027','29/09/2027',6,'Estação Oeste'],
+  [374,'Revestimento Secundário - Poço','08/02/2028','15/05/2028',5,'Estação Oeste'],[375,'Revestimento Secundário - Poço','08/02/2028','15/05/2028',6,'Estação Oeste'],[376,'Estruturas','30/09/2027','12/08/2028',5,'Estação Oeste'],
+  [377,'Fundação','30/09/2027','29/10/2027',6,'Estação Oeste'],[378,'Nivel de plataforma','19/10/2027','17/12/2027',6,'Estação Oeste'],[379,'Nivel Mezanino','01/12/2027','07/02/2028',6,'Estação Oeste'],
+  [380,'Nivel Pleno de Ventilação','21/01/2028','22/03/2028',6,'Estação Oeste'],[381,'Estrutura dos poços','16/05/2028','12/08/2028',6,'Estação Oeste'],[382,'Acabamentos','18/12/2027','05/10/2028',5,'Estação Oeste'],
+  [383,'Nivel de plataforma','18/12/2027','28/03/2028',6,'Estação Oeste'],[384,'Nivel Mezanino','08/02/2028','11/05/2028',6,'Estação Oeste'],[385,'Nivel Pleno de Ventilação','14/07/2028','12/09/2028',6,'Estação Oeste'],
+  [386,'Poço Oeste','08/07/2028','05/10/2028',6,'Estação Oeste'],[387,'SISTEMAS ESTAÇÃO OESTE','16/05/2028','05/10/2028',4,'Sistemas Estação Oeste'],[388,'Estação','16/05/2028','05/10/2028',5,'Sistemas Estação Oeste'],
+  [389,'Bandejamento','16/05/2028','05/10/2028',6,'Sistemas Estação Oeste'],[391,'TÚNEL DE INTERLIGAÇÃO','20/04/2026','27/09/2028',3,'Túnel de Interligação'],[392,'Alteamento','20/04/2026','03/11/2026',4,'Túnel de Interligação'],
+  [393,'Enfilagens Lado Sul','20/04/2026','26/05/2026',5,'Túnel de Interligação'],[394,'Enfilagens Lado Oeste','27/05/2026','10/06/2026',5,'Túnel de Interligação'],[395,'Escavação para acerto e regularização espelho (SUL)','19/09/2026','21/09/2026',5,'Túnel de Interligação'],
+  [396,'Escavação do alteamento + alargamento Cambota 21 à 04','22/09/2026','22/10/2026',5,'Túnel de Interligação'],[397,'Escavação para acerto e regularização espelho (OESTE)','26/10/2026','27/10/2026',5,'Túnel de Interligação'],[398,'Escavação do alteamento + alargamento Cambota 01 à 03','28/10/2026','03/11/2026',5,'Túnel de Interligação'],
+  [399,'Escavação a Fogo Túnel de interligação','24/11/2026','30/03/2027',4,'Túnel de Interligação'],[400,'1o. Rebaixo','24/11/2026','04/01/2027',5,'Túnel de Interligação'],[401,'2o. Rebaixo','20/02/2027','23/03/2027',5,'Túnel de Interligação'],
+  [402,'Rebaixo final - fogo de acabamento','24/03/2027','30/03/2027',5,'Túnel de Interligação'],[403,'Revestimento Secundário','07/05/2027','01/09/2027',4,'Túnel de Interligação'],[404,'Invert','07/05/2027','31/05/2027',5,'Túnel de Interligação'],
+  [405,'Paredes','12/06/2027','09/08/2027',5,'Túnel de Interligação'],[406,'Abóbada','10/08/2027','01/09/2027',5,'Túnel de Interligação'],[407,'Estruturas','13/10/2027','17/05/2028',4,'Túnel de Interligação'],
+  [408,'Fundação','13/10/2027','24/11/2027',5,'Túnel de Interligação'],[409,'Nivel Porão','25/11/2027','19/01/2028',5,'Túnel de Interligação'],[410,'Nivel de plataforma','08/01/2028','04/03/2028',5,'Túnel de Interligação'],
+  [411,'Nivel Mezanino','14/02/2028','08/04/2028',5,'Túnel de Interligação'],[412,'Nivel Pleno de Ventilação','23/03/2028','17/05/2028',5,'Túnel de Interligação'],[413,'Acabamentos','23/03/2028','15/07/2028',4,'Túnel de Interligação'],
+  [414,'Nivel de plataforma','23/03/2028','23/05/2028',5,'Túnel de Interligação'],[415,'Nivel Mezanino','18/05/2028','15/07/2028',5,'Túnel de Interligação'],[416,'Nivel Pleno de Ventilação','18/05/2028','15/07/2028',5,'Túnel de Interligação'],
+  [417,'Sistemas','17/06/2028','27/09/2028',4,'Túnel de Interligação'],[418,'Bandejamento','17/06/2028','27/09/2028',5,'Túnel de Interligação'],[420,'TÚNEL DE LIGAÇÃO ENTRE AS PLATAFORMAS','30/01/2027','20/03/2028',3,'Túnel de Ligação entre Plataformas'],
+  [421,'Escavação à Fogo','30/01/2027','07/04/2027',4,'Túnel de Ligação entre Plataformas'],[422,'Túnel Norte','20/03/2027','07/04/2027',5,'Túnel de Ligação entre Plataformas'],[423,'Tunel Sul','30/01/2027','19/02/2027',5,'Túnel de Ligação entre Plataformas'],
+  [424,'Revestimento Secundário Sul','19/05/2027','26/08/2027',4,'Túnel de Ligação entre Plataformas'],[425,'Invert','19/05/2027','05/06/2027',5,'Túnel de Ligação entre Plataformas'],[426,'Paredes','10/08/2027','26/08/2027',5,'Túnel de Ligação entre Plataformas'],
+  [427,'Revestimento Secundário Norte','07/05/2027','29/06/2027',4,'Túnel de Ligação entre Plataformas'],[428,'Invert','07/05/2027','24/05/2027',5,'Túnel de Ligação entre Plataformas'],[429,'Paredes','12/06/2027','29/06/2027',5,'Túnel de Ligação entre Plataformas'],
+  [430,'Obras Civis','25/11/2027','07/01/2028',4,'Túnel de Ligação entre Plataformas'],[431,'Norte','25/11/2027','07/01/2028',5,'Túnel de Ligação entre Plataformas'],[432,'Fundação','25/11/2027','08/12/2027',6,'Túnel de Ligação entre Plataformas'],
+  [433,'Nivel de plataforma','09/12/2027','07/01/2028',6,'Túnel de Ligação entre Plataformas'],[434,'Sul','25/11/2027','07/01/2028',5,'Túnel de Ligação entre Plataformas'],[435,'Fundação','25/11/2027','08/12/2027',6,'Túnel de Ligação entre Plataformas'],
+  [436,'Nivel de plataforma','09/12/2027','07/01/2028',6,'Túnel de Ligação entre Plataformas'],[437,'Acabamentos','08/01/2028','24/02/2028',4,'Túnel de Ligação entre Plataformas'],[438,'Norte','08/01/2028','24/02/2028',5,'Túnel de Ligação entre Plataformas'],
+  [439,'Sul','08/01/2028','24/02/2028',5,'Túnel de Ligação entre Plataformas'],[440,'Bandejamento','25/02/2028','20/03/2028',4,'Túnel de Ligação entre Plataformas'],[441,'Norte','25/02/2028','20/03/2028',5,'Túnel de Ligação entre Plataformas'],
+  [442,'Sul','25/02/2028','20/03/2028',5,'Túnel de Ligação entre Plataformas'],[444,'TÚNEL MADRE JACINTA','04/08/2025','25/10/2028',2,'Túnel Madre Jacinta'],[445,'TÚNEL DE SERVIÇO MADRE JACINTA','04/08/2025','27/07/2026',3,'Túnel Madre Jacinta'],
+  [446,'Limpeza geral do piso do túnel','04/08/2025','13/09/2025',4,'Túnel Madre Jacinta'],[447,'Execução de laje de piso','25/08/2025','07/10/2025',4,'Túnel Madre Jacinta'],[448,'Bandejamento','28/05/2026','27/07/2026',4,'Túnel Madre Jacinta'],
+  [449,'VENTILAÇÃO PRIMÁRIA EMBOQUE Não será executada, Apenas a estrutura do Emboque)','14/08/2028','18/08/2028',3,'Túnel Madre Jacinta'],[450,'Estrutura de concreto Externa (Paredes de concreto, porém adotado alvenaria estrutural)','14/08/2028','18/08/2028',4,'Túnel Madre Jacinta'],[451,'Fundações','14/08/2028','14/08/2028',5,'Túnel Madre Jacinta'],
+  [452,'Estaca Raiz (33 un / 3 por dia)','14/08/2028','14/08/2028',6,'Túnel Madre Jacinta'],[453,'Estrutura Nivel do Piso 1 (Sapatas, cintas e pilares Elev. + 28,70)','15/08/2028','15/08/2028',5,'Túnel Madre Jacinta'],[454,'Laje Elev. +28,70','16/08/2028','16/08/2028',5,'Túnel Madre Jacinta'],
+  [455,'Estrutura Nivel 2 (até Elev +46,67) (h= 18m  - considerado lances de 2m cada semana)','17/08/2028','17/08/2028',5,'Túnel Madre Jacinta'],[456,'Laje Elev. +16,67','18/08/2028','18/08/2028',5,'Túnel Madre Jacinta'],[457,'Desmontagem do Canteiro','18/08/2028','10/10/2028',3,'Túnel Madre Jacinta'],
+  [458,'Urbanização do Entorno','12/09/2028','25/10/2028',3,'Túnel Madre Jacinta'],
+];
 
 const CRONOGRAMA_GERAL_FILHOS_TRAVA = {
   'Marcos Contratuais': {
@@ -2562,6 +2788,19 @@ function renderizarCronogramaGeral() {
   });
   const janelaTotal = (maiorData - menorData) || 1;
 
+  // ✅ data de término da OBRA especificamente (não a maior data entre
+  // tudo, que pode ser uma linha de base perdida no meio do caminho) —
+  // usada embaixo da curva S
+  let terminoAtualObra = null, terminoBaseObra = null;
+  atividades.forEach(a => {
+    const tp = parseDataCompleta(a.terminoPrevisto);
+    const tb = parseDataCompleta(a.terminoBase);
+    if (tp && (!terminoAtualObra || tp > terminoAtualObra)) terminoAtualObra = tp;
+    if (tb && (!terminoBaseObra || tb > terminoBaseObra)) terminoBaseObra = tb;
+  });
+  const fimObraStr = terminoAtualObra ? `${String(terminoAtualObra.getDate()).padStart(2,'0')}/${String(terminoAtualObra.getMonth()+1).padStart(2,'0')}/${terminoAtualObra.getFullYear()}` : '-';
+  const fimObraBaseStr = terminoBaseObra ? `${String(terminoBaseObra.getDate()).padStart(2,'0')}/${String(terminoBaseObra.getMonth()+1).padStart(2,'0')}/${terminoBaseObra.getFullYear()}` : null;
+
   function posicao(dataStr) {
     const data = parseDataCompleta(dataStr);
     if (!data) return null;
@@ -2648,8 +2887,7 @@ function renderizarCronogramaGeral() {
   ganttHtml += `</div>`;
 
   // ✅ CURVA S — linha de base x tendência, linha inteira (passado +
-  // futuro), com marcação dos meses/anos. Sem bolinha de "hoje" (pedido
-  // explícito — não confiamos no % concluído da planilha pra marcar isso).
+  // futuro), com marcação dos meses/anos.
   const NUM_PONTOS = 40;
   function progressoMedioEm(dataAmostra, usarBase) {
     let soma = 0, contagem = 0;
@@ -2666,44 +2904,54 @@ function renderizarCronogramaGeral() {
     return contagem > 0 ? soma / contagem : 0;
   }
 
+  // ✅ estende um pouco a janela pra frente e pra trás, pra curva não
+  // nascer/morrer exatamente na borda do gráfico (dava a impressão de
+  // estar cortada)
+  const folgaJanela = janelaTotal * 0.06;
+  const menorDataGrafico = new Date(menorData.getTime() - folgaJanela);
+  const maiorDataGrafico = new Date(maiorData.getTime() + folgaJanela);
+  const janelaGrafico = maiorDataGrafico - menorDataGrafico;
+
   const pontosPrevisto = [], pontosBase = [];
   for (let i = 0; i <= NUM_PONTOS; i++) {
-    const dataAmostra = new Date(menorData.getTime() + (janelaTotal * i / NUM_PONTOS));
+    const dataAmostra = new Date(menorDataGrafico.getTime() + (janelaGrafico * i / NUM_PONTOS));
     pontosPrevisto.push(progressoMedioEm(dataAmostra, false));
     pontosBase.push(progressoMedioEm(dataAmostra, true));
   }
-  const svgW = 600, svgH = 200, margemBaixo = 22;
-  const escalaY = (p) => (svgH - margemBaixo) - (p * (svgH - margemBaixo) / 100);
-  const pontosSvgPrevisto = pontosPrevisto.map((p, i) => `${(i / NUM_PONTOS) * svgW},${escalaY(p)}`).join(' ');
-  const pontosSvgBase = pontosBase.map((p, i) => `${(i / NUM_PONTOS) * svgW},${escalaY(p)}`).join(' ');
+
+  // ✅ viewBox mais largo que alto, com margem em CIMA também (senão a
+  // linha de 100% fica cortada no topo, parecendo incompleta) e mantém
+  // a proporção certa (sem "preserveAspectRatio=none", que distorcia)
+  const svgW = 560, svgH = 260, margemBaixo = 26, margemCima = 18, margemEsq = 30;
+  const escalaY = (p) => margemCima + (svgH - margemBaixo - margemCima) - (p * (svgH - margemBaixo - margemCima) / 100);
+  const escalaX = (i) => margemEsq + (i / NUM_PONTOS) * (svgW - margemEsq);
+  const pontosSvgPrevisto = pontosPrevisto.map((p, i) => `${escalaX(i)},${escalaY(p)}`).join(' ');
+  const pontosSvgBase = pontosBase.map((p, i) => `${escalaX(i)},${escalaY(p)}`).join(' ');
 
   let marcasHtml = '';
-  const cursor = new Date(menorData.getFullYear(), menorData.getMonth(), 1);
+  const cursor = new Date(menorDataGrafico.getFullYear(), menorDataGrafico.getMonth(), 1);
   const MESES_ABREV3 = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   let mesIndice = 0;
-  while (cursor <= maiorData) {
-    if (mesIndice % 3 === 0) {
-      const x = ((cursor - menorData) / janelaTotal) * svgW;
-      if (x >= 0 && x <= svgW) {
-        marcasHtml += `<line x1="${x}" y1="0" x2="${x}" y2="${svgH - margemBaixo}" stroke="var(--line)" stroke-width="1"/>`;
-        marcasHtml += `<text x="${x}" y="${svgH - 6}" font-size="9" fill="var(--text-soft)" text-anchor="middle">${MESES_ABREV3[cursor.getMonth()]}/${String(cursor.getFullYear()).slice(2)}</text>`;
+  while (cursor <= maiorDataGrafico) {
+    if (mesIndice % 4 === 0) {
+      const x = margemEsq + ((cursor - menorDataGrafico) / janelaGrafico) * (svgW - margemEsq);
+      if (x >= margemEsq && x <= svgW) {
+        marcasHtml += `<line x1="${x}" y1="${margemCima}" x2="${x}" y2="${svgH - margemBaixo}" stroke="var(--line)" stroke-width="1"/>`;
+        marcasHtml += `<text x="${x}" y="${svgH - 8}" font-size="9" fill="var(--text-soft)" text-anchor="middle">${MESES_ABREV3[cursor.getMonth()]}/${String(cursor.getFullYear()).slice(2)}</text>`;
       }
     }
     cursor.setMonth(cursor.getMonth() + 1);
     mesIndice++;
   }
 
-  // ✅ linhas de referência horizontal (0/25/50/75/100%) — sem isso não
-  // dava pra saber onde exatamente cada linha estava chegando
+  // ✅ linhas de referência horizontal (0/25/50/75/100%) — com margem no
+  // topo agora o 100% aparece inteiro, não corta mais
   let gradeYHtml = '';
   [0, 25, 50, 75, 100].forEach(p => {
     const y = escalaY(p);
-    gradeYHtml += `<line x1="0" y1="${y}" x2="${svgW}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
-    gradeYHtml += `<text x="4" y="${y - 3}" font-size="8.5" fill="var(--text-soft)">${p}%</text>`;
+    gradeYHtml += `<line x1="${margemEsq}" y1="${y}" x2="${svgW}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    gradeYHtml += `<text x="0" y="${y + 3}" font-size="8.5" fill="var(--text-soft)">${p}%</text>`;
   });
-
-  // ✅ marca a data final da obra bem visível, pra dar pra ver onde ela termina
-  const fimObraStr = `${String(maiorData.getDate()).padStart(2,'0')}/${String(maiorData.getMonth()+1).padStart(2,'0')}/${maiorData.getFullYear()}`;
 
   const curvaSHtml = `
     <div style="margin:22px 0 6px; font-size:12px; font-weight:700; color:var(--ink);">Curva S — linha de base x tendência atual</div>
@@ -2712,14 +2960,16 @@ function renderizarCronogramaGeral() {
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:#C77D22; display:inline-block;"></span>Linha de base</span>
       <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:3px; background:var(--accent); display:inline-block;"></span>Tendência (previsto atual)</span>
     </div>
-    <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none" style="width:100%; height:240px; background:var(--paper-2); border-radius:6px;">
+    <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; height:auto; background:var(--paper-2); border-radius:6px;">
       ${gradeYHtml}
       ${marcasHtml}
       <polyline points="${pontosSvgBase}" fill="none" stroke="#C77D22" stroke-width="2.5" stroke-dasharray="6,4" vector-effect="non-scaling-stroke"/>
       <polyline points="${pontosSvgPrevisto}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
-      <line x1="${svgW - 1}" y1="0" x2="${svgW - 1}" y2="${svgH - margemBaixo}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2,2" opacity="0.4"/>
     </svg>
-    <div style="font-size:9.5px; color:var(--text-soft); text-align:right; margin-top:4px;">Conclusão prevista: ${fimObraStr}</div>
+    <div style="display:flex; justify-content:space-between; margin-top:8px;">
+      <div style="font-size:9.5px; color:#C77D22;">Linha de base previa terminar: <b>${fimObraBaseStr || '-'}</b></div>
+      <div style="font-size:9.5px; color:var(--accent);">Previsto terminar agora: <b>${fimObraStr}</b></div>
+    </div>
   `;
 
   const btnPdf = CRONOGRAMA_GERAL_INFO.pdfUrl
@@ -2731,6 +2981,13 @@ function renderizarCronogramaGeral() {
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
       <div style="display:flex; align-items:center;">
         <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+        <div class="notif" onclick="abrirNotificacoes()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.7 21a2 2 0 01-3.4 0"/>
+          </svg>
+          <span id="contadorNotif">0</span>
+        </div>
       </div>
     </div>
     <div class="heroNovo">
@@ -2990,7 +3247,12 @@ function montarRespostaDependenciasAtividade(termoOriginal) {
 // SUB-TELA DE DETALHES — abre por cima do Cronograma Geral quando toca
 // num cartão do topo ou numa atividade macro no Gantt
 // =======================================================================
+let subTelaCronogramaTipo = null;
+let subTelaCronogramaParametro = null;
+
 function abrirSubTelaCronograma(tipo, parametro) {
+  subTelaCronogramaTipo = tipo;
+  subTelaCronogramaParametro = parametro;
   document.getElementById('subTelaCronograma').innerHTML = renderizarSubTelaCronograma(tipo, parametro);
   document.getElementById('subTelaCronograma').style.display = 'block';
   window.scrollTo(0, 0);
@@ -2999,13 +3261,48 @@ function abrirSubTelaCronograma(tipo, parametro) {
 function fecharSubTelaCronograma() {
   document.getElementById('subTelaCronograma').style.display = 'none';
   document.getElementById('subTelaCronograma').innerHTML = '';
+  subTelaCronogramaTipo = null;
 }
 
+const SUGESTOES_CAMINHO_CRITICO = [
+  'O que há de caminho crítico no mês [mes]',
+  'O que há de caminho crítico do mês [mes] até o mês [mes]',
+];
+
+const SUGESTOES_ATIVIDADE_DETALHE = [
+  'O que está previsto para o dia [data] até o dia [data]',
+  'O que é considerado caminho crítico nesta frente?',
+];
+
 function renderizarSubTelaCronograma(tipo, parametro) {
-  let titulo = '', conteudo = '';
-  if (tipo === 'marcos') { titulo = 'Marcos contratuais'; conteudo = conteudoDetalheMarcos(); }
-  else if (tipo === 'critico') { titulo = 'Caminho crítico'; conteudo = conteudoDetalheCaminhoCritico(); }
-  else if (tipo === 'atividade') { titulo = parametro; conteudo = conteudoDetalheAtividade(parametro); }
+  let titulo = '', conteudo = '', caixaBuscaHtml = '';
+  if (tipo === 'marcos') {
+    titulo = 'Marcos contratuais'; conteudo = conteudoDetalheMarcos();
+  } else if (tipo === 'critico') {
+    titulo = 'Caminho crítico'; conteudo = conteudoDetalheCaminhoCritico();
+    caixaBuscaHtml = `
+      <div class="caixaBusca" style="position:relative; margin-top:22px;">
+        <input type="text" id="inputBuscaCD" placeholder="Pergunte algo... ex: o que há de crítico em outubro/2026?"
+               oninput="mostrarSugestoes('CD')" onfocus="mostrarSugestoes('CD')"
+               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('CD')">
+        <button class="btnBusca" onclick="buscarInteligenteCronograma('CD')">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaCD" style="display:none;"></div>
+      </div>
+      <div id="resultadoBuscaCD"></div>
+    `;
+  } else if (tipo === 'atividade') {
+    titulo = parametro; conteudo = conteudoDetalheAtividade(parametro);
+    caixaBuscaHtml = `
+      <div class="caixaBusca" style="position:relative; margin-top:22px;">
+        <input type="text" id="inputBuscaCD" placeholder="Pergunte algo... ex: o que está previsto pra essa frente?"
+               oninput="mostrarSugestoes('CD')" onfocus="mostrarSugestoes('CD')"
+               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('CD')">
+        <button class="btnBusca" onclick="buscarInteligenteCronograma('CD')">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaCD" style="display:none;"></div>
+      </div>
+      <div id="resultadoBuscaCD"></div>
+    `;
+  }
 
   return `
     <div style="padding:18px 16px 100px;">
@@ -3016,17 +3313,11 @@ function renderizarSubTelaCronograma(tipo, parametro) {
 
       ${conteudo}
 
-      <div class="caixaBusca" style="position:relative; margin-top:22px;">
-        <input type="text" id="inputBuscaCD" placeholder="Pergunte algo... ex: o que mudou no replanejamento?"
-               oninput="mostrarSugestoes('CD')" onfocus="mostrarSugestoes('CD')"
-               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('CD')">
-        <button class="btnBusca" onclick="buscarInteligenteCronograma('CD')">Buscar</button>
-        <div class="sugestoesBusca" id="sugestoesBuscaCD" style="display:none;"></div>
-      </div>
-      <div id="resultadoBuscaCD"></div>
+      ${caixaBuscaHtml}
     </div>
   `;
 }
+
 
 // ✅ Concluído geral — real vs. esperado hoje, e status de cada atividade
 function conteudoDetalheMarcos() {
@@ -3072,85 +3363,48 @@ function linhaDependenciaCritico(nome, trava, travadaPor, aninhado) {
 }
 
 function conteudoDetalheCaminhoCritico() {
-  const blocos = CRONOGRAMA_CAMINHO_CRITICO;
-  const primeiroBloco = blocos[0], ultimoBloco = blocos[blocos.length - 1];
-  const inicioTotal = parseDataCompleta(primeiroBloco.inicio);
-  const fimTotal = parseDataCompleta(ultimoBloco.fim);
-  const duracaoTotal = (fimTotal - inicioTotal) || 1;
+  const tarefas = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO;
 
-  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px; line-height:1.4;">
-    Essa é a sequência de tarefas que, juntas, determinam a data final da obra — se qualquer uma delas atrasar, a obra inteira atrasa junto. Toque no "+" de cada passagem pra ver as sub-frentes e o que cada uma trava e é travada por. Uma mesma área pode aparecer mais de uma vez — não é duplicata, é o caminho saindo pra outra área e voltando pra essa depois.
+  const MESES_NOME_CC = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:16px; line-height:1.4;">
+    Esse é o caminho crítico inteiro da obra, do início ao fim — ${tarefas.length} tarefas que, juntas, determinam a data final. Cada uma mostra de onde ela vem (a frente/etapa exata), pra dar pra rastrear tudo.
   </div>`;
 
-  // ✅ barra de visão geral (proporcional à duração de cada passagem)
-  html += `<div style="display:flex; height:10px; border-radius:5px; overflow:hidden; margin-bottom:20px;">`;
-  blocos.forEach((b, i) => {
-    const dIni = parseDataCompleta(b.inicio), dFim = parseDataCompleta(b.fim);
-    const largura = Math.max(((dFim - dIni) / duracaoTotal) * 100, 1);
-    const cor = i % 2 === 0 ? 'var(--accent)' : '#8FB84B';
-    html += `<div style="width:${largura}%; background:${cor};" title="${b.area}"></div>`;
-  });
-  html += `</div>`;
+  html += `<div style="position:relative;">`;
 
-  blocos.forEach((b, i) => {
-    const proximaArea = i < blocos.length - 1 ? blocos[i + 1].area : null;
-    const idExpansivel = 'cc_' + i + '_' + b.area.replace(/[^a-zA-Z0-9]/g, '');
-    const expandido = cronogramaExpandidoMacro[idExpansivel];
-    const filhosArea = CRONOGRAMA_GERAL_FILHOS_TRAVA[b.area] || {};
-    const temFilhos = Object.keys(filhosArea).length > 0;
+  let mesAnterior = null;
+  tarefas.forEach((t, i) => {
+    const dataInicio = parseDataCompleta(t.inicio);
+    const chaveMes = dataInicio ? `${dataInicio.getMonth()}-${dataInicio.getFullYear()}` : null;
 
-    // ✅ se a mesma área aparece mais de uma vez no caminho (o caminho
-    // crítico "sai" pra outra área e depois "volta"), deixa isso claro
-    // — não é duplicata, é o caminho passando por ali de novo mesmo
-    const ocorrenciasAntes = blocos.slice(0, i).filter(x => x.area === b.area).length;
-    const totalOcorrencias = blocos.filter(x => x.area === b.area).length;
-    const rotuloPassagem = totalOcorrencias > 1 ? ` (${ocorrenciasAntes + 1}ª passagem)` : '';
-
-    let detalheHtml = '';
-    if (temFilhos && expandido) {
-      detalheHtml = `<div style="margin-top:10px; padding-left:10px; border-left:2px solid var(--line);">`;
-      Object.keys(filhosArea).forEach(nomeFilho => {
-        const info = filhosArea[nomeFilho];
-        detalheHtml += linhaDependenciaCritico(nomeFilho, info.trava, info.travadaPor, false);
-
-        // ✅ Estação Oeste > Escavação a Fogo tem MUITA coisa dentro —
-        // mostra as frentes de verdade (Sentido São Conrado, Sentido
-        // Carioca, Apêndice, Rebaixo, Rabicho), aninhadas
-        if (b.area === 'Estação Oeste' && nomeFilho === 'Escavação a Fogo') {
-          CRONOGRAMA_ESTACAO_OESTE_DETALHE.forEach(f => {
-            detalheHtml += linhaDependenciaCritico(f.nome, f.trava, f.travadaPor, true);
-          });
-        }
-      });
-      detalheHtml += `</div>`;
+    if (chaveMes !== mesAnterior) {
+      html += `
+        <div style="display:flex; align-items:center; gap:10px; margin:${i === 0 ? '0' : '18'}px 0 10px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:4px 10px; border-radius:12px;">
+            ${MESES_NOME_CC[dataInicio.getMonth()]} / ${dataInicio.getFullYear()}
+          </div>
+          <div style="flex:1; height:1px; background:var(--line);"></div>
+        </div>
+      `;
+      mesAnterior = chaveMes;
     }
 
-    const botaoExpandir = temFilhos
-      ? `<span onclick="alternarExpandirCaminhoCritico('${idExpansivel}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:15px; margin-left:8px;">${expandido ? '−' : '+'}</span>`
-      : '';
+    const breadcrumbTexto = t.caminho.slice(0, -1).join(' › ');
 
     html += `
-      <div style="display:flex; gap:12px; padding-bottom:${i < blocos.length - 1 ? '18' : '10'}px;">
-        <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
-          <div style="width:26px; height:26px; border-radius:50%; background:var(--painel-1); color:var(--accent-bright); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">${i + 1}</div>
-          ${i < blocos.length - 1 ? `<div style="width:2px; flex:1; background:var(--line); margin:4px 0;"></div>` : ''}
-        </div>
-        <div style="flex:1; padding-bottom:6px;">
-          <div style="display:flex; align-items:center;">
-            <span style="font-size:13px; font-weight:700; color:var(--ink);">${b.area}${rotuloPassagem ? `<span style="font-size:10px; font-weight:600; color:var(--text-soft);">${rotuloPassagem}</span>` : ''}</span>
-            ${botaoExpandir}
-          </div>
-          <div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${b.inicio} → ${b.fim} · ${b.qtdTarefas} tarefa(s) críticas aqui</div>
-          <div style="background:var(--paper-2); border-radius:6px; padding:8px 10px; margin-top:6px;">
-            <div style="font-size:10.5px; color:var(--ink);"><b>Entra por:</b> ${b.primeiraTarefa}</div>
-            <div style="font-size:10.5px; color:var(--ink); margin-top:3px;"><b>Fecha essa passagem:</b> ${b.ultimaTarefa}</div>
-          </div>
-          ${proximaArea ? `<div style="font-size:10px; color:#B23A3A; margin-top:6px;">⚠ Se atrasar aqui, trava o início de <b>${proximaArea}</b></div>` : `<div style="font-size:10px; color:#4F7A2E; margin-top:6px;">🏁 Última passagem — leva direto à conclusão final da obra</div>`}
-          ${detalheHtml}
+      <div style="display:flex; gap:10px; padding:8px 0 8px 4px; border-left:2px solid var(--accent); margin-left:4px;">
+        <div style="flex-shrink:0; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; margin-left:-7px;"></div>
+        <div style="flex:1;">
+          ${breadcrumbTexto ? `<div style="font-size:9px; color:var(--text-soft); margin-bottom:2px;">${breadcrumbTexto}</div>` : ''}
+          <div style="font-size:12px; font-weight:700; color:var(--ink);">${t.nome}</div>
+          <div style="font-size:10px; color:var(--text-soft); margin-top:2px;">${t.inicio} → ${t.termino}</div>
         </div>
       </div>
     `;
   });
+
+  html += `</div>`;
   return html;
 }
 
@@ -3163,9 +3417,6 @@ function conteudoDetalheAtividade(nomeAtividade) {
   const atividade = CRONOGRAMA_GERAL_ATIVIDADES.find(a => a.nome === nomeAtividade);
   if (!atividade) return `<p style="font-size:13px; color:var(--text-soft);">Atividade não encontrada.</p>`;
 
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-  const filhos = CRONOGRAMA_GERAL_FILHOS[nomeAtividade] || [];
-  const deps = CRONOGRAMA_GERAL_DEPENDENCIAS[nomeAtividade] || [];
   const deltaTermino = variacaoDias(atividade.terminoPrevisto, atividade.terminoBase);
   const deltaDuracao = variacaoDuracao(atividade);
 
@@ -3196,61 +3447,228 @@ function conteudoDetalheAtividade(nomeAtividade) {
         <div style="font-size:9.5px; color:var(--text-soft); margin-top:2px;">término vs. linha de base</div>
       </div>
     </div>
-    <div style="font-size:11px; color:var(--text-soft); margin-bottom:16px;">
+    <div style="font-size:11px; color:var(--text-soft); margin-bottom:18px;">
       Previsto: ${atividade.inicioPrevisto} → ${atividade.terminoPrevisto}${atividade.inicioBase ? ` · Linha de base: ${atividade.inicioBase} → ${atividade.terminoBase}` : ''}
     </div>
+    <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:8px;">Tarefas dessa frente:</div>
   `;
 
-  if (deps.length > 0) {
-    html += `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:16px;">Depende de: <b style="color:var(--ink);">${deps.join(', ')}</b></div>`;
-  }
-
-  if (filhos.length === 0) {
-    html += `<p style="font-size:13px; color:var(--text-soft);">Sem detalhamento de sub-fases cadastrado ainda pra essa atividade.</p>`;
+  // ✅ árvore completa, na ordem em que aparece no cronograma — toque no
+  // "+" pra ir descendo os níveis, tanto quanto precisar
+  let itensArea = CRONOGRAMA_ARVORE_COMPLETA.filter(i => i[5] === nomeAtividade).sort((a, b) => a[0] - b[0]);
+  if (itensArea.length === 0) {
+    html += `<p style="font-size:13px; color:var(--text-soft);">Sem detalhamento cadastrado ainda pra essa atividade.</p>`;
     return html;
   }
+  let nivelRaiz = Math.min(...itensArea.map(i => i[4]));
+  let itensRaiz = itensArea.filter(i => i[4] === nivelRaiz);
+  // ✅ se só tem UM item nesse nível mais raso, é a própria área repetida
+  // (o cabeçalho macro) — pula direto pros filhos dela, sem mostrar de novo
+  if (itensRaiz.length === 1) {
+    itensArea = itensArea.filter(i => i[0] !== itensRaiz[0][0]);
+    nivelRaiz = Math.min(...itensArea.map(i => i[4]));
+    itensRaiz = itensArea.filter(i => i[4] === nivelRaiz);
+  }
+  itensRaiz.forEach(item => { html += renderizarNoArvoreCronograma(nomeAtividade, item, itensArea); });
 
-  // ✅ classificação por DATA (não por %): concluída = já passou do
-  // término previsto; em andamento = hoje está entre início e término;
-  // a iniciar = ainda não chegou no início previsto
-  const concluidas = filhos.filter(f => parseDataCompleta(f.terminoPrevisto) < hoje);
-  const emAndamento = filhos.filter(f => {
-    const ini = parseDataCompleta(f.inicioPrevisto), fim = parseDataCompleta(f.terminoPrevisto);
-    return ini <= hoje && fim >= hoje;
-  });
-  const aIniciar = filhos.filter(f => parseDataCompleta(f.inicioPrevisto) > hoje);
+  return html;
+}
 
-  function cartaoItem(f, corBorda) {
-    const deltaTermino = variacaoDias(f.terminoPrevisto, f.terminoBase);
-    const deltaDuracao = variacaoDuracao(f);
-    let notaDelta = '';
-    if (deltaTermino !== null && deltaTermino !== 0) {
-      const cor = deltaTermino > 0 ? '#B23A3A' : '#4F7A2E';
-      notaDelta += ` · <span style="color:${cor};">término ${deltaTermino > 0 ? '+' : ''}${deltaTermino}d vs. base</span>`;
-    }
-    if (deltaDuracao !== null && deltaDuracao !== 0) {
-      const cor = deltaDuracao > 0 ? '#B23A3A' : '#4F7A2E';
-      notaDelta += ` · <span style="color:${cor};">duração ${deltaDuracao > 0 ? '+' : ''}${deltaDuracao}d vs. base</span>`;
-    }
-    return `
-      <div style="border-left:3px solid ${corBorda}; background:var(--paper-2); border-radius:0 6px 6px 0; padding:8px 10px; margin-bottom:6px;">
-        <div style="font-size:11.5px; font-weight:700; color:var(--ink);">${f.nome}</div>
-        <div style="font-size:10px; color:var(--text-soft); margin-top:2px;">${f.inicioPrevisto} → ${f.terminoPrevisto}${notaDelta}</div>
+// ✅ acha os filhos DIRETOS de um item na árvore (próximos itens com
+// nível maior, até achar um de nível igual ou menor que o pai)
+function filhosDiretosArvore(itensArea, idPai, nivelPai) {
+  const idx = itensArea.findIndex(i => i[0] === idPai);
+  if (idx === -1) return [];
+  const filhos = [];
+  for (let i = idx + 1; i < itensArea.length; i++) {
+    if (itensArea[i][4] <= nivelPai) break;
+    if (itensArea[i][4] === nivelPai + 1) filhos.push(itensArea[i]);
+  }
+  return filhos;
+}
+
+let cronogramaArvoreExpandida = {};
+
+function alternarExpandirArvoreCronograma(id) {
+  cronogramaArvoreExpandida[id] = !cronogramaArvoreExpandida[id];
+  document.getElementById('subTelaCronograma').innerHTML = renderizarSubTelaCronograma('atividade', subTelaCronogramaParametro);
+}
+
+function renderizarNoArvoreCronograma(nomeAtividade, item, itensArea) {
+  const [id, nome, inicio, termino, nivel] = item;
+  const idExp = 'arv_' + id;
+  const expandido = cronogramaArvoreExpandida[idExp];
+  const filhos = filhosDiretosArvore(itensArea, id, nivel);
+  const temFilhos = filhos.length > 0;
+
+  let filhosHtml = '';
+  if (temFilhos && expandido) {
+    filhosHtml = `<div style="padding-left:14px; border-left:2px solid var(--line); margin-top:2px;">`;
+    filhos.forEach(f => { filhosHtml += renderizarNoArvoreCronograma(nomeAtividade, f, itensArea); });
+    filhosHtml += `</div>`;
+  }
+
+  const botao = temFilhos
+    ? `<span onclick="alternarExpandirArvoreCronograma('${idExp}')" style="cursor:pointer; color:var(--accent); font-weight:700; font-size:13px; margin-right:6px; display:inline-block; width:14px;">${expandido ? '−' : '+'}</span>`
+    : `<span style="display:inline-block; width:14px;"></span>`;
+
+  return `
+    <div style="padding:5px 0;">
+      <div style="display:flex; align-items:baseline;">
+        ${botao}<span style="font-size:${nivel <= 4 ? '12' : '11'}px; font-weight:${nivel <= 4 ? '700' : '500'}; color:var(--ink);">${nome}</span>
       </div>
-    `;
+      <div style="font-size:9px; color:var(--text-soft); margin-left:20px;">${inicio} → ${termino}</div>
+      ${filhosHtml}
+    </div>
+  `;
+}
+
+
+function extrairDuasDatasCompletas(termoOriginal) {
+  const matches = [...termoOriginal.matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
+  if (matches.length < 2) return null;
+  const d1 = new Date(parseInt(matches[0][3]), parseInt(matches[0][2]) - 1, parseInt(matches[0][1]));
+  const d2 = new Date(parseInt(matches[1][3]), parseInt(matches[1][2]) - 1, parseInt(matches[1][1]));
+  return d1 <= d2 ? [d1, d2] : [d2, d1];
+}
+
+function extrairMesesAno(termoOriginal) {
+  const padrao = new RegExp('(' + MESES_NOME_CAL.join('|') + ')/(\\d{4})', 'gi');
+  const matches = [...termoOriginal.matchAll(padrao)];
+  return matches.map(m => {
+    const mes = MESES_NOME_CAL.findIndex(nome => nome.toLowerCase() === m[1].toLowerCase());
+    return new Date(parseInt(m[2]), mes, 1);
+  });
+}
+
+// ✅ "o que está previsto do dia X até Y" — tela principal do Cronograma,
+// procura em TODAS as ~445 tarefas, o mais completo possível
+function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
+  const datas = extrairDuasDatasCompletas(termoOriginal);
+  if (!datas) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não consegui identificar as duas datas. Toque na caixinha pra usar o calendário.</p>`;
+  }
+  const [inicio, fim] = datas;
+
+  const itens = CRONOGRAMA_ARVORE_COMPLETA.filter(i => {
+    const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
+    return ini <= fim && term >= inicio;
+  }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+
+  const rotuloInicio = formatarDataParaContexto('C', inicio), rotuloFim = formatarDataParaContexto('C', fim);
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  function secaoBloco(titulo, lista, cor) {
-    if (lista.length === 0) return '';
-    let h = `<div style="font-size:12px; font-weight:700; color:${cor}; margin:16px 0 8px;">${titulo} (${lista.length})</div>`;
-    lista.forEach(f => { h += cartaoItem(f, cor); });
-    return h;
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
+  itens.slice(0, 50).forEach(i => {
+    html += `<div class="subtitulo2"><span style="color:var(--accent);">[${i[5]}]</span> ${i[1]}: ${i[2]} → ${i[3]}</div>`;
+  });
+  if (itens.length > 50) {
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 50}. Tenta um período menor pra ver tudo listado.</div>`;
+  }
+  return html;
+}
+
+// ✅ mesma pergunta, mas dentro da tela de uma atividade específica —
+// só olha as tarefas daquela área
+function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) {
+  const datas = extrairDuasDatasCompletas(termoOriginal);
+  if (!datas) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não consegui identificar as duas datas. Toque na caixinha pra usar o calendário.</p>`;
+  }
+  const [inicio, fim] = datas;
+
+  const itens = CRONOGRAMA_ARVORE_COMPLETA.filter(i => i[5] === nomeAtividade).filter(i => {
+    const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
+    return ini <= fim && term >= inicio;
+  }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+
+  const rotuloInicio = formatarDataParaContexto('C', inicio), rotuloFim = formatarDataParaContexto('C', fim);
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto pra ${nomeAtividade} entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  html += secaoBloco('Em andamento', emAndamento, 'var(--accent)');
-  html += secaoBloco('Prestes a iniciar', aIniciar, '#4A90D9');
-  html += secaoBloco('Já deveria estar concluída', concluidas, '#8A8378');
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
+  itens.forEach(i => {
+    html += `<div class="subtitulo2">${i[1]}: ${i[2]} → ${i[3]}</div>`;
+  });
+  return html;
+}
 
+// ✅ "o que há de caminho crítico no mês X" — usa a lista completa de
+// 68 tarefas, com o caminho (breadcrumb) rastreado de cada uma
+function montarRespostaCaminhoCriticoMes(termoOriginal) {
+  const meses = extrairMesesAno(termoOriginal);
+  if (meses.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não consegui identificar o mês. Toque na caixinha pra usar o calendário.</p>`;
+  }
+  const mesRef = meses[0];
+  const fimMes = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0);
+
+  const itens = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO.filter(t => {
+    const ini = parseDataCompleta(t.inicio), term = parseDataCompleta(t.termino);
+    return ini <= fimMes && term >= mesRef;
+  });
+
+  const rotulo = `${MESES_NOME_CAL[mesRef.getMonth()]}/${mesRef.getFullYear()}`;
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não há caminho crítico passando em ${rotulo}.</p>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Caminho crítico em ${rotulo}:</div>`;
+  itens.forEach(t => {
+    const bc = t.caminho.slice(0, -1).join(' › ');
+    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
+  });
+  return html;
+}
+
+function montarRespostaCaminhoCriticoIntervalo(termoOriginal) {
+  const meses = extrairMesesAno(termoOriginal);
+  if (meses.length < 2) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não consegui identificar os dois meses. Toque na caixinha pra usar o calendário.</p>`;
+  }
+  const [m1, m2] = meses.sort((a, b) => a - b);
+  const fimMes = new Date(m2.getFullYear(), m2.getMonth() + 1, 0);
+
+  const itens = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO.filter(t => {
+    const ini = parseDataCompleta(t.inicio), term = parseDataCompleta(t.termino);
+    return ini <= fimMes && term >= m1;
+  });
+
+  const rotulo = `${MESES_NOME_CAL[m1.getMonth()]}/${m1.getFullYear()} até ${MESES_NOME_CAL[m2.getMonth()]}/${m2.getFullYear()}`;
+
+  if (itens.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não há caminho crítico entre ${rotulo}.</p>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Caminho crítico de ${rotulo} (${itens.length} tarefa(s)):</div>`;
+  itens.forEach(t => {
+    const bc = t.caminho.slice(0, -1).join(' › ');
+    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
+  });
+  return html;
+}
+
+// ✅ "o que é considerado caminho crítico nesta frente" — dentro da
+// tela de detalhe de uma atividade macro
+function montarRespostaCaminhoCriticoDaFrente(nomeAtividade) {
+  const nomeNorm = normalizarTexto(nomeAtividade);
+  const itens = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO.filter(t => normalizarTexto(t.caminho[0]) === nomeNorm);
+
+  if (itens.length === 0) {
+    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;"><b>${nomeAtividade}</b> não faz parte do caminho crítico da obra hoje.</div>`;
+  }
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;"><b>${nomeAtividade}</b> tem ${itens.length} tarefa(s) no caminho crítico da obra:</div>`;
+  itens.forEach(t => {
+    const bc = t.caminho.slice(1, -1).join(' › ');
+    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
+  });
   return html;
 }
 
@@ -3265,22 +3683,21 @@ async function buscarInteligenteCronograma(sufixo) {
 
   let html = '';
 
-  if (termo.includes('o que adiantou') || termo.includes('adiantaram') || termo.includes('quais adiantaram')) {
-    html = montarRespostaAdiantouCronograma();
-  } else if (termo.includes('o que mudou') || termo.includes('mudancas') || termo.includes('o que foi alterado')) {
-    html = montarRespostaMudancasCronograma();
-  } else if (termo.includes('mais alteracao') || termo.includes('mais alteradas') || termo.includes('maior alteracao')) {
-    html = montarRespostaMaioresAlteracoesCronograma();
-  } else if (termo.includes('caminho critico') || termo.includes('caminho critica') || termo.includes('gargalo')) {
-    html = conteudoDetalheCaminhoCritico();
-  } else if (termo.includes('trava a conclusao') || termo.includes('falta pra concluir') || termo.includes('falta para concluir') || termo.includes('o que falta')) {
-    html = montarRespostaDependenciasConclusao();
-  } else if (termo.includes('trava') || termo.includes('depende de') || termo.includes('depende a')) {
-    html = montarRespostaDependenciasAtividade(termoOriginal);
-  } else if (termo.includes('termina') || termo.includes('termino') || termo.includes('acaba')) {
-    html = montarRespostaDataAtividadeCronograma(termoOriginal, 'termino');
-  } else if (termo.includes('inicia') || termo.includes('comeca') || termo.includes('inicio')) {
-    html = montarRespostaDataAtividadeCronograma(termoOriginal, 'inicio');
+  if (sufixo === 'C') {
+    // ✅ tela principal do Cronograma Geral: só a pergunta de período
+    html = montarRespostaPrevistoIntervaloGeral(termoOriginal);
+  } else if (sufixo === 'CD' && subTelaCronogramaTipo === 'critico') {
+    if (termo.includes(' ate ')) {
+      html = montarRespostaCaminhoCriticoIntervalo(termoOriginal);
+    } else {
+      html = montarRespostaCaminhoCriticoMes(termoOriginal);
+    }
+  } else if (sufixo === 'CD' && subTelaCronogramaTipo === 'atividade') {
+    if (termo.includes('caminho critico')) {
+      html = montarRespostaCaminhoCriticoDaFrente(subTelaCronogramaParametro);
+    } else {
+      html = montarRespostaPrevistoIntervaloAtividade(subTelaCronogramaParametro, termoOriginal);
+    }
   } else {
     html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não entendi essa pergunta. Toque na caixinha pra ver as sugestões prontas.</p>`;
   }
@@ -3354,6 +3771,9 @@ async function carregarFrentes() {
         <span class="contagemSecao" id="contagemFrentes">00</span>
       </div>
       <hr class="regra">
+      <div style="text-align:right; margin-bottom:10px;">
+        <span onclick="mostrarTelaFrentesConcluidas()" style="cursor:pointer; font-size:11.5px; color:var(--accent); font-weight:600;">Frentes concluídas →</span>
+      </div>
       <div id="botoes"></div>
     </section>
   `;
@@ -3434,6 +3854,290 @@ async function carregarFrentes() {
   await carregarContadorNotif();
 }
 
+// =======================================================================
+// FRENTES CONCLUÍDAS — mesma estrutura visual de "Próximas Semanas" no
+// topo, cards parecidos com os de Frentes (mas sempre 100%, "concluída
+// em" no lugar de "situação em", e status de término em vez de prazo
+// corrente). Considera concluída só quando TODAS as etapas do avanço
+// físico bateram o previsto — se tiver algo em andamento ou a iniciar,
+// não entra aqui.
+// =======================================================================
+async function mostrarTelaFrentesConcluidas() {
+  esconderTelasPrincipais();
+  document.getElementById("telaFrentesConcluidas").style.display = "block";
+  await carregarFrentesConcluidas();
+}
+
+async function carregarFrentesConcluidas() {
+  const container = document.getElementById("telaFrentesConcluidas");
+
+  container.innerHTML = `
+    <div id="topo">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span onclick="voltarHome()" style="cursor:pointer; font-size:20px;">←</span>
+        <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+      </div>
+      <div style="display:flex; align-items:center;">
+        <span class="toggleTema iconeTema" onclick="alternarTema()" style="margin-right:0;">🌙</span>
+      </div>
+    </div>
+
+    <div class="heroNovo">
+      <div class="eyebrow">Planejamento em Mãos</div>
+      <h1 style="font-size:26px;">Frentes concluídas</h1>
+    </div>
+
+    <section class="secaoNova">
+      <div class="caixaBusca" style="position:relative;">
+        <input type="text" id="inputBuscaFC" placeholder="Pergunte algo... ex: quando foi a última detonação?"
+               oninput="mostrarSugestoes('FC')" onfocus="mostrarSugestoes('FC')"
+               onkeypress="if(event.key==='Enter') buscarInteligenteFrentesConcluidas()">
+        <button class="btnBusca" onclick="buscarInteligenteFrentesConcluidas()">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaFC" style="display:none;"></div>
+      </div>
+      <div id="resultadoBuscaFC"></div>
+
+      <div id="listaFrentesConcluidas" style="margin-top:14px;"></div>
+    </section>
+  `;
+
+  atualizarIconeTema();
+
+  const listaContainer = document.getElementById("listaFrentesConcluidas");
+  const snap = await db.collection("Frentes").get();
+  window.todasFrentesConcluidas = [];
+
+  snap.forEach(doc => {
+    const data = doc.data();
+    const etapas = data.AvancoPorEtapa || [];
+
+    // ✅ só é "concluída" se TODAS as etapas bateram o previsto — uma só
+    // em andamento ou não iniciada já tira ela dessa lista
+    const concluida = etapas.length > 0 && etapas.every(et =>
+      (et.TotalPrevisto || 0) > 0 && (et.TotalRealizado || 0) >= (et.TotalPrevisto || 0)
+    );
+    if (!concluida) return;
+
+    window.todasFrentesConcluidas.push(data);
+
+    // ✅ data de conclusão = último dia com avanço realizado de verdade
+    let dataConclusao = null;
+    etapas.forEach(et => {
+      (et.Dias || []).forEach(d => {
+        if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+          const dt = parseDiaMes(d.Data);
+          if (dt && (!dataConclusao || dt > dataConclusao)) dataConclusao = dt;
+        }
+      });
+    });
+
+    // ✅ status de término: compara o previsto (Percentualprevisto) na
+    // curva atual — se ele ainda não bateu 100%, terminamos adiantado;
+    // se já passou de 100%, terminamos atrasado
+    const previsto = data.Percentualprevisto || 0;
+    let statusTexto, classeAtrasada;
+    if (previsto > 102) { statusTexto = "Término atrasado"; classeAtrasada = "atrasada"; }
+    else if (previsto < 98) { statusTexto = "Término adiantado"; classeAtrasada = ""; }
+    else { statusTexto = "Término no prazo"; classeAtrasada = ""; }
+
+    const card = document.createElement("div");
+    card.className = "frenteNova";
+    card.innerHTML = `
+      <div class="topo2">
+        <span class="nome2">${data.Nome}</span>
+        <span class="tagStatus ${classeAtrasada}">
+          <span class="ponto"></span>
+          ${statusTexto}
+        </span>
+      </div>
+
+      <div class="regua">
+        <div class="regua-trilho"></div>
+        <div class="regua-preenchida" style="width:100%"></div>
+        <div class="regua-marcas">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="baixo2">
+        <span class="pct2">100%</span>
+        <span class="meta2">${dataConclusao ? "concluída em " + formatarDataCurta(dataConclusao) : ""}</span>
+      </div>
+    `;
+
+    card.onclick = () => abrir(data);
+    listaContainer.appendChild(card);
+  });
+
+  if (listaContainer.children.length === 0) {
+    listaContainer.innerHTML = '<p style="font-size:13px; color:var(--text-soft); text-align:left;">Nenhuma frente concluída ainda.</p>';
+  }
+}
+
+const SUGESTOES_BUSCA_FC = [
+  'Quantas detonações houveram ao todo na frente [frente]',
+  'Quando foi a última detonação da frente [frente]',
+  'Quando foi o término da frente [frente]',
+  'Quando iniciou a frente [frente]',
+];
+
+// ✅ acha a frente só dentro das CONCLUÍDAS (não busca nas ativas)
+function acharFrenteConcluidaPorNome(termo) {
+  const lista = window.todasFrentesConcluidas || [];
+  let encontrada = null;
+  lista.forEach(f => {
+    const nomeNorm = normalizarTexto(f.Nome);
+    if (termo.includes(nomeNorm) || nomeNorm.includes(termo)) encontrada = f;
+  });
+  return encontrada;
+}
+
+async function buscarInteligenteFrentesConcluidas() {
+  const input = document.getElementById('inputBuscaFC');
+  const resultado = document.getElementById('resultadoBuscaFC');
+  const termoOriginal = input.value.trim();
+  const termo = normalizarTexto(termoOriginal);
+  if (!termo) return;
+
+  let html = '';
+
+  if (termo.includes('ultima detonac') || termo.includes('ultimo fogo')) {
+    html = await montarRespostaUltimaDetonacaoConcluida(termoOriginal);
+  } else if (termo.includes('detonac')) {
+    html = await montarRespostaTotalDetonacoesConcluida(termoOriginal);
+  } else if (termo.includes('termino') || termo.includes('terminou') || termo.includes('concluiu') || termo.includes('conclusao')) {
+    html = montarRespostaTerminoConcluida(termoOriginal);
+  } else if (termo.includes('iniciou') || termo.includes('inicio')) {
+    html = montarRespostaInicioConcluida(termoOriginal);
+  } else {
+    html = `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não entendi essa pergunta. Toque na caixinha pra ver as sugestões prontas.</p>`;
+  }
+
+  resultado.innerHTML = `<span class="fecharBusca" onclick="limparBusca('FC')">×</span>` + html;
+  document.getElementById('sugestoesBuscaFC').style.display = 'none';
+}
+
+async function montarRespostaTotalDetonacoesConcluida(termoOriginal) {
+  const termo = normalizarTexto(termoOriginal);
+  const frente = acharFrenteConcluidaPorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa frente entre as concluídas.</p>`;
+  }
+
+  let eventos = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventos = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  const variantes = await buscarCorrelacoesDaFrente(frente.Nome);
+  if (variantes.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  const filtrados = eventos.filter(e => descricaoBateComVariantes(e.Descricao || '', variantes));
+  if (filtrados.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações de ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  const fogosUnicos = new Set(filtrados.map(e => e.Evento));
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} teve <b>${fogosUnicos.size}</b> detonação(ões) ao todo:</div>`;
+  filtrados.forEach(e => {
+    html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+  });
+  return html;
+}
+
+async function montarRespostaUltimaDetonacaoConcluida(termoOriginal) {
+  const termo = normalizarTexto(termoOriginal);
+  const frente = acharFrenteConcluidaPorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa frente entre as concluídas.</p>`;
+  }
+
+  let eventos = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventos = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  const variantes = await buscarCorrelacoesDaFrente(frente.Nome);
+  if (variantes.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let melhorData = null;
+  eventos.forEach(e => {
+    if (descricaoBateComVariantes(e.Descricao || '', variantes)) {
+      const d = parseDiaMes(e.Data);
+      if (d && (!melhorData || d > melhorData)) melhorData = d;
+    }
+  });
+
+  if (!melhorData) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma detonação de ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  const melhorDataStr = formatarDataCurta(melhorData);
+  const fogosDoDia = eventos.filter(e => e.Data === melhorDataStr && descricaoBateComVariantes(e.Descricao || '', variantes));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorDataStr}</b></div>`;
+  fogosDoDia.forEach(e => {
+    html += `<div class="subtitulo2">Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+  });
+  return html;
+}
+
+function montarRespostaTerminoConcluida(termoOriginal) {
+  const termo = normalizarTexto(termoOriginal);
+  const frente = acharFrenteConcluidaPorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa frente entre as concluídas.</p>`;
+  }
+
+  let dataConclusao = null;
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    (et.Dias || []).forEach(d => {
+      if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+        const dt = parseDiaMes(d.Data);
+        if (dt && (!dataConclusao || dt > dataConclusao)) dataConclusao = dt;
+      }
+    });
+  });
+
+  if (!dataConclusao) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei a data de término de ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frente.Nome)} terminou em <b>${formatarDataCurta(dataConclusao)}</b>.</div>`;
+}
+
+function montarRespostaInicioConcluida(termoOriginal) {
+  const termo = normalizarTexto(termoOriginal);
+  const frente = acharFrenteConcluidaPorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei essa frente entre as concluídas.</p>`;
+  }
+
+  let menorData = null;
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    (et.Dias || []).forEach(d => {
+      if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+        const dt = parseDiaMes(d.Data);
+        if (dt && (!menorData || dt < menorData)) menorData = dt;
+      }
+    });
+  });
+
+  if (!menorData) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei a data de início de ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frente.Nome)} iniciou em <b>${formatarDataCurta(menorData)}</b>.</div>`;
+}
+
 async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
@@ -3443,18 +4147,28 @@ async function carregarProximasSemanas() {
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
       <div style="display:flex; align-items:center;">
         <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+        <div class="notif" onclick="abrirNotificacoes()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.7 21a2 2 0 01-3.4 0"/>
+          </svg>
+          <span id="contadorNotif">0</span>
+        </div>
       </div>
     </div>
 
     <div class="heroNovo">
       <div class="eyebrow">Planejamento em mãos</div>
-      <h1 style="font-size:26px;">Próximas Semanas</h1>
+      <h1 style="font-size:26px;">Six Week</h1>
     </div>
 
     <section class="secaoNova">
       <div class="cabecalho">
-        <span class="tituloSecao">Próximas semanas</span>
-        <button class="btnGantt" onclick="abrirGantt()">📊 Gráfico de Gantt</button>
+        <span class="tituloSecao">Six Week</span>
+        <button class="btnGantt" onclick="abrirGantt()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><path d="M4 4v16h16"/><path d="M8 16l4-6 3 3 5-7"/></svg>
+          Gráfico de Gantt
+        </button>
       </div>
       <hr class="regra">
 
@@ -3665,6 +4379,7 @@ function esconderTelasPrincipais() {
   document.getElementById("lista").style.display = "none";
   document.getElementById("telaProximasSemanas").style.display = "none";
   document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("telaFrentesConcluidas").style.display = "none";
   document.getElementById("navInferior").style.display = "none";
 }
 
@@ -4197,6 +4912,16 @@ function abrirDetalheSemana(data) {
       `;
     });
 
+    // ✅ se o término real da tarefa vai além do último dia mostrado no
+    // gráfico diário, avisa que ela continua na próxima Six Week — sem
+    // isso, parece que a tarefa simplesmente "acabou" antes da hora
+    let avisoContinuacao = '';
+    const terminoReal = parseDiaMes(tarefa.TerminoPrevisto);
+    const ultimoDiaGrafico = diario.length > 0 ? parseDiaMes(diario[diario.length - 1].Data) : null;
+    if (terminoReal && ultimoDiaGrafico && terminoReal > ultimoDiaGrafico) {
+      avisoContinuacao = `<div style="font-size:11px; color:var(--text-soft); font-style:italic; margin-top:8px; text-align:left;">Obs: Continuação na próxima Six Week</div>`;
+    }
+
     const bloco = document.createElement("div");
     bloco.className = "bloco";
     bloco.innerHTML = `
@@ -4211,6 +4936,7 @@ function abrirDetalheSemana(data) {
       <div class="graficoDiario">
         ${barrasHtml || '<p style="font-size:12px; color:var(--text-soft);">Sem previsão diária cadastrada.</p>'}
       </div>
+      ${avisoContinuacao}
     `;
 
     container.appendChild(bloco);
@@ -4249,7 +4975,14 @@ function abrirGantt() {
   }
 
   const minDate = new Date(Math.min(...tarefas.map(t => t.inicio)));
-  const maxDate = new Date(Math.max(...tarefas.map(t => t.termino)));
+  // ✅ "Six Week" = janela de 6 semanas (42 dias) a partir do início real
+  // dos dados — não é uma data fixa, recalcula sozinho toda vez que a
+  // planilha for atualizada. Tarefas que passam disso (tipo Via
+  // Permanente) ganham um aviso de continuação, em vez de esticar o
+  // gráfico inteiro e fazer tudo mais parecer "parado".
+  const maxDateJanela = new Date(minDate.getTime() + 41 * 86400000);
+  const maxDateReal = new Date(Math.max(...tarefas.map(t => t.termino)));
+  const maxDate = maxDateJanela < maxDateReal ? maxDateJanela : maxDateReal;
   const totalDias = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
 
   // ✅ agrupa por frente, mantendo a ordem em que apareceram
@@ -4299,9 +5032,11 @@ function abrirGantt() {
 
     porFrente[nomeFrente].forEach(t => {
       const offsetDias = Math.round((t.inicio - minDate) / 86400000);
-      const duracaoDias = Math.round((t.termino - t.inicio) / 86400000) + 1;
+      const terminoVisivel = t.termino > maxDate ? maxDate : t.termino;
+      const duracaoDias = Math.round((terminoVisivel - t.inicio) / 86400000) + 1;
       const left = pctPorDia(offsetDias);
       const width = Math.max(1.2, pctPorDia(duracaoDias));
+      const continuaDepois = t.termino > maxDate;
 
       linhasHtml += `
         <div class="ganttLinhaH">
@@ -4310,8 +5045,9 @@ function abrirGantt() {
             ${t.nome}
           </div>
           <div class="ganttTrilhaH">
-            <div class="ganttBarraH" style="left:${left}%; width:${width}%;"
-                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}"></div>
+            <div class="ganttBarraH" style="left:${left}%; width:${width}%; ${continuaDepois ? 'border-top-right-radius:0; border-bottom-right-radius:0;' : ''}"
+                 title="${t.nome}: ${formatarDataCurta(t.inicio)} a ${formatarDataCurta(t.termino)}${continuaDepois ? ' (continua na próxima Six Week)' : ''}"></div>
+            ${continuaDepois ? `<div style="position:absolute; left:calc(${left}% + ${width}%); top:0; bottom:0; display:flex; align-items:center; font-size:10px; color:var(--text-soft);">›</div>` : ''}
           </div>
         </div>
       `;
@@ -4369,6 +5105,10 @@ const SUGESTOES_BUSCA_F = [
   'Quando foi a última detonação da frente [frente]',
   'Quanto de avanço tem a frente [frente]',
   'Em qual PK está a frente [frente]',
+  'Quantas detonações houveram na frente [frente] entre o dia [data] até o dia [data]',
+  'Quanto falta para terminar a frente [frente]',
+  'Quando iniciou a frente [frente]',
+  'Quantas detonações houveram ao todo na frente [frente]',
 ];
 
 // ✅ perguntas sugeridas na tela de PRÓXIMAS SEMANAS
@@ -4382,14 +5122,7 @@ const SUGESTOES_BUSCA_S = [
 
 // ✅ perguntas sugeridas na tela de CRONOGRAMA GERAL
 const SUGESTOES_BUSCA_C = [
-  'Qual é o caminho crítico',
-  'O que mudou nesse replanejamento',
-  'O que adiantou nesse replanejamento',
-  'Quais atividades tiveram mais alteração de data',
-  'O que falta pra concluir a obra',
-  'O que trava a atividade [atividade]',
-  'Quando inicia a atividade [atividade]',
-  'Quando termina a atividade [atividade]',
+  'O que está previsto para o dia [data] até o dia [data]',
 ];
 
 let timeoutsSugestoes = {};
@@ -4398,7 +5131,18 @@ let calendarioEstado = {};
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
   const container = document.getElementById('sugestoesBusca' + sufixo);
-  const lista = sufixo === 'F' ? SUGESTOES_BUSCA_F : (sufixo === 'C' || sufixo === 'CD') ? SUGESTOES_BUSCA_C : SUGESTOES_BUSCA_S;
+
+  let lista;
+  if (sufixo === 'F') lista = SUGESTOES_BUSCA_F;
+  else if (sufixo === 'FC') lista = SUGESTOES_BUSCA_FC;
+  else if (sufixo === 'S') lista = SUGESTOES_BUSCA_S;
+  else if (sufixo === 'C') lista = SUGESTOES_BUSCA_C;
+  else if (sufixo === 'CD') {
+    if (subTelaCronogramaTipo === 'critico') lista = SUGESTOES_CAMINHO_CRITICO;
+    else if (subTelaCronogramaTipo === 'atividade') lista = SUGESTOES_ATIVIDADE_DETALHE;
+    else lista = [];
+  } else lista = SUGESTOES_BUSCA_S;
+
   const termo = normalizarTexto(input.value.trim());
 
   const filtradas = termo
@@ -4427,6 +5171,9 @@ async function selecionarSugestao(sufixo, el) {
     await mostrarListaFrentes(sufixo);
   } else if (textoCompleto.includes('[atividade]')) {
     mostrarListaAtividadesCronograma(sufixo);
+  } else if (textoCompleto.includes('[mes]')) {
+    const qtdMeses = (textoCompleto.match(/\[mes\]/g) || []).length;
+    abrirCalendarioMes(sufixo, qtdMeses > 1);
   } else if (textoCompleto.includes('[data]')) {
     const qtdDatas = (textoCompleto.match(/\[data\]/g) || []).length;
     abrirCalendario(sufixo, qtdDatas > 1);
@@ -4463,8 +5210,13 @@ async function mostrarListaFrentes(sufixo) {
 
   let nomes = [];
   try {
-    const snap = await db.collection('Frentes').get();
-    snap.forEach(doc => nomes.push(formatarTitulo(doc.data().Nome)));
+    if (sufixo === 'FC') {
+      // ✅ só as frentes concluídas — essas perguntas são exclusivas dessa aba
+      (window.todasFrentesConcluidas || []).forEach(f => nomes.push(formatarTitulo(f.Nome)));
+    } else {
+      const snap = await db.collection('Frentes').get();
+      snap.forEach(doc => nomes.push(formatarTitulo(doc.data().Nome)));
+    }
   } catch (e) { /* ignora */ }
 
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
@@ -4596,9 +5348,17 @@ function selecionarDiaCalendario(sufixo, dia) {
   }
 }
 
+// ✅ nas telas do Cronograma (C/CD), os dados vão até 2028 — precisa do
+// ano no texto da pergunta, senão fica ambíguo
+function formatarDataParaContexto(sufixo, data) {
+  return (sufixo === 'C' || sufixo === 'CD')
+    ? `${String(data.getDate()).padStart(2,'0')}/${String(data.getMonth()+1).padStart(2,'0')}/${data.getFullYear()}`
+    : formatarDataCurta(data);
+}
+
 function preencherDataEscolhida(sufixo, data) {
   const input = document.getElementById('inputBusca' + sufixo);
-  input.value = input.value.replace('[data]', formatarDataCurta(data));
+  input.value = input.value.replace('[data]', formatarDataParaContexto(sufixo, data));
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   input.focus();
 }
@@ -4607,11 +5367,114 @@ function preencherIntervaloEscolhido(sufixo) {
   const estado = calendarioEstado[sufixo];
   const input = document.getElementById('inputBusca' + sufixo);
   input.value = input.value
-    .replace('[data]', formatarDataCurta(estado.inicio))
-    .replace('[data]', formatarDataCurta(estado.fim));
+    .replace('[data]', formatarDataParaContexto(sufixo, estado.inicio))
+    .replace('[data]', formatarDataParaContexto(sufixo, estado.fim));
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
   input.focus();
 }
+
+// ---------------------------------------------------------------------
+// CALENDÁRIO DE MÊS/ANO — usado nas perguntas de caminho crítico, onde
+// só faz sentido escolher mês e ano (o cronograma inteiro é longo
+// demais pra escolher dia a dia)
+// ---------------------------------------------------------------------
+let calendarioMesEstado = {};
+
+function abrirCalendarioMes(sufixo, doisCampos) {
+  const hoje = new Date();
+  calendarioMesEstado[sufixo] = { anoAtual: hoje.getFullYear(), inicio: null, fim: null, doisCampos };
+  renderizarCalendarioMes(sufixo);
+}
+
+function renderizarCalendarioMes(sufixo) {
+  const estado = calendarioMesEstado[sufixo];
+  const container = document.getElementById('sugestoesBusca' + sufixo);
+
+  let celulas = '';
+  MESES_NOME_CAL.forEach((nomeMes, i) => {
+    const dataMes = new Date(estado.anoAtual, i, 1);
+    let classe = 'calDia';
+    if (estado.inicio && estado.inicio.getTime() === dataMes.getTime()) classe += ' calDiaSelecionado';
+    if (estado.fim && estado.fim.getTime() === dataMes.getTime()) classe += ' calDiaSelecionado';
+    if (estado.inicio && estado.fim && dataMes > estado.inicio && dataMes < estado.fim) classe += ' calDiaIntervalo';
+    celulas += `<div class="${classe}" style="padding:10px 2px;" onmousedown="selecionarMesCalendario('${sufixo}', ${i})">${nomeMes.slice(0, 3)}</div>`;
+  });
+
+  const camposHtml = estado.doisCampos ? `
+    <div class="calendarioAbas">
+      <div class="calendarioAba ${!estado.fim ? 'ativa' : ''}">
+        <div class="calendarioAbaLabel">De</div>
+        <div class="calendarioAbaData">${estado.inicio ? `${MESES_NOME_CAL[estado.inicio.getMonth()]}/${estado.inicio.getFullYear()}` : '__/____'}</div>
+      </div>
+      <div class="calendarioAba ${estado.inicio && !estado.fim ? 'ativa' : ''}">
+        <div class="calendarioAbaLabel">Até</div>
+        <div class="calendarioAbaData">${estado.fim ? `${MESES_NOME_CAL[estado.fim.getMonth()]}/${estado.fim.getFullYear()}` : '__/____'}</div>
+      </div>
+    </div>
+  ` : '';
+
+  container.innerHTML = `
+    <div class="calendarioPopup">
+      ${camposHtml}
+      <div class="calendarioNav">
+        <span class="calendarioSeta" onmousedown="mudarAnoCalendarioMes('${sufixo}', -1)">‹</span>
+        <span class="calendarioMesAno">${estado.anoAtual}</span>
+        <span class="calendarioSeta" onmousedown="mudarAnoCalendarioMes('${sufixo}', 1)">›</span>
+      </div>
+      <div class="calendarioGrade" style="grid-template-columns:repeat(4,1fr);">${celulas}</div>
+    </div>
+  `;
+  container.style.display = 'block';
+}
+
+function mudarAnoCalendarioMes(sufixo, delta) {
+  calendarioMesEstado[sufixo].anoAtual += delta;
+  renderizarCalendarioMes(sufixo);
+}
+
+function selecionarMesCalendario(sufixo, mes) {
+  const estado = calendarioMesEstado[sufixo];
+  const dataClicada = new Date(estado.anoAtual, mes, 1);
+
+  if (!estado.doisCampos) {
+    preencherMesEscolhido(sufixo, dataClicada);
+    return;
+  }
+
+  if (!estado.inicio || estado.fim) {
+    estado.inicio = dataClicada;
+    estado.fim = null;
+  } else if (dataClicada < estado.inicio) {
+    estado.inicio = dataClicada;
+    estado.fim = null;
+  } else {
+    estado.fim = dataClicada;
+  }
+
+  renderizarCalendarioMes(sufixo);
+
+  if (estado.inicio && estado.fim) {
+    setTimeout(() => preencherIntervaloMesEscolhido(sufixo), 350);
+  }
+}
+
+function preencherMesEscolhido(sufixo, data) {
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value.replace('[mes]', `${MESES_NOME_CAL[data.getMonth()]}/${data.getFullYear()}`);
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
+}
+
+function preencherIntervaloMesEscolhido(sufixo) {
+  const estado = calendarioMesEstado[sufixo];
+  const input = document.getElementById('inputBusca' + sufixo);
+  input.value = input.value
+    .replace('[mes]', `${MESES_NOME_CAL[estado.inicio.getMonth()]}/${estado.inicio.getFullYear()}`)
+    .replace('[mes]', `${MESES_NOME_CAL[estado.fim.getMonth()]}/${estado.fim.getFullYear()}`);
+  document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
+  input.focus();
+}
+
 
 // ✅ fecha a lista/calendário só quando clicar de verdade fora da caixa
 // de busca inteira — muito mais confiável do que usar blur com timeout,
@@ -4733,13 +5596,23 @@ async function buscarInteligente(sufixo) {
 
   const perguntaUltimaDetonacao = termo.includes('ultima detonac') || termo.includes('ultimo fogo') || termo.includes('ultima vez que detonou');
   const perguntaDetonouFrente = termo.includes('detonou');
-  const perguntaTotalFogos = termo.includes('quantos fogos') || termo.includes('ao todo') ||
-    termo.includes('total de detonac') || termo.includes('total de fogos');
-  const perguntaContagemDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos &&
+  const perguntaTemFrente = /\bfrente\b/.test(termo);
+  // ✅ "quantas detonações na frente X [entre Y e Z / ao todo]" — cobre
+  // as duas perguntas novas (com ou sem período) numa função só
+  const perguntaTotalFogosFrentePeriodo = !perguntaUltimaDetonacao && !perguntaDetonouFrente &&
+    termo.includes('detonac') && perguntaTemFrente &&
+    (termo.includes('ao todo') || termo.includes('quantas') || termo.includes('quantos'));
+  const perguntaTotalFogos = !perguntaTotalFogosFrentePeriodo && (termo.includes('quantos fogos') || termo.includes('ao todo') ||
+    termo.includes('total de detonac') || termo.includes('total de fogos'));
+  const perguntaContagemDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos && !perguntaTotalFogosFrentePeriodo &&
     termo.includes('detonac') && (termo.includes('quantas') || termo.includes('quantos'));
-  const perguntaDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos &&
+  const perguntaDetonacao = !perguntaUltimaDetonacao && !perguntaDetonouFrente && !perguntaTotalFogos && !perguntaTotalFogosFrentePeriodo &&
     !perguntaContagemDetonacao && termo.includes('detonac');
-  const perguntaTermino = termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu');
+  // ✅ "quanto falta pra terminar a frente X" — precisa vir antes de
+  // perguntaTermino, senão "terminar" já capturava essa pergunta antes
+  const perguntaQuantoFalta = termo.includes('falta') && (termo.includes('terminar') || termo.includes('concluir') || termo.includes('acabar'));
+  const perguntaInicioFrente = termo.includes('iniciou') || (termo.includes('quando') && termo.includes('inicio') && perguntaTemFrente);
+  const perguntaTermino = !perguntaQuantoFalta && (termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu'));
   const perguntaMediaDiaria = termo.includes('media');
   const perguntaMaiorAvanco = termo.includes('maior avanco') || (termo.includes('maior') && termo.includes('avanco'));
   const perguntaDiasSemAvanco = termo.includes('sem avanco') || termo.includes('dias parados') || termo.includes('dias parado');
@@ -4774,6 +5647,9 @@ async function buscarInteligente(sufixo) {
     const periodo = extrairPeriodo() || { tipo: 'dia', data: hoje, rotulo: 'hoje' };
     html = await montarRespostaDetonouFrente(termo, periodo);
 
+  } else if (perguntaTotalFogosFrentePeriodo) {
+    html = await montarRespostaContagemDetonacoesFrentePeriodo(termo, extrairPeriodo());
+
   } else if (perguntaTotalFogos) {
     html = await montarRespostaTotalFogos();
 
@@ -4785,6 +5661,12 @@ async function buscarInteligente(sufixo) {
     const periodo = extrairPeriodo();
     const infoData = (periodo && periodo.tipo === 'dia') ? periodo : { data: hoje, rotulo: 'hoje' };
     html = await montarRespostaDetonacoes(infoData.data, infoData.rotulo);
+
+  } else if (perguntaQuantoFalta) {
+    html = await montarRespostaQuantoFalta(termo);
+
+  } else if (perguntaInicioFrente) {
+    html = await montarRespostaInicioFrente(termo);
 
   } else if (perguntaTermino) {
     html = await montarRespostaTermino(termo);
@@ -5116,6 +5998,104 @@ async function montarRespostaTotalFogos() {
   const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
   return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Tivemos <b>${maiorFogo}</b> detonação(ões) ao todo, desde o início do registro.${notaData}</div>`;
+}
+
+// ✅ "quantas detonações houveram na frente X entre o dia Y até Z" (ou
+// "ao todo na frente X", sem período) — cruza a frente via correlações
+// COM um período opcional
+async function montarRespostaContagemDetonacoesFrentePeriodo(termo, periodo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  let eventos = [];
+  try {
+    const doc = await db.collection('Config').doc('Detonacoes').get();
+    if (doc.exists) eventos = doc.data().Eventos || [];
+  } catch (e) { /* sem detonações cadastradas ainda */ }
+
+  const variantes = await buscarCorrelacoesDaFrente(frente.Nome);
+  if (variantes.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)} — confira a aba "Correlações - Frentes x Det." na planilha.</p>`;
+  }
+
+  function noPeriodo(diaStr) {
+    if (!periodo) return true;
+    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
+    const d = parseDiaMes(diaStr);
+    return d && d >= periodo.inicio && d <= periodo.fim;
+  }
+
+  const filtrados = eventos.filter(e => descricaoBateComVariantes(e.Descricao || '', variantes) && noPeriodo(e.Data));
+  const rotuloPeriodo = periodo ? periodo.rotulo : 'ao todo';
+  const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
+  const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
+
+  if (filtrados.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei detonações de ${formatarTitulo(frente.Nome)} em ${rotuloPeriodo}.</p>${notaData}`;
+  }
+
+  const fogosUnicos = new Set(filtrados.map(e => e.Evento));
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} teve <b>${fogosUnicos.size}</b> detonação(ões) em ${rotuloPeriodo}:</div>`;
+  filtrados.forEach(e => {
+    html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
+  });
+  html += notaData;
+  return html;
+}
+
+// ✅ "quanto falta pra terminar a frente X" — usa o avanço por etapa
+async function montarRespostaQuantoFalta(termo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  const etapas = frente.AvancoPorEtapa || [];
+  if (etapas.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — quanto falta por etapa:</div>`;
+  let temAlgumaFalta = false;
+  etapas.forEach(et => {
+    const realizado = et.TotalRealizado || 0;
+    const previsto = et.TotalPrevisto || 0;
+    const falta = Math.max(0, previsto - realizado);
+    if (falta > 0) temAlgumaFalta = true;
+    const cor = falta > 0 ? 'var(--ink)' : '#4F7A2E';
+    const texto = falta > 0 ? `faltam <b>${falta}m</b>` : 'concluída';
+    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${realizado}m de ${previsto}m)</div>`;
+  });
+  if (!temAlgumaFalta) {
+    html += `<div style="font-size:11px; color:#4F7A2E; margin-top:8px;">Todas as etapas estão concluídas.</div>`;
+  }
+  return html;
+}
+
+// ✅ "quando iniciou a frente X" — primeiro dia com avanço realizado de verdade
+async function montarRespostaInicioFrente(termo) {
+  const frente = await acharFrentePorNome(termo);
+  if (!frente) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
+  }
+
+  let menorData = null;
+  (frente.AvancoPorEtapa || []).forEach(et => {
+    (et.Dias || []).forEach(d => {
+      if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0) {
+        const data = parseDiaMes(d.Data);
+        if (data && (!menorData || data < menorData)) menorData = data;
+      }
+    });
+  });
+
+  if (!menorData) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei registro de início de avanço pra ${formatarTitulo(frente.Nome)}.</p>`;
+  }
+
+  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frente.Nome)} iniciou em <b>${formatarDataCurta(menorData)}</b> (primeiro registro de avanço).</div>`;
 }
 
 // ✅ "qual a média de avanço diário do [frente]" — média só dos dias
