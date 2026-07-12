@@ -3544,6 +3544,16 @@ function extrairMesesAno(termoOriginal) {
 
 // ✅ "o que está previsto do dia X até Y" — tela principal do Cronograma,
 // procura em TODAS as ~445 tarefas, o mais completo possível
+// ✅ verifica se um item é "folha" (não tem filhos na árvore) — itens
+// PAI/resumo (tipo "MOBILIZAÇÃO DA OBRA", que dura de 2025 a 2027)
+// tecnicamente cobrem qualquer data perguntada, poluindo a resposta.
+// Só as folhas representam trabalho de verdade acontecendo num dia.
+function ehItemFolha(item, indice, arvoreOrdenada) {
+  const proximo = arvoreOrdenada[indice + 1];
+  if (!proximo || proximo[5] !== item[5]) return true; // último item da área
+  return proximo[4] <= item[4]; // próximo não é mais fundo => não tem filhos
+}
+
 function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
   const datas = extrairDuasDatasCompletas(termoOriginal);
   if (!datas) {
@@ -3551,10 +3561,12 @@ function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
   }
   const [inicio, fim] = datas;
 
-  const itens = CRONOGRAMA_ARVORE_COMPLETA.filter(i => {
-    const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
-    return ini <= fim && term >= inicio;
-  }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+  const itens = CRONOGRAMA_ARVORE_COMPLETA
+    .filter((i, idx) => ehItemFolha(i, idx, CRONOGRAMA_ARVORE_COMPLETA))
+    .filter(i => {
+      const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
+      return ini <= fim && term >= inicio;
+    }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
 
   const rotuloInicio = formatarDataParaContexto('C', inicio), rotuloFim = formatarDataParaContexto('C', fim);
 
@@ -3562,43 +3574,18 @@ function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  // ✅ agrupa por área — bem menos confuso que uma lista corrida de 445
-  // itens possíveis, e dá pra ver de cara em quais frentes tem coisa
-  // acontecendo naquele período
-  const porArea = {};
-  const ordemAreas = [];
-  itens.slice(0, 80).forEach(i => {
-    const area = i[5];
-    if (!porArea[area]) { porArea[area] = []; ordemAreas.push(area); }
-    porArea[area].push(i);
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
+  itens.slice(0, 30).forEach(i => {
+    html += `<div class="subtitulo2"><span style="color:var(--accent); font-weight:700;">[${i[5]}]</span> ${i[1]}: ${i[2]} → ${i[3]}</div>`;
   });
-
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 12px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} — ${itens.length} item(ns) em ${ordemAreas.length} área(s):</div>`;
-
-  ordemAreas.forEach(area => {
-    html += `<div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.05em; text-transform:uppercase; color:var(--accent); font-weight:700; margin:12px 0 6px;">${area}</div>`;
-    porArea[area].forEach(i => {
-      const nivel = i[4];
-      const corItem = nivel <= 4 ? 'var(--ink)' : 'var(--text-soft)';
-      const pesoItem = nivel <= 4 ? '700' : '500';
-      const recuo = Math.max(0, (nivel - 3)) * 10;
-      html += `<div style="padding-left:${recuo}px; margin-bottom:5px;">
-        <span style="font-size:12px; font-weight:${pesoItem}; color:${corItem};">${i[1]}</span>
-        <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${i[2]} → ${i[3]}</div>
-      </div>`;
-    });
-  });
-
-  if (itens.length > 80) {
-    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:10px;">...e mais ${itens.length - 80}. Tenta um período menor pra ver tudo.</div>`;
+  if (itens.length > 30) {
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
   }
   return html;
 }
 
 // ✅ mesma pergunta, mas dentro da tela de uma atividade específica —
-// já vem filtrada pra uma área só, então organiza por nível hierárquico
-// (item principal x sub-tarefa em cores/pesos diferentes) em vez de
-// agrupar por área de novo
+// só olha as tarefas daquela área
 function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) {
   const datas = extrairDuasDatasCompletas(termoOriginal);
   if (!datas) {
@@ -3606,10 +3593,13 @@ function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) 
   }
   const [inicio, fim] = datas;
 
-  const itens = CRONOGRAMA_ARVORE_COMPLETA.filter(i => i[5] === nomeAtividade).filter(i => {
-    const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
-    return ini <= fim && term >= inicio;
-  }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+  const itens = CRONOGRAMA_ARVORE_COMPLETA
+    .filter((i, idx) => ehItemFolha(i, idx, CRONOGRAMA_ARVORE_COMPLETA))
+    .filter(i => i[5] === nomeAtividade)
+    .filter(i => {
+      const ini = parseDataCompleta(i[2]), term = parseDataCompleta(i[3]);
+      return ini <= fim && term >= inicio;
+    }).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
 
   const rotuloInicio = formatarDataParaContexto('C', inicio), rotuloFim = formatarDataParaContexto('C', fim);
 
@@ -3617,22 +3607,13 @@ function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) 
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto pra ${nomeAtividade} entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 12px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
-
-  itens.forEach(i => {
-    const nivel = i[4];
-    // ✅ itens mais "principais" (nível mais raso) em verde-destaque e
-    // negrito; sub-tarefas mais fundas ficam em cinza e recuadas — fica
-    // claro visualmente o que é item e o que é subitem
-    const cor = nivel <= 4 ? 'var(--accent)' : 'var(--text-soft)';
-    const peso = nivel <= 4 ? '700' : '500';
-    const tamanho = nivel <= 4 ? '12.5px' : '11.5px';
-    const recuo = Math.max(0, (nivel - 3)) * 12;
-    html += `<div style="padding-left:${recuo}px; margin-bottom:6px; ${nivel > 4 ? 'border-left:2px solid var(--line); padding-left:' + (recuo + 8) + 'px;' : ''}">
-      <span style="font-size:${tamanho}; font-weight:${peso}; color:${cor};">${i[1]}</span>
-      <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${i[2]} → ${i[3]}</div>
-    </div>`;
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
+  itens.slice(0, 30).forEach(i => {
+    html += `<div class="subtitulo2"><span style="color:var(--ink); font-weight:600;">${i[1]}</span>: ${i[2]} → ${i[3]}</div>`;
   });
+  if (itens.length > 30) {
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
+  }
   return html;
 }
 
@@ -4988,14 +4969,31 @@ function abrirGantt() {
   const container = document.getElementById("conteudoGantt");
   const frentes = window.todasFrentesSemanas || [];
 
-  // ✅ achata todas as tarefas de todas as frentes numa lista só
+  // ✅ achata todas as tarefas de todas as frentes numa lista só — usa
+  // as datas do "Diario" (os dias visíveis de verdade, os
+  // "quadradinhos") pra início/término, não as datas oficiais
+  // (InicioPrevisto/TerminoPrevisto), que podem se estender bem além
+  // da janela de seis semanas (ex: Via Permanente)
   const tarefas = [];
   frentes.forEach(frente => {
     (frente.Tarefas || []).forEach(t => {
-      const inicio = parseDiaMes(t.InicioPrevisto);
+      const dias = t.Diario || [];
+      let inicio, termino;
+
+      if (dias.length > 0) {
+        const datasDiario = dias.map(d => parseDiaMes(d.Data)).filter(Boolean);
+        if (datasDiario.length > 0) {
+          inicio = new Date(Math.min(...datasDiario));
+          termino = new Date(Math.max(...datasDiario));
+        }
+      }
+
+      // ✅ sem diário cadastrado — usa a data oficial como último recurso
+      if (!inicio) inicio = parseDiaMes(t.InicioPrevisto);
       if (!inicio) return;
-      let termino = parseDiaMes(t.TerminoPrevisto) || inicio;
+      if (!termino) termino = parseDiaMes(t.TerminoPrevisto) || inicio;
       if (termino < inicio) termino = inicio;
+
       tarefas.push({
         frente: formatarTitulo(frente.Nome),
         topico: t.Topico || '',
