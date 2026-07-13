@@ -2793,15 +2793,17 @@ function renderizarCronogramaGeral() {
   // ✅ data de término da OBRA especificamente (não a maior data entre
   // tudo, que pode ser uma linha de base perdida no meio do caminho) —
   // usada embaixo da curva S
-  let terminoAtualObra = null, terminoBaseObra = null;
+  let terminoAtualObra = null;
   atividades.forEach(a => {
     const tp = parseDataCompleta(a.terminoPrevisto);
-    const tb = parseDataCompleta(a.terminoBase);
     if (tp && (!terminoAtualObra || tp > terminoAtualObra)) terminoAtualObra = tp;
-    if (tb && (!terminoBaseObra || tb > terminoBaseObra)) terminoBaseObra = tb;
   });
   const fimObraStr = terminoAtualObra ? `${String(terminoAtualObra.getDate()).padStart(2,'0')}/${String(terminoAtualObra.getMonth()+1).padStart(2,'0')}/${terminoAtualObra.getFullYear()}` : '-';
-  const fimObraBaseStr = terminoBaseObra ? `${String(terminoBaseObra.getDate()).padStart(2,'0')}/${String(terminoBaseObra.getMonth()+1).padStart(2,'0')}/${terminoBaseObra.getFullYear()}` : null;
+  // ✅ data oficial da Linha de Base Contratual do projeto inteiro
+  // (confirmada no cabeçalho do cronograma original) — não é o máximo
+  // entre os 13 itens macro, porque "Marcos Contratuais" não tem linha
+  // de base cadastrada e distorcia essa conta
+  const fimObraBaseStr = '27/07/2028';
 
   function posicao(dataStr) {
     const data = parseDataCompleta(dataStr);
@@ -2974,10 +2976,6 @@ function renderizarCronogramaGeral() {
     </div>
   `;
 
-  const btnPdf = CRONOGRAMA_GERAL_INFO.pdfUrl
-    ? `<a href="${CRONOGRAMA_GERAL_INFO.pdfUrl}" target="_blank" style="display:flex; align-items:center; gap:6px; background:#1C2B28; color:var(--accent-bright); font-size:11px; font-weight:600; padding:8px 14px; border-radius:6px; text-decoration:none;">⬇ Baixar PDF</a>`
-    : `<span style="font-size:10.5px; color:#5f6b66;">PDF ainda não disponível</span>`;
-
   return `
     <div id="topo">
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
@@ -2995,9 +2993,9 @@ function renderizarCronogramaGeral() {
     <div class="heroNovo">
       <div class="eyebrow">Cronograma Geral</div>
       <h1 style="font-size:24px; color:#fff;">${CRONOGRAMA_GERAL_INFO.titulo}</h1>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+      <div style="font-size:11px; color:#E0A94B; font-weight:600; margin-top:2px;">Em Aprovação</div>
+      <div style="margin-top:10px;">
         <span style="font-size:11px; color:#A9B7B1;">Corte em ${CRONOGRAMA_GERAL_INFO.corte}</span>
-        ${btnPdf}
       </div>
       <div style="margin-top:14px; background:#1C2B28; border-radius:6px; padding:10px 12px; cursor:pointer;" onclick="abrirSubTelaCronograma('marcos')">
         <div style="font-size:13px; font-weight:700; color:#fff;">${proximoMarco ? proximoMarco.nome : '-'}</div>
@@ -3801,11 +3799,22 @@ async function carregarFrentes() {
 
   let noPrazo = 0;
   let atrasadas = 0;
+  let qtdFrentesAtivas = 0;
 
   // ✅ LOOP DAS FRENTES
   snap.forEach(doc => {
 
     const data = doc.data();
+
+    // ✅ se todas as etapas do avanço físico já bateram o previsto, essa
+    // frente saiu daqui — ela só aparece em "Frentes concluídas" agora
+    const etapasAvanco = data.AvancoPorEtapa || [];
+    const jaConcluida = etapasAvanco.length > 0 && etapasAvanco.every(et =>
+      (et.TotalPrevisto || 0) > 0 && (et.TotalRealizado || 0) >= (et.TotalPrevisto || 0)
+    );
+    if (jaConcluida) return;
+
+    qtdFrentesAtivas++;
 
     const card = document.createElement("div");
     card.className = "frenteNova";
@@ -3860,10 +3869,10 @@ async function carregarFrentes() {
   });
 
   // ✅ METRICAS
-  document.getElementById("qtFrentes").innerText = snap.size;
+  document.getElementById("qtFrentes").innerText = qtdFrentesAtivas;
   document.getElementById("noPrazo").innerText = noPrazo;
   document.getElementById("atrasadas").innerText = atrasadas;
-  document.getElementById("contagemFrentes").innerText = String(snap.size).padStart(2, "0");
+  document.getElementById("contagemFrentes").innerText = String(qtdFrentesAtivas).padStart(2, "0");
 
   await verificarAtualizacoes();
   await carregarContadorNotif();
@@ -4915,19 +4924,58 @@ function abrirDetalheSemana(data) {
   (data.Tarefas || []).forEach(tarefa => {
 
     const diario = tarefa.Diario || [];
-    const maxValor = Math.max(1, ...diario.map(d => d.Valor || 0));
+    const valoresNumericos = diario.map(d => parseFloat(d.Valor)).filter(v => !isNaN(v));
+    const maxValor = Math.max(1, ...valoresNumericos);
 
+    let temNaoEstipulado = false, temTexto = false;
     let barrasHtml = "";
     diario.forEach(d => {
-      const alturaPx = Math.max(4, Math.round((d.Valor / maxValor) * 100));
-      barrasHtml += `
-        <div class="colDia">
-          <div class="labelValor">${d.Valor}</div>
-          <div class="barraValor" style="height:${alturaPx}px;"></div>
-          <div class="labelDia">${d.Data}</div>
-        </div>
-      `;
+      const valorBruto = d.Valor;
+      const valorNumerico = parseFloat(valorBruto);
+      const ehNumero = valorBruto !== null && valorBruto !== undefined && valorBruto !== '' && !isNaN(valorNumerico);
+      const ehMarcadorS = !ehNumero && String(valorBruto || '').trim().toUpperCase() === 'S';
+      const ehTexto = !ehNumero && !ehMarcadorS && String(valorBruto || '').trim() !== '';
+
+      if (ehNumero) {
+        const alturaPx = Math.max(4, Math.round((valorNumerico / maxValor) * 100));
+        barrasHtml += `
+          <div class="colDia">
+            <div class="labelValor">${valorNumerico}</div>
+            <div class="barraValor" style="height:${alturaPx}px;"></div>
+            <div class="labelDia">${d.Data}</div>
+          </div>
+        `;
+      } else if (ehMarcadorS) {
+        // ✅ só marca que teve trabalho naquele dia, sem quantidade cadastrada
+        temNaoEstipulado = true;
+        barrasHtml += `
+          <div class="colDia" title="Quantidade diária não estipulada na Six Week">
+            <div class="labelValor" style="font-size:8.5px; color:var(--text-soft);">S</div>
+            <div class="barraValor" style="height:10px; background:repeating-linear-gradient(45deg, var(--line), var(--line) 3px, transparent 3px, transparent 6px);"></div>
+            <div class="labelDia">${d.Data}</div>
+          </div>
+        `;
+      } else if (ehTexto) {
+        // ✅ texto descritivo (tipo "Acertos") em vez de uma quantidade —
+        // sinaliza com cor diferente, pra não parecer um dia sem nada
+        temTexto = true;
+        barrasHtml += `
+          <div class="colDia" title="${valorBruto}">
+            <div class="labelValor" style="font-size:8px; color:var(--accent); font-weight:700; line-height:1.1;">${valorBruto}</div>
+            <div class="barraValor" style="height:10px; background:var(--accent); opacity:0.35;"></div>
+            <div class="labelDia">${d.Data}</div>
+          </div>
+        `;
+      }
     });
+
+    let notaValoresEspeciais = '';
+    if (temNaoEstipulado) {
+      notaValoresEspeciais += `<div style="font-size:10px; color:var(--text-soft); margin-top:6px; text-align:left;">Dias marcados "S": quantidade diária não estipulada na Six Week.</div>`;
+    }
+    if (temTexto) {
+      notaValoresEspeciais += `<div style="font-size:10px; color:var(--accent); margin-top:2px; text-align:left;">Dias em destaque: atividade registrada sem quantidade numérica.</div>`;
+    }
 
     // ✅ se o término real da tarefa vai além do último dia mostrado no
     // gráfico diário, avisa que ela continua na próxima Six Week — sem
@@ -4953,6 +5001,7 @@ function abrirDetalheSemana(data) {
       <div class="graficoDiario">
         ${barrasHtml || '<p style="font-size:12px; color:var(--text-soft);">Sem previsão diária cadastrada.</p>'}
       </div>
+      ${notaValoresEspeciais}
       ${avisoContinuacao}
     `;
 
