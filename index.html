@@ -6145,7 +6145,7 @@ function formatarNumeroBR(n) {
 // resposta pode estar com alguma defasagem (dado desatualizado).
 function situacaoMaisRecente(frente) {
   let situacaoRecente = "";
-  (frente.AvancoPorEtapa || []).forEach(etapa => {
+  (frente.Etapas || []).forEach(etapa => {
     if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
   });
   return situacaoRecente;
