@@ -6140,6 +6140,24 @@ function formatarNumeroBR(n) {
   return Number(n).toFixed(2).replace('.', ',');
 }
 
+// ✅ acha a "situação em" mais recente entre as etapas de uma frente —
+// mesma lógica usada nos cards. Serve pra avisar o usuário se a
+// resposta pode estar com alguma defasagem (dado desatualizado).
+function situacaoMaisRecente(frente) {
+  let situacaoRecente = "";
+  (frente.AvancoPorEtapa || []).forEach(etapa => {
+    if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
+  });
+  return situacaoRecente;
+}
+
+function notaSituacaoEm(frente) {
+  const situacao = situacaoMaisRecente(frente);
+  return situacao
+    ? `<div style="font-size:10.5px; color:var(--text-soft); margin-top:8px;">Situação em <b>${situacao}</b></div>`
+    : '';
+}
+
 async function montarRespostaQuantoFalta(termo) {
   const frente = await acharFrentePorNome(termo);
   if (!frente) {
@@ -6165,6 +6183,7 @@ async function montarRespostaQuantoFalta(termo) {
   if (!temAlgumaFalta) {
     html += `<div style="font-size:11px; color:#4F7A2E; margin-top:8px;">Todas as etapas estão concluídas.</div>`;
   }
+  html += notaSituacaoEm(frente);
   return html;
 }
 
@@ -6311,6 +6330,7 @@ async function montarRespostaAvancoTotalGeral(termo) {
   etapas.forEach(et => {
     html += `<div class="subtitulo2">${et.Etapa}: <b>${et.TotalRealizado || 0}m</b> realizado (de ${et.TotalPrevisto || 0}m previstos)</div>`;
   });
+  html += notaSituacaoEm(frente);
   return html;
 }
 
@@ -6732,6 +6752,7 @@ async function montarRespostaPk(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum PK registrado pra ${formatarTitulo(frente.Nome)}.</p>`;
   }
 
+  html += notaSituacaoEm(frente);
   return html;
 }
 
