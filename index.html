@@ -3845,7 +3845,10 @@ async function carregarFrentes() {
     // ✅ a nota de paralisação só aparece pra quem está paralisada — as
     // outras continuam exatamente como estavam, sem essa linha a mais
     const notaParalisacaoHtml = status === "paralisada" && data.NotaParalisacao
-      ? `<div style="font-size:10.5px; color:#c0392b; margin-top:4px; text-align:left;">⏸ ${data.NotaParalisacao}</div>`
+      ? `<div style="display:flex; align-items:flex-start; gap:5px; font-size:10.5px; color:#c0392b; margin-top:4px; text-align:left;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1.5px;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <span>${data.NotaParalisacao}</span>
+        </div>`
       : "";
 
     card.innerHTML = `
@@ -4572,12 +4575,6 @@ let menu = `
     const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
     const corDesvio = desvioNum < 0 ? '#e53935' : '#43a047';
 
-    // ✅ acha a Produtividade correspondente em AvancoPorEtapa (vem de
-    // outra fonte/planilha, então casa pelo nome normalizado, não exato)
-    const nomeEtapaNorm = normalizarTexto(etapa.Etapa || '');
-    const avancoCorrespondente = (data.AvancoPorEtapa || []).find(a => normalizarTexto(a.Etapa || '') === nomeEtapaNorm);
-    const produtividade = avancoCorrespondente ? avancoCorrespondente.Produtividade : null;
-
     html += `
     <div style="${i > 0 ? 'margin-top:20px; padding-top:16px; border-top:1px solid #eee;' : ''}">
 
@@ -4627,22 +4624,6 @@ let menu = `
           <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/481/481099.png"
                style="width:14px; position:absolute; bottom:10px; right:10px;">
         </div>
-
-        ${produtividade ? `
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Produtividade prevista</div>
-            <div style="font-size:15px; margin-top:4px;">${produtividade.MediaPrevista !== null ? produtividade.MediaPrevista + 'm/deton.' : '-'}</div>
-          </div>
-        </div>
-
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Produtividade realizada</div>
-            <div style="font-size:15px; margin-top:4px;">${produtividade.MediaRealizada !== null ? produtividade.MediaRealizada + 'm/deton.' : '-'}</div>
-          </div>
-        </div>
-        ` : ''}
       </div>
 
       ${etapa.InformacoesAdicionais ? `
@@ -4852,6 +4833,20 @@ function mostrarDesempenho() {
                 <div style="font-size:13px; margin-top:4px;">${statusRealizado(et)}</div>
               </div>
             </div>
+            ${et.Produtividade ? `
+            <div class="cardIndicador">
+              <div style="text-align:left;">
+                <div style="font-size:11px; font-weight:600;">Produtividade prevista</div>
+                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista + 'm/deton.' : '-'}</div>
+              </div>
+            </div>
+            <div class="cardIndicador">
+              <div style="text-align:left;">
+                <div style="font-size:11px; font-weight:600;">Produtividade realizada</div>
+                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada + 'm/deton.' : '-'}</div>
+              </div>
+            </div>
+            ` : ''}
           </div>
         </div>
       `).join('')}
