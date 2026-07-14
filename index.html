@@ -3825,7 +3825,7 @@ async function carregarFrentes() {
 
     let status = "ok";
 
-    if (data.Paralisada) {
+    if (data.Paralisada === true || data.Paralisada === 'true') {
       status = "paralisada";
     } else if (progresso < previsto) {
       status = "atrasada";
@@ -4571,6 +4571,13 @@ let menu = `
   (data.Etapas || []).forEach((etapa, i) => {
     const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
     const corDesvio = desvioNum < 0 ? '#e53935' : '#43a047';
+
+    // ✅ acha a Produtividade correspondente em AvancoPorEtapa (vem de
+    // outra fonte/planilha, então casa pelo nome normalizado, não exato)
+    const nomeEtapaNorm = normalizarTexto(etapa.Etapa || '');
+    const avancoCorrespondente = (data.AvancoPorEtapa || []).find(a => normalizarTexto(a.Etapa || '') === nomeEtapaNorm);
+    const produtividade = avancoCorrespondente ? avancoCorrespondente.Produtividade : null;
+
     html += `
     <div style="${i > 0 ? 'margin-top:20px; padding-top:16px; border-top:1px solid #eee;' : ''}">
 
@@ -4620,6 +4627,22 @@ let menu = `
           <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/481/481099.png"
                style="width:14px; position:absolute; bottom:10px; right:10px;">
         </div>
+
+        ${produtividade ? `
+        <div class="cardIndicador" style="position:relative;">
+          <div style="text-align:left;">
+            <div style="font-size:12px; font-weight:600;">Produtividade prevista</div>
+            <div style="font-size:15px; margin-top:4px;">${produtividade.MediaPrevista !== null ? produtividade.MediaPrevista + 'm/deton.' : '-'}</div>
+          </div>
+        </div>
+
+        <div class="cardIndicador" style="position:relative;">
+          <div style="text-align:left;">
+            <div style="font-size:12px; font-weight:600;">Produtividade realizada</div>
+            <div style="font-size:15px; margin-top:4px;">${produtividade.MediaRealizada !== null ? produtividade.MediaRealizada + 'm/deton.' : '-'}</div>
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       ${etapa.InformacoesAdicionais ? `
