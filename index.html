@@ -2593,6 +2593,107 @@ const CRONOGRAMA_ARVORE_COMPLETA = [
   [458,'Urbanização do Entorno','12/09/2028','25/10/2028',3,'Túnel Madre Jacinta'],
 ];
 
+// ✅ reconstrói o "número da estrutura de tópicos" (tipo "1.6.3.1.4") de
+// cada item — o MS Project mostra isso, mas eu só tinha o "nível"
+// (profundidade). Como os itens já vêm na ordem certa do cronograma,
+// dá pra reconstruir contando quantas vezes cada nível se repete,
+// resetando os níveis mais fundos toda vez que sobe um nível.
+// Calculado uma vez só e guardado em cache.
+let CRONOGRAMA_NUMEROS_CACHE = null;
+function calcularNumerosEstrutura() {
+  if (CRONOGRAMA_NUMEROS_CACHE) return CRONOGRAMA_NUMEROS_CACHE;
+
+  const contadores = {};
+  const numeroPorId = {};
+  CRONOGRAMA_ARVORE_COMPLETA.forEach(item => {
+    const [id, nome, inicio, termino, nivel] = item;
+    Object.keys(contadores).forEach(k => { if (parseInt(k) > nivel) delete contadores[k]; });
+    contadores[nivel] = (contadores[nivel] || 0) + 1;
+    const partes = ['1'];
+    for (let n = 2; n <= nivel; n++) partes.push(contadores[n] || 1);
+    numeroPorId[id] = partes.join('.');
+  });
+
+  CRONOGRAMA_NUMEROS_CACHE = numeroPorId;
+  return numeroPorId;
+}
+
+// ✅ acha o item com esse número exato, e todos os descendentes dele
+// (cujo número COMEÇA com o número + ".") — é o item + toda a sub-árvore
+function acharItensCronogramaPorNumero(numeroAlvo) {
+  const numeros = calcularNumerosEstrutura();
+  const alvoLimpo = String(numeroAlvo || '').trim();
+  if (!alvoLimpo) return [];
+
+  return CRONOGRAMA_ARVORE_COMPLETA.filter(item => {
+    const num = numeros[item[0]];
+    if (!num) return false;
+    return num === alvoLimpo || num.startsWith(alvoLimpo + '.');
+  });
+}
+
+function mostrarCronogramaFrente() {
+  document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
+  document.querySelectorAll(".menuBtn")[2].classList.add("ativo");
+
+  document.getElementById("visaoGeral").style.display = "none";
+  document.getElementById("desempenho").style.display = "none";
+  const container = document.getElementById("cronogramaFrente");
+  container.style.display = "block";
+
+  const d = window.frenteAtual;
+  const numero = d.NumeroCronograma;
+
+  if (!numero) {
+    container.innerHTML = `<div class="bloco"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Essa frente ainda não tem o número do cronograma cadastrado (coluna "Nº no cronograma" na aba "Nome das Frentes").</p></div>`;
+    return;
+  }
+
+  const itens = acharItensCronogramaPorNumero(numero).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+  const numeros = calcularNumerosEstrutura();
+
+  if (itens.length === 0) {
+    container.innerHTML = `<div class="bloco"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Não encontrei o item "${numero}" no cronograma geral.</p></div>`;
+    return;
+  }
+
+  const MESES_NOME_CRONFR = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  let html = `<div class="bloco"><div style="font-size:11px; color:var(--text-soft); margin-bottom:14px; text-align:left;">Item ${numero} do cronograma geral — ${itens.length} tarefa(s).</div>`;
+
+  let mesAnterior = null;
+  itens.forEach((item, i) => {
+    const dataInicio = parseDataCompleta(item[2]);
+    const chaveMes = dataInicio ? `${dataInicio.getMonth()}-${dataInicio.getFullYear()}` : null;
+
+    if (chaveMes !== mesAnterior) {
+      html += `
+        <div style="display:flex; align-items:center; gap:10px; margin:${i === 0 ? '0' : '16'}px 0 8px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:3px 9px; border-radius:12px;">
+            ${MESES_NOME_CRONFR[dataInicio.getMonth()]} / ${dataInicio.getFullYear()}
+          </div>
+          <div style="flex:1; height:1px; background:var(--line);"></div>
+        </div>
+      `;
+      mesAnterior = chaveMes;
+    }
+
+    html += `
+      <div style="display:flex; gap:8px; padding:6px 0 6px 4px; border-left:2px solid var(--accent); margin-left:4px;">
+        <div style="flex-shrink:0; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; margin-left:-7px;"></div>
+        <div style="flex:1; text-align:left;">
+          <div style="font-size:9.5px; color:var(--text-soft); margin-bottom:1px;">${numeros[item[0]]}</div>
+          <div style="font-size:12px; font-weight:600; color:var(--ink);">${item[1]}</div>
+          <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${item[2]} → ${item[3]}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
 const CRONOGRAMA_GERAL_FILHOS_TRAVA = {
   'Marcos Contratuais': {
     'Conclusão das escavações da Estação OESTE': { trava: [], travadaPor: ['Estação Oeste', 'Túnel de Interligação', 'Túnel de Ligação entre Plataformas', 'Túnel de Via Trecho Oeste'] },
@@ -4555,6 +4656,15 @@ let menu = `
     <span>Desempenho</span>
   </div>
 
+  <div class="menuBtn" onclick="mostrarCronogramaFrente()">
+    <div class="iconCircle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/>
+      </svg>
+    </div>
+    <span>Cronograma</span>
+  </div>
+
 </div>
 `;
   // ✅ IMPORTANTE: cria o html ANTES
@@ -4737,6 +4847,8 @@ document.getElementById("conteudo").innerHTML = `
 
   <div id="desempenho" style="display:none;"></div>
 
+  <div id="cronogramaFrente" style="display:none;"></div>
+
 `;
 
 // ✅ abre já na aba "Visão Geral"
@@ -4772,6 +4884,7 @@ function mostrarVisao() {
 
   document.getElementById("visaoGeral").style.display = "block";
   document.getElementById("desempenho").style.display = "none";
+  document.getElementById("cronogramaFrente").style.display = "none";
 
 }
 
@@ -4806,6 +4919,7 @@ function mostrarDesempenho() {
 
   document.getElementById("visaoGeral").style.display = "none";
   document.getElementById("desempenho").style.display = "block";
+  document.getElementById("cronogramaFrente").style.display = "none";
 
   const etapas = d.AvancoPorEtapa || [];
 
