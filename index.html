@@ -2649,7 +2649,12 @@ function mostrarCronogramaFrente() {
     return;
   }
 
-  const itens = acharItensCronogramaPorNumero(numero).sort((a, b) => parseDataCompleta(a[2]) - parseDataCompleta(b[2]));
+  // ✅ ordena pela ordem ORIGINAL do cronograma (id), não por data — 
+  // ordenar por data espalhava itens de origens diferentes que caem no
+  // mesmo mês, misturando "Enfilagens" de um tópico com "Enfilagens" de
+  // outro completamente diferente. Pela ordem original, pai/filhos/
+  // irmãos ficam sempre juntos, do jeito que aparecem no MS Project.
+  const itens = acharItensCronogramaPorNumero(numero).sort((a, b) => a[0] - b[0]);
   const numeros = calcularNumerosEstrutura();
 
   if (itens.length === 0) {
@@ -2675,27 +2680,9 @@ function mostrarCronogramaFrente() {
     if (ehPaiDeAlguem) temFilhos.add(numAtual);
   });
 
-  const MESES_NOME_CRONFR = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
   let html = `<div class="bloco"><div style="font-size:11px; color:var(--text-soft); margin-bottom:14px; text-align:left;">Item ${numero} do cronograma geral — ${itens.length} tarefa(s).</div>`;
 
-  let mesAnterior = null;
   itens.forEach((item, i) => {
-    const dataInicio = parseDataCompleta(item[2]);
-    const chaveMes = dataInicio ? `${dataInicio.getMonth()}-${dataInicio.getFullYear()}` : null;
-
-    if (chaveMes !== mesAnterior) {
-      html += `
-        <div style="display:flex; align-items:center; gap:10px; margin:${i === 0 ? '0' : '16'}px 0 8px;">
-          <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:3px 9px; border-radius:12px;">
-            ${MESES_NOME_CRONFR[dataInicio.getMonth()]} / ${dataInicio.getFullYear()}
-          </div>
-          <div style="flex:1; height:1px; background:var(--line);"></div>
-        </div>
-      `;
-      mesAnterior = chaveMes;
-    }
-
     // ✅ nível RELATIVO ao item principal dessa frente — define se é
     // título (a própria frente), subtítulo (a "fase" dela) ou uma
     // linha normal (a tarefa do dia a dia). A partir do nível 2, o
