@@ -2664,6 +2664,17 @@ function mostrarCronogramaFrente() {
   const itemRaiz = itens.find(item => numeros[item[0]] === numero);
   const nivelRaiz = itemRaiz ? itemRaiz[4] : Math.min(...itens.map(i => i[4]));
 
+  // ✅ marca quais itens TÊM subitens dentro dessa listagem — esses
+  // ficam destacados independente da profundidade deles, pra
+  // diferenciar "isso agrupa outras coisas" de "isso é uma tarefa do
+  // dia a dia mesmo"
+  const numerosDaLista = itens.map(item => numeros[item[0]]);
+  const temFilhos = new Set();
+  numerosDaLista.forEach(numAtual => {
+    const ehPaiDeAlguem = numerosDaLista.some(outro => outro !== numAtual && outro.startsWith(numAtual + '.'));
+    if (ehPaiDeAlguem) temFilhos.add(numAtual);
+  });
+
   const MESES_NOME_CRONFR = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   let html = `<div class="bloco"><div style="font-size:11px; color:var(--text-soft); margin-bottom:14px; text-align:left;">Item ${numero} do cronograma geral — ${itens.length} tarefa(s).</div>`;
@@ -2692,6 +2703,8 @@ function mostrarCronogramaFrente() {
     // (em vez de "achatar" tudo igual de uma vez), pra continuar dando
     // pra perceber a profundidade mesmo em itens com muitos níveis.
     const nivelRelativo = item[4] - nivelRaiz;
+    const numeroAtual = numeros[item[0]];
+    const ehPai = temFilhos.has(numeroAtual);
     let tamanho, peso, cor, corData, recuo, corLinha, corBolinha, opacidade;
     if (nivelRelativo <= 0) {
       // TÍTULO — a própria frente
@@ -2712,6 +2725,16 @@ function mostrarCronogramaFrente() {
       recuo = 14 + Math.min(fundura + 1, 8) * 9;
       corLinha = 'var(--line)'; corBolinha = 'var(--line)';
       opacidade = Math.max(0.55, 1 - fundura * 0.06);
+    }
+
+    // ✅ quem TEM subitens fica destacado — não esmaece, fica em negrito
+    // e com a cor mais forte, mesmo que esteja bem fundo na hierarquia.
+    // Só as "folhas" (sem filhos) é que vão esmaecendo com a profundidade.
+    if (ehPai && nivelRelativo > 1) {
+      opacidade = 1;
+      peso = '700';
+      cor = 'var(--ink)';
+      tamanho = Math.max(11, parseFloat(tamanho)) + 'px';
     }
 
     html += `
