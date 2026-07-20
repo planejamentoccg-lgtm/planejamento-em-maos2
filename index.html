@@ -2657,6 +2657,13 @@ function mostrarCronogramaFrente() {
     return;
   }
 
+  // ✅ acha o nível ABSOLUTO do item principal dessa frente, pra usar
+  // como referência — tudo mais é estilizado pelo nível RELATIVO a
+  // esse (0 = o item principal, 1 = subitem direto, 2+ = linha normal
+  // mais funda), não pelo nível absoluto do cronograma inteiro
+  const itemRaiz = itens.find(item => numeros[item[0]] === numero);
+  const nivelRaiz = itemRaiz ? itemRaiz[4] : Math.min(...itens.map(i => i[4]));
+
   const MESES_NOME_CRONFR = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   let html = `<div class="bloco"><div style="font-size:11px; color:var(--text-soft); margin-bottom:14px; text-align:left;">Item ${numero} do cronograma geral — ${itens.length} tarefa(s).</div>`;
@@ -2678,13 +2685,32 @@ function mostrarCronogramaFrente() {
       mesAnterior = chaveMes;
     }
 
+    // ✅ nível RELATIVO ao item principal dessa frente — define se é
+    // título (a própria frente), subtítulo (a "fase" dela) ou uma
+    // linha normal (a tarefa do dia a dia, mais funda)
+    const nivelRelativo = item[4] - nivelRaiz;
+    let tamanho, peso, cor, corData, recuo, corLinha, corBolinha;
+    if (nivelRelativo <= 0) {
+      // TÍTULO — a própria frente
+      tamanho = '14px'; peso = '700'; cor = 'var(--accent)'; corData = 'var(--ink)';
+      recuo = 0; corLinha = 'var(--accent)'; corBolinha = 'var(--accent)';
+    } else if (nivelRelativo === 1) {
+      // SUBTÍTULO — a fase dela
+      tamanho = '12.5px'; peso = '600'; cor = 'var(--ink)'; corData = 'var(--text-soft)';
+      recuo = 14; corLinha = 'var(--line)'; corBolinha = 'var(--ink)';
+    } else {
+      // LINHA NORMAL — tarefa do dia a dia, quanto mais funda mais recuada
+      tamanho = '11px'; peso = '400'; cor = 'var(--text-soft)'; corData = 'var(--text-soft)';
+      recuo = 14 + Math.min(nivelRelativo - 1, 3) * 10; corLinha = 'var(--line)'; corBolinha = 'var(--line)';
+    }
+
     html += `
-      <div style="display:flex; gap:8px; padding:6px 0 6px 4px; border-left:2px solid var(--accent); margin-left:4px;">
-        <div style="flex-shrink:0; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; margin-left:-7px;"></div>
+      <div style="display:flex; gap:8px; padding:${nivelRelativo <= 0 ? '8' : '5'}px 0 ${nivelRelativo <= 0 ? '8' : '5'}px ${4 + recuo}px; border-left:2px solid ${corLinha}; margin-left:4px;">
+        <div style="flex-shrink:0; width:5px; height:5px; border-radius:50%; background:${corBolinha}; margin-top:6px; margin-left:${-7 - recuo}px;"></div>
         <div style="flex:1; text-align:left;">
-          <div style="font-size:9.5px; color:var(--text-soft); margin-bottom:1px;">${numeros[item[0]]}</div>
-          <div style="font-size:12px; font-weight:600; color:var(--ink);">${item[1]}</div>
-          <div style="font-size:10px; color:var(--text-soft); margin-top:1px;">${item[2]} → ${item[3]}</div>
+          <div style="font-size:9px; color:var(--text-soft); margin-bottom:1px; opacity:0.8;">${numeros[item[0]]}</div>
+          <div style="font-size:${tamanho}; font-weight:${peso}; color:${cor};">${item[1]}</div>
+          <div style="font-size:10px; color:${corData}; margin-top:1px;">${item[2]} → ${item[3]}</div>
         </div>
       </div>
     `;
