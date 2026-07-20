@@ -3916,7 +3916,10 @@ async function carregarFrentes() {
     );
     if (jaConcluida) return;
 
-    qtdFrentesAtivas++;
+    // ✅ frentes paralisadas continuam aparecendo como card na lista,
+    // mas não entram na contagem do painel como "em andamento"
+    const estaParalisada = data.Paralisada === true || data.Paralisada === 'true';
+    if (!estaParalisada) qtdFrentesAtivas++;
 
     const card = document.createElement("div");
     card.className = "frenteNova";
