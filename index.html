@@ -1502,6 +1502,11 @@ body.tema-escuro .iconeIndicador{
   font-family:'IBM Plex Mono', monospace;
   font-size:10.5px; color:var(--text-soft);
 }
+.frenteNova .previstoInline{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:400; font-size:10.5px; color:var(--text-soft);
+  margin-left:4px;
+}
 
 /* -------- agenda (próximas semanas) -------- */
 .agendaItem{
@@ -4034,7 +4039,9 @@ async function carregarFrentes() {
       </div>
 
       <div class="baixo2">
-        <span class="pct2">${progresso}%</span>
+        <span>
+          <span class="pct2">${progresso}%</span><span class="previstoInline">/previsto: ${previsto}%</span>
+        </span>
         <span class="meta2">${situacaoRecente ? "situação em " + situacaoRecente : ""}</span>
       </div>
       ${notaParalisacaoHtml}
