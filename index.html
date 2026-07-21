@@ -3966,6 +3966,15 @@ async function carregarFrentes() {
     );
     if (jaConcluida) return;
 
+    // ✅ se TODAS as etapas ainda estão "A iniciar" (nenhuma em andamento,
+    // concluída ou paralisada ainda), a frente não aparece nem na lista
+    // nem entra na contagem de "Frentes ativas" — ela só passa a existir
+    // aqui quando pelo menos 1 etapa realmente começar
+    const etapasDaFrente = data.Etapas || [];
+    const aindaNaoComecou = etapasDaFrente.length > 0 &&
+      etapasDaFrente.every(et => normalizarTexto(et.Status) === 'a iniciar');
+    if (aindaNaoComecou) return;
+
     // ✅ frentes paralisadas continuam aparecendo como card na lista,
     // mas não entram na contagem do painel como "em andamento"
     const estaParalisada = data.Paralisada === true || data.Paralisada === 'true';
