@@ -1332,6 +1332,32 @@ body.tema-escuro .iconeIndicador{
 }
 .btnBusca:hover{ background:var(--accent-bright); }
 
+.filtrosTipo{
+  display:flex;
+  gap:8px;
+  margin:10px 0 4px;
+}
+.filtroTipoBtn{
+  flex:1;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--text-soft);
+  background:var(--card-fundo);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:8px 10px;
+  cursor:pointer;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.filtroTipoBtn:hover{ border-color:var(--accent); color:var(--ink); }
+.filtroTipoBtn.ativo{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+
 .sugestoesBusca{
   position:absolute;
   top:100%; left:0; right:0;
@@ -4040,6 +4066,12 @@ async function carregarFrentes() {
       </div>
       <div id="resultadoBuscaF"></div>
 
+      <div class="filtrosTipo" id="filtrosTipo">
+        <button class="filtroTipoBtn ativo" data-tipo="Geral" onclick="filtrarFrentesPorTipo('Geral')">Geral</button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">Escavação</button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">Civil</button>
+      </div>
+
       <div class="cabecalho" style="margin-top:20px;">
         <span class="tituloSecao">Frentes de serviço</span>
         <span class="contagemSecao" id="contagemFrentes">00</span>
@@ -4054,18 +4086,41 @@ async function carregarFrentes() {
 
   atualizarIconeTema();
 
-  const botoes = document.getElementById("botoes");
-
   const snap = await db.collection("Frentes").get();
+  window.todasFrentesAtivas = [];
+  snap.forEach(doc => window.todasFrentesAtivas.push(doc.data()));
+
+  // ✅ preserva o filtro de Tipo que já estava selecionado (se a tela for
+  // recarregada), senão começa em "Geral"
+  window.filtroTipoFrentes = window.filtroTipoFrentes || 'Geral';
+  renderizarFrentesFiltradas();
+
+  await verificarAtualizacoes();
+  await carregarContadorNotif();
+}
+
+// ✅ desenha a lista de cards + as métricas do painel considerando só as
+// frentes do Tipo selecionado ("Geral" = todas, sem filtro)
+function renderizarFrentesFiltradas() {
+
+  const botoes = document.getElementById("botoes");
+  botoes.innerHTML = "";
+
+  const tipoAtivo = window.filtroTipoFrentes || 'Geral';
+
+  document.querySelectorAll(".filtroTipoBtn").forEach(btn => {
+    btn.classList.toggle("ativo", btn.dataset.tipo === tipoAtivo);
+  });
 
   let noPrazo = 0;
   let atrasadas = 0;
   let qtdFrentesAtivas = 0;
 
-  // ✅ LOOP DAS FRENTES
-  snap.forEach(doc => {
+  (window.todasFrentesAtivas || []).forEach(data => {
 
-    const data = doc.data();
+    // ✅ filtro por Tipo — "Geral" mostra todas, o resto compara com a
+    // coluna "Tipo" da aba Planejamento em Mãos (ex: "Civil", "Escavação")
+    if (tipoAtivo !== 'Geral' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
 
     // ✅ se todas as etapas do avanço físico já bateram o previsto, essa
     // frente saiu daqui — ela só aparece em "Frentes concluídas" agora
@@ -4162,9 +4217,13 @@ async function carregarFrentes() {
   document.getElementById("noPrazo").innerText = noPrazo;
   document.getElementById("atrasadas").innerText = atrasadas;
   document.getElementById("contagemFrentes").innerText = String(qtdFrentesAtivas).padStart(2, "0");
+}
 
-  await verificarAtualizacoes();
-  await carregarContadorNotif();
+// ✅ chamado pelos 3 botões (Geral/Escavação/Civil) — troca o filtro e
+// redesenha a lista + o painel de métricas na hora, sem nova consulta ao banco
+function filtrarFrentesPorTipo(tipo) {
+  window.filtroTipoFrentes = tipo;
+  renderizarFrentesFiltradas();
 }
 
 // =======================================================================
