@@ -4067,7 +4067,7 @@ async function carregarFrentes() {
       <div id="resultadoBuscaF"></div>
 
       <div class="filtrosTipo" id="filtrosTipo">
-        <button class="filtroTipoBtn ativo" data-tipo="Geral" onclick="filtrarFrentesPorTipo('Geral')">Geral</button>
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">Todas</button>
         <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">Escavação</button>
         <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">Civil</button>
       </div>
@@ -4091,8 +4091,8 @@ async function carregarFrentes() {
   snap.forEach(doc => window.todasFrentesAtivas.push(doc.data()));
 
   // ✅ preserva o filtro de Tipo que já estava selecionado (se a tela for
-  // recarregada), senão começa em "Geral"
-  window.filtroTipoFrentes = window.filtroTipoFrentes || 'Geral';
+  // recarregada), senão começa em "Todas"
+  window.filtroTipoFrentes = window.filtroTipoFrentes || 'Todas';
   renderizarFrentesFiltradas();
 
   await verificarAtualizacoes();
@@ -4100,13 +4100,13 @@ async function carregarFrentes() {
 }
 
 // ✅ desenha a lista de cards + as métricas do painel considerando só as
-// frentes do Tipo selecionado ("Geral" = todas, sem filtro)
+// frentes do Tipo selecionado ("Todas" = todas, sem filtro)
 function renderizarFrentesFiltradas() {
 
   const botoes = document.getElementById("botoes");
   botoes.innerHTML = "";
 
-  const tipoAtivo = window.filtroTipoFrentes || 'Geral';
+  const tipoAtivo = window.filtroTipoFrentes || 'Todas';
 
   document.querySelectorAll(".filtroTipoBtn").forEach(btn => {
     btn.classList.toggle("ativo", btn.dataset.tipo === tipoAtivo);
@@ -4118,9 +4118,9 @@ function renderizarFrentesFiltradas() {
 
   (window.todasFrentesAtivas || []).forEach(data => {
 
-    // ✅ filtro por Tipo — "Geral" mostra todas, o resto compara com a
+    // ✅ filtro por Tipo — "Todas" mostra todas, o resto compara com a
     // coluna "Tipo" da aba Planejamento em Mãos (ex: "Civil", "Escavação")
-    if (tipoAtivo !== 'Geral' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
+    if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
 
     // ✅ se todas as etapas do avanço físico já bateram o previsto, essa
     // frente saiu daqui — ela só aparece em "Frentes concluídas" agora
@@ -4270,13 +4270,18 @@ async function carregarFrentesConcluidas() {
       </div>
       <div id="resultadoBuscaFC"></div>
 
+      <div class="filtrosTipo" id="filtrosTipoFC">
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesConcluidasPorTipo('Todas')">Todas</button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">Escavação</button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesConcluidasPorTipo('Civil')">Civil</button>
+      </div>
+
       <div id="listaFrentesConcluidas" style="margin-top:14px;"></div>
     </section>
   `;
 
   atualizarIconeTema();
 
-  const listaContainer = document.getElementById("listaFrentesConcluidas");
   const snap = await db.collection("Frentes").get();
   window.todasFrentesConcluidas = [];
 
@@ -4292,6 +4297,32 @@ async function carregarFrentesConcluidas() {
     if (!concluida) return;
 
     window.todasFrentesConcluidas.push(data);
+  });
+
+  // ✅ preserva o filtro já selecionado, senão começa em "Todas"
+  window.filtroTipoFrentesConcluidas = window.filtroTipoFrentesConcluidas || 'Todas';
+  renderizarFrentesConcluidasFiltradas();
+}
+
+// ✅ desenha a lista de cards de frentes concluídas considerando só as
+// frentes do Tipo selecionado ("Todas" = sem filtro)
+function renderizarFrentesConcluidasFiltradas() {
+  const listaContainer = document.getElementById("listaFrentesConcluidas");
+  listaContainer.innerHTML = "";
+
+  const tipoAtivo = window.filtroTipoFrentesConcluidas || 'Todas';
+
+  document.querySelectorAll("#filtrosTipoFC .filtroTipoBtn").forEach(btn => {
+    btn.classList.toggle("ativo", btn.dataset.tipo === tipoAtivo);
+  });
+
+  (window.todasFrentesConcluidas || []).forEach(data => {
+
+    // ✅ filtro por Tipo — "Todas" mostra todas, o resto compara com a
+    // coluna "Tipo" da aba Planejamento em Mãos (ex: "Civil", "Escavação")
+    if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
+
+    const etapas = data.AvancoPorEtapa || [];
 
     // ✅ data de conclusão = último dia com avanço realizado de verdade
     let dataConclusao = null;
@@ -4347,6 +4378,12 @@ async function carregarFrentesConcluidas() {
   if (listaContainer.children.length === 0) {
     listaContainer.innerHTML = '<p style="font-size:13px; color:var(--text-soft); text-align:left;">Nenhuma frente concluída ainda.</p>';
   }
+}
+
+// ✅ chamado pelos 3 botões (Todas/Escavação/Civil) na tela de concluídas
+function filtrarFrentesConcluidasPorTipo(tipo) {
+  window.filtroTipoFrentesConcluidas = tipo;
+  renderizarFrentesConcluidasFiltradas();
 }
 
 const SUGESTOES_BUSCA_FC = [
