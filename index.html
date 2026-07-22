@@ -3739,12 +3739,18 @@ function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
-  itens.slice(0, 30).forEach(i => {
-    html += `<div class="subtitulo2"><span style="color:var(--accent); font-weight:700;">[${i[5]}]</span> ${i[1]}: ${i[2]} → ${i[3]}</div>`;
-  });
+  const mostrados = itens.slice(0, 30);
+  const itensAgrupados = mostrados.map(i => ({ area: i[5], nome: i[1], periodo: `${i[2]} → ${i[3]}` }));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'area', i => `
+    <div style="margin-bottom:9px;">
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
   if (itens.length > 30) {
-    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:10px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
   }
   return html;
 }
@@ -3772,12 +3778,21 @@ function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) 
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto pra ${nomeAtividade} entre ${rotuloInicio} e ${rotuloFim}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
-  itens.slice(0, 30).forEach(i => {
-    html += `<div class="subtitulo2"><span style="color:var(--ink); font-weight:600;">${i[1]}</span>: ${i[2]} → ${i[3]}</div>`;
+  const mostrados = itens.slice(0, 30);
+  const itensAgrupados = mostrados.map(i => {
+    const d = parseDataCompleta(i[2]);
+    return { mes: `${MESES_NOME_CAL[d.getMonth()]}/${d.getFullYear()}`, nome: i[1], periodo: `${i[2]} → ${i[3]}` };
   });
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'mes', i => `
+    <div style="margin-bottom:9px;">
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
   if (itens.length > 30) {
-    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:6px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:10px;">...e mais ${itens.length - 30}. Tenta um período menor pra ver tudo listado.</div>`;
   }
   return html;
 }
@@ -3803,11 +3818,21 @@ function montarRespostaCaminhoCriticoMes(termoOriginal) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não há caminho crítico passando em ${rotulo}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Caminho crítico em ${rotulo}:</div>`;
-  itens.forEach(t => {
-    const bc = t.caminho.slice(0, -1).join(' › ');
-    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
-  });
+  const itensAgrupados = itens.map(t => ({
+    area: t.caminho[0],
+    bc: t.caminho.slice(1, -1).join(' › '),
+    nome: t.nome,
+    periodo: `${t.inicio} → ${t.termino}`,
+  }));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Caminho crítico em ${rotulo}:</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'area', i => `
+    <div style="margin-bottom:9px;">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
   return html;
 }
 
@@ -3830,11 +3855,24 @@ function montarRespostaCaminhoCriticoIntervalo(termoOriginal) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não há caminho crítico entre ${rotulo}.</p>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Caminho crítico de ${rotulo} (${itens.length} tarefa(s)):</div>`;
-  itens.forEach(t => {
-    const bc = t.caminho.slice(0, -1).join(' › ');
-    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
+  const itensAgrupados = itens.map(t => {
+    const d = parseDataCompleta(t.inicio);
+    return {
+      mes: `${MESES_NOME_CAL[d.getMonth()]}/${d.getFullYear()}`,
+      bc: t.caminho.slice(0, -1).join(' › '),
+      nome: t.nome,
+      periodo: `${t.inicio} → ${t.termino}`,
+    };
   });
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Caminho crítico de ${rotulo} (${itens.length} tarefa(s)):</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'mes', i => `
+    <div style="margin-bottom:9px;">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
   return html;
 }
 
@@ -3848,11 +3886,24 @@ function montarRespostaCaminhoCriticoDaFrente(nomeAtividade) {
     return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;"><b>${nomeAtividade}</b> não faz parte do caminho crítico da obra hoje.</div>`;
   }
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;"><b>${nomeAtividade}</b> tem ${itens.length} tarefa(s) no caminho crítico da obra:</div>`;
-  itens.forEach(t => {
-    const bc = t.caminho.slice(1, -1).join(' › ');
-    html += `<div class="subtitulo2">${bc ? `<span style="font-size:9.5px; color:var(--text-soft);">${bc}</span><br>` : ''}<b>${t.nome}</b>: ${t.inicio} → ${t.termino}</div>`;
+  const itensAgrupados = itens.map(t => {
+    const d = parseDataCompleta(t.inicio);
+    return {
+      mes: `${MESES_NOME_CAL[d.getMonth()]}/${d.getFullYear()}`,
+      bc: t.caminho.slice(1, -1).join(' › '),
+      nome: t.nome,
+      periodo: `${t.inicio} → ${t.termino}`,
+    };
   });
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;"><b>${nomeAtividade}</b> tem ${itens.length} tarefa(s) no caminho crítico da obra:</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'mes', i => `
+    <div style="margin-bottom:9px;">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
   return html;
 }
 
@@ -6282,10 +6333,15 @@ async function montarRespostaContagemDetonacoes(periodo) {
   // pode ter mais de um registro)
   const fogosUnicos = new Set(noIntervalo.map(e => e.Evento));
 
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Tivemos <b>${fogosUnicos.size}</b> detonação(ões) em ${periodo.rotulo}:</div>`;
-  noIntervalo.forEach(e => {
-    html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
-  });
+  const itensAgrupados = noIntervalo.map(e => ({ data: e.Data, fogo: e.Evento, desc: e.Descricao || '-' }));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Tivemos <b>${fogosUnicos.size}</b> detonação(ões) em ${periodo.rotulo}:</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'data', i => `
+    <div style="margin-bottom:9px;">
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">Fogo ${i.fogo}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.desc}</div>
+    </div>
+  `);
   html += notaData;
   return html;
 }
@@ -6348,10 +6404,15 @@ async function montarRespostaContagemDetonacoesFrentePeriodo(termo, periodo) {
   }
 
   const fogosUnicos = new Set(filtrados.map(e => e.Evento));
-  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} teve <b>${fogosUnicos.size}</b> detonação(ões) em ${rotuloPeriodo}:</div>`;
-  filtrados.forEach(e => {
-    html += `<div class="subtitulo2">${e.Data} — Fogo ${e.Evento}: <span style="color:var(--ink); font-weight:400; font-family:'IBM Plex Sans',sans-serif;">${e.Descricao || '-'}</span></div>`;
-  });
+  const itensAgrupados = filtrados.map(e => ({ data: e.Data, fogo: e.Evento, desc: e.Descricao || '-' }));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">${formatarTitulo(frente.Nome)} teve <b>${fogosUnicos.size}</b> detonação(ões) em ${rotuloPeriodo}:</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'data', i => `
+    <div style="margin-bottom:9px;">
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">Fogo ${i.fogo}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.desc}</div>
+    </div>
+  `);
   html += notaData;
   return html;
 }
@@ -7060,11 +7121,21 @@ async function montarRespostaAvancoData(termo, periodo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado${contexto} para ${periodo.rotulo}.</p>`;
   }
 
-  const mostrarData = periodo.tipo === 'intervalo'; // ✅ num intervalo, mostra a data de cada item
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${periodo.rotulo}:</div>`;
-  itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.frente} — ${i.etapa}${mostrarData ? ' (' + i.data + ')' : ''}: avanço <b>${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>`;
-  });
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 0; text-align:left;">Avanço em ${periodo.rotulo}:</div>`;
+
+  if (periodo.tipo === 'intervalo') {
+    // ✅ período com mais de um dia — agrupa por data pra não repetir
+    const itensAgrupados = itens.map(i => ({ data: i.data, frente: `${i.frente} — ${i.etapa}`, tarefa: 'avanço', valor: `${i.avanco}m${i.obs ? ' · ' + i.obs : ''}` }));
+    html += montarBlocosPorDia(itensAgrupados, 'data');
+  } else {
+    // ✅ um único dia — data já está no título, não precisa repetir
+    html += `<div style="margin-top:10px;">${itens.map(i => `
+      <div style="margin-bottom:9px;">
+        <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.frente} — ${i.etapa}</div>
+        <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">avanço <b style="color:var(--ink);">${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>
+      </div>
+    `).join('')}</div>`;
+  }
   return html;
 }
 
@@ -7090,34 +7161,40 @@ async function acharFrentePorNome(termo) {
   return encontrada;
 }
 
-// ✅ agrupa uma lista de itens por dia e monta um bloco por data (chip de
-// data + itens embaixo, sem repetir a data em cada linha) — bem mais fácil
-// de escanear que uma linha corrida repetindo "DD/MM — Frente — Tarefa"
-// em cada item. `chave` é o campo de data de cada item (ex: 'data' ou
-// 'inicio'); `linhaExtra` é opcional, pra texto adicional por item (ex:
-// "início" na lista de "começando em breve").
-function montarBlocosPorDia(itens, chave) {
-  const porDia = {};
-  const ordemDias = [];
+// ✅ agrupa uma lista de itens por qualquer critério (dia, área, mês...) e
+// monta um bloco por grupo — chip de rótulo + itens embaixo, sem repetir
+// o rótulo em cada linha. Bem mais fácil de escanear que uma linha corrida
+// repetindo "DD/MM — Frente — Tarefa" (ou "[Área] Nome") em todo item.
+// `chave` é o campo de agrupamento de cada item (ex: 'data', 'area',
+// 'mes'); `renderItem` desenha o miolo de cada item — recebe o item e
+// devolve o HTML dele (título + linha de detalhe, no mesmo estilo).
+function montarBlocosAgrupados(itens, chave, renderItem) {
+  const porGrupo = {};
+  const ordemGrupos = [];
   itens.forEach(i => {
-    const d = i[chave];
-    if (!porDia[d]) { porDia[d] = []; ordemDias.push(d); }
-    porDia[d].push(i);
+    const g = i[chave];
+    if (!porGrupo[g]) { porGrupo[g] = []; ordemGrupos.push(g); }
+    porGrupo[g].push(i);
   });
 
-  return ordemDias.map(dia => `
+  return ordemGrupos.map(g => `
     <div style="margin-top:14px;">
-      <div style="display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:3px 10px; border-radius:12px;">${dia}</div>
+      <div style="display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:3px 10px; border-radius:12px;">${g}</div>
       <div style="border-left:2px solid var(--line); margin:8px 0 0 6px; padding-left:12px;">
-        ${porDia[dia].map(i => `
-          <div style="margin-bottom:9px;">
-            <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.frente}</div>
-            <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.tarefa}: <b style="color:var(--ink);">${i.valor}</b></div>
-          </div>
-        `).join('')}
+        ${porGrupo[g].map(renderItem).join('')}
       </div>
     </div>
   `).join('');
+}
+
+// ✅ atalho pro caso mais comum: agrupar por data, item com {frente, tarefa, valor}
+function montarBlocosPorDia(itens, chave) {
+  return montarBlocosAgrupados(itens, chave, i => `
+    <div style="margin-bottom:9px;">
+      <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.frente}</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.tarefa}: <b style="color:var(--ink);">${i.valor}</b></div>
+    </div>
+  `);
 }
 
 function montarRespostaPorData(frentes, dataStr, rotulo) {
