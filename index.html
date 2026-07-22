@@ -538,7 +538,8 @@
 .blocoNotif {
   margin: 12px;
   padding: 14px;
-  background: #f5f5f5;
+  background: var(--paper-2);
+  color: var(--ink);
   border-radius: 14px;
   font-size: 13px;
   cursor: pointer;
@@ -553,6 +554,11 @@
   background: #e8f5e9; /* leve verde */
   border-left: 4px solid #7cb342;
   font-weight: bold;
+}
+
+body.tema-escuro .naoLida {
+  background: rgba(143, 184, 75, 0.16); /* mesmo verde de destaque, translúcido pro fundo escuro */
+  border-left: 4px solid var(--accent);
 }
 .header-frente {
   position: relative;
@@ -1176,7 +1182,9 @@ body.tema-escuro{
 
 
 /* -------- topo -------- */
-#lista #topo{
+#lista #topo,
+#telaProximasSemanas #topo,
+#telaCronograma #topo{
   background:var(--paper);
   border-bottom:1px solid var(--line);
 }
@@ -1184,7 +1192,9 @@ body.tema-escuro{
 #detalhe #topo img[src*="iZ8gr1i"],
 #semanas #topo img[src*="iZ8gr1i"],
 #telaGantt #topo img[src*="iZ8gr1i"],
-#notificacoes #topo img[src*="iZ8gr1i"]{
+#notificacoes #topo img[src*="iZ8gr1i"],
+#telaProximasSemanas #topo img[src*="iZ8gr1i"],
+#telaCronograma #topo img[src*="iZ8gr1i"]{
   background:#FFFFFF;
   border-radius:8px;
   padding:4px 8px;
@@ -1549,7 +1559,7 @@ body.tema-escuro .iconeIndicador{
 
 /* -------- gráfico de gantt -------- */
 #telaGantt{ background:var(--paper); }
-#telaGantt #topo, #semanas #topo, #detalhe #topo{
+#telaGantt #topo, #semanas #topo, #detalhe #topo, #telaProximasSemanas #topo, #telaCronograma #topo{
   background:var(--paper);
   border-bottom:1px solid var(--line);
   color:var(--ink);
@@ -3467,9 +3477,9 @@ function renderizarSubTelaCronograma(tipo, parametro) {
         <span style="font-size:16px; font-weight:700; color:var(--ink);">${titulo}</span>
       </div>
 
-      ${conteudo}
-
       ${caixaBuscaHtml}
+
+      ${conteudo}
     </div>
   `;
 }
