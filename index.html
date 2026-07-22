@@ -7090,13 +7090,43 @@ async function acharFrentePorNome(termo) {
   return encontrada;
 }
 
+// ✅ agrupa uma lista de itens por dia e monta um bloco por data (chip de
+// data + itens embaixo, sem repetir a data em cada linha) — bem mais fácil
+// de escanear que uma linha corrida repetindo "DD/MM — Frente — Tarefa"
+// em cada item. `chave` é o campo de data de cada item (ex: 'data' ou
+// 'inicio'); `linhaExtra` é opcional, pra texto adicional por item (ex:
+// "início" na lista de "começando em breve").
+function montarBlocosPorDia(itens, chave) {
+  const porDia = {};
+  const ordemDias = [];
+  itens.forEach(i => {
+    const d = i[chave];
+    if (!porDia[d]) { porDia[d] = []; ordemDias.push(d); }
+    porDia[d].push(i);
+  });
+
+  return ordemDias.map(dia => `
+    <div style="margin-top:14px;">
+      <div style="display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--paper-2); padding:3px 10px; border-radius:12px;">${dia}</div>
+      <div style="border-left:2px solid var(--line); margin:8px 0 0 6px; padding-left:12px;">
+        ${porDia[dia].map(i => `
+          <div style="margin-bottom:9px;">
+            <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.frente}</div>
+            <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.tarefa}: <b style="color:var(--ink);">${i.valor}</b></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
 function montarRespostaPorData(frentes, dataStr, rotulo) {
   const itens = [];
   frentes.forEach(f => {
     (f.Tarefas || []).forEach(t => {
       const dia = (t.Diario || []).find(d => d.Data === dataStr);
       if (dia) {
-        itens.push({ frente: formatarTitulo(f.Nome), tarefa: t.Nome, valor: dia.Valor, unidade: t.Unidade });
+        itens.push({ frente: formatarTitulo(f.Nome), tarefa: t.Nome, valor: `${dia.Valor}${t.Unidade}`, data: dataStr });
       }
     });
   });
@@ -7105,10 +7135,8 @@ function montarRespostaPorData(frentes, dataStr, rotulo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nada previsto para ${rotulo} (${dataStr}) em nenhuma frente.</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Previsto para ${rotulo} (${dataStr}):</div>`;
-  itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa}: <b>${i.valor}${i.unidade}</b></div>`;
-  });
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 0; text-align:left;">Previsto para ${rotulo}:</div>`;
+  html += montarBlocosPorDia(itens, 'data');
   return html;
 }
 
@@ -7123,7 +7151,7 @@ function montarRespostaSemana(frentes, hoje) {
       if (inicio && inicio >= hoje && inicio <= daqui7) {
         itens.push({
           frente: formatarTitulo(f.Nome), tarefa: t.Nome,
-          inicio: t.InicioPrevisto, total: t.TotalPrevisto, unidade: t.Unidade,
+          inicio: t.InicioPrevisto, valor: `${t.TotalPrevisto}${t.Unidade} previstos`,
         });
       }
     });
@@ -7133,10 +7161,10 @@ function montarRespostaSemana(frentes, hoje) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Nenhuma tarefa começando nos próximos 7 dias.</p>`;
   }
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Começando nos próximos 7 dias:</div>`;
-  itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.frente} — ${i.tarefa} (início ${i.inicio}): <b>${i.total}${i.unidade}</b> previstos</div>`;
-  });
+  itens.sort((a, b) => parseDiaMes(a.inicio) - parseDiaMes(b.inicio));
+
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 0; text-align:left;">Começando nos próximos 7 dias:</div>`;
+  html += montarBlocosPorDia(itens, 'inicio');
   return html;
 }
 
@@ -7151,7 +7179,7 @@ function montarRespostaPeriodoSemanas(frentes, periodo) {
         if (data && data >= periodo.inicio && data <= periodo.fim) {
           itens.push({
             frente: formatarTitulo(f.Nome), tarefa: t.Nome,
-            data: d.Data, valor: d.Valor, unidade: t.Unidade,
+            data: d.Data, valor: `${d.Valor}${t.Unidade}`,
           });
         }
       });
@@ -7165,10 +7193,8 @@ function montarRespostaPeriodoSemanas(frentes, periodo) {
   // ✅ ordena por data pra ficar mais fácil de ler
   itens.sort((a, b) => parseDiaMes(a.data) - parseDiaMes(b.data));
 
-  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Previsto para ${periodo.rotulo}:</div>`;
-  itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.data} — ${i.frente} — ${i.tarefa}: <b>${i.valor}${i.unidade}</b></div>`;
-  });
+  let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 0; text-align:left;">Previsto para ${periodo.rotulo} (${itens.length} item(ns)):</div>`;
+  html += montarBlocosPorDia(itens, 'data');
   return html;
 }
 
