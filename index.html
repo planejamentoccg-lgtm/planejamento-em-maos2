@@ -4057,6 +4057,12 @@ async function carregarFrentes() {
 
     <section class="secaoNova">
 
+      <div class="filtrosTipo" id="filtrosTipo">
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">Todas</button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">Escavação</button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">Civil</button>
+      </div>
+
       <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaF" placeholder="Pergunte algo... ex: quais detonações tivemos ontem?"
                oninput="mostrarSugestoes('F')" onfocus="mostrarSugestoes('F')"
@@ -4065,12 +4071,6 @@ async function carregarFrentes() {
         <div class="sugestoesBusca" id="sugestoesBuscaF" style="display:none;"></div>
       </div>
       <div id="resultadoBuscaF"></div>
-
-      <div class="filtrosTipo" id="filtrosTipo">
-        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">Todas</button>
-        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">Escavação</button>
-        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">Civil</button>
-      </div>
 
       <div class="cabecalho" style="margin-top:20px;">
         <span class="tituloSecao">Frentes de serviço</span>
@@ -4090,9 +4090,10 @@ async function carregarFrentes() {
   window.todasFrentesAtivas = [];
   snap.forEach(doc => window.todasFrentesAtivas.push(doc.data()));
 
-  // ✅ preserva o filtro de Tipo que já estava selecionado (se a tela for
-  // recarregada), senão começa em "Todas"
-  window.filtroTipoFrentes = window.filtroTipoFrentes || 'Todas';
+  // ✅ o filtro de Tipo (Todas/Escavação/Civil) é uma única variável
+  // global compartilhada com a tela de Frentes concluídas — assim ele
+  // não reseta ao navegar entre as duas telas
+  window.filtroTipoGlobal = window.filtroTipoGlobal || 'Todas';
   renderizarFrentesFiltradas();
 
   await verificarAtualizacoes();
@@ -4106,7 +4107,7 @@ function renderizarFrentesFiltradas() {
   const botoes = document.getElementById("botoes");
   botoes.innerHTML = "";
 
-  const tipoAtivo = window.filtroTipoFrentes || 'Todas';
+  const tipoAtivo = window.filtroTipoGlobal || 'Todas';
 
   document.querySelectorAll(".filtroTipoBtn").forEach(btn => {
     btn.classList.toggle("ativo", btn.dataset.tipo === tipoAtivo);
@@ -4222,7 +4223,7 @@ function renderizarFrentesFiltradas() {
 // ✅ chamado pelos 3 botões (Geral/Escavação/Civil) — troca o filtro e
 // redesenha a lista + o painel de métricas na hora, sem nova consulta ao banco
 function filtrarFrentesPorTipo(tipo) {
-  window.filtroTipoFrentes = tipo;
+  window.filtroTipoGlobal = tipo;
   renderizarFrentesFiltradas();
 }
 
@@ -4261,6 +4262,12 @@ async function carregarFrentesConcluidas() {
     </div>
 
     <section class="secaoNova">
+      <div class="filtrosTipo" id="filtrosTipoFC">
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesConcluidasPorTipo('Todas')">Todas</button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">Escavação</button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesConcluidasPorTipo('Civil')">Civil</button>
+      </div>
+
       <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaFC" placeholder="Pergunte algo... ex: quando foi a última detonação?"
                oninput="mostrarSugestoes('FC')" onfocus="mostrarSugestoes('FC')"
@@ -4269,12 +4276,6 @@ async function carregarFrentesConcluidas() {
         <div class="sugestoesBusca" id="sugestoesBuscaFC" style="display:none;"></div>
       </div>
       <div id="resultadoBuscaFC"></div>
-
-      <div class="filtrosTipo" id="filtrosTipoFC">
-        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesConcluidasPorTipo('Todas')">Todas</button>
-        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">Escavação</button>
-        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesConcluidasPorTipo('Civil')">Civil</button>
-      </div>
 
       <div id="listaFrentesConcluidas" style="margin-top:14px;"></div>
     </section>
@@ -4299,8 +4300,9 @@ async function carregarFrentesConcluidas() {
     window.todasFrentesConcluidas.push(data);
   });
 
-  // ✅ preserva o filtro já selecionado, senão começa em "Todas"
-  window.filtroTipoFrentesConcluidas = window.filtroTipoFrentesConcluidas || 'Todas';
+  // ✅ mesma variável global do filtro da tela de Frentes — mantém o
+  // filtro selecionado ao navegar entre as duas telas
+  window.filtroTipoGlobal = window.filtroTipoGlobal || 'Todas';
   renderizarFrentesConcluidasFiltradas();
 }
 
@@ -4310,7 +4312,7 @@ function renderizarFrentesConcluidasFiltradas() {
   const listaContainer = document.getElementById("listaFrentesConcluidas");
   listaContainer.innerHTML = "";
 
-  const tipoAtivo = window.filtroTipoFrentesConcluidas || 'Todas';
+  const tipoAtivo = window.filtroTipoGlobal || 'Todas';
 
   document.querySelectorAll("#filtrosTipoFC .filtroTipoBtn").forEach(btn => {
     btn.classList.toggle("ativo", btn.dataset.tipo === tipoAtivo);
@@ -4382,7 +4384,7 @@ function renderizarFrentesConcluidasFiltradas() {
 
 // ✅ chamado pelos 3 botões (Todas/Escavação/Civil) na tela de concluídas
 function filtrarFrentesConcluidasPorTipo(tipo) {
-  window.filtroTipoFrentesConcluidas = tipo;
+  window.filtroTipoGlobal = tipo;
   renderizarFrentesConcluidasFiltradas();
 }
 
@@ -5220,13 +5222,13 @@ function mostrarDesempenho() {
             <div class="cardIndicador">
               <div style="text-align:left;">
                 <div style="font-size:11px; font-weight:600;">Produtividade Prevista por Avanço (média)</div>
-                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista + 'm' : '-'}</div>
+                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista + (et.Unidade || 'm') : '-'}</div>
               </div>
             </div>
             <div class="cardIndicador">
               <div style="text-align:left;">
                 <div style="font-size:11px; font-weight:600;">Produtividade Realizada por Avanço (média)</div>
-                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada + 'm' : '-'}</div>
+                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada + (et.Unidade || 'm') : '-'}</div>
               </div>
             </div>
             ` : ''}
@@ -5256,8 +5258,8 @@ function mostrarDesempenho() {
           <thead>
             <tr style="position:sticky; top:0; background:var(--paper-2);">
               <th style="padding:8px; text-align:left;">Data</th>
-              <th style="padding:8px; text-align:right;">Previsto acumulado (m)</th>
-              <th style="padding:8px; text-align:right;">Realizado acumulado (m)</th>
+              <th style="padding:8px; text-align:right;">Previsto acumulado (${et.Unidade || 'm'})</th>
+              <th style="padding:8px; text-align:right;">Realizado acumulado (${et.Unidade || 'm'})</th>
               <th style="padding:8px; text-align:left;">Observações</th>
             </tr>
           </thead>
@@ -5597,6 +5599,17 @@ const SUGESTOES_BUSCA_F = [
   'Quantas detonações houveram ao todo na frente [frente]',
 ];
 
+// ✅ quando o filtro "Civil" está ativo na tela de Frentes, só essas 5
+// perguntas ficam disponíveis nas sugestões — "Todas" e "Escavação"
+// continuam com a lista completa (SUGESTOES_BUSCA_F)
+const SUGESTOES_BUSCA_F_FILTRADAS = [
+  'Quanto de avanço tem a frente [frente]',
+  'Em qual PK está a frente [frente]',
+  'Quanto falta para terminar a frente [frente]',
+  'Quando iniciou a frente [frente]',
+  'Qual a previsão de término da frente [frente]',
+];
+
 // ✅ perguntas sugeridas na tela de PRÓXIMAS SEMANAS
 const SUGESTOES_BUSCA_S = [
   'O que está previsto para hoje',
@@ -5619,7 +5632,10 @@ function mostrarSugestoes(sufixo) {
   const container = document.getElementById('sugestoesBusca' + sufixo);
 
   let lista;
-  if (sufixo === 'F') lista = SUGESTOES_BUSCA_F;
+  if (sufixo === 'F') {
+    const tipoAtivo = window.filtroTipoGlobal || 'Todas';
+    lista = tipoAtivo === 'Civil' ? SUGESTOES_BUSCA_F_FILTRADAS : SUGESTOES_BUSCA_F;
+  }
   else if (sufixo === 'FC') lista = SUGESTOES_BUSCA_FC;
   else if (sufixo === 'S') lista = SUGESTOES_BUSCA_S;
   else if (sufixo === 'C') lista = SUGESTOES_BUSCA_C;
@@ -5654,7 +5670,7 @@ async function selecionarSugestao(sufixo, el) {
   input.value = textoCompleto;
 
   if (textoCompleto.includes('[frente]')) {
-    await mostrarListaFrentes(sufixo);
+    await mostrarListaFrentes(sufixo, textoCompleto);
   } else if (textoCompleto.includes('[atividade]')) {
     mostrarListaAtividadesCronograma(sufixo);
   } else if (textoCompleto.includes('[mes]')) {
@@ -5686,29 +5702,52 @@ function completarComAtividade(sufixo, el) {
   input.focus();
 }
 
+// ✅ checa se uma frente tem PK cadastrado em algum dia de alguma etapa —
+// usado pra tirar da lista de sugestões as frentes sem PK quando a
+// pergunta selecionada é sobre PK
+function frenteTemPk(data) {
+  return (data.AvancoPorEtapa || []).some(et =>
+    (et.Dias || []).some(d => d.PkFinal !== null && d.PkFinal !== undefined && String(d.PkFinal).trim() !== '')
+  );
+}
+
 // ✅ depois de escolher um template com [frente], mostra as frentes que
-// já estão sendo acompanhadas, pra completar com um clique
-async function mostrarListaFrentes(sufixo) {
+// já estão sendo acompanhadas, pra completar com um clique — respeitando
+// o filtro de Tipo (Todas/Escavação/Civil) ativo na tela, e excluindo
+// frentes sem PK cadastrado quando a pergunta escolhida é sobre PK
+async function mostrarListaFrentes(sufixo, textoTemplate) {
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
   const container = document.getElementById('sugestoesBusca' + sufixo);
   container.innerHTML = `<div style="padding:10px 14px; font-size:11.5px; color:var(--text-soft);">Carregando frentes...</div>`;
   container.style.display = 'block';
 
+  const tipoAtivo = window.filtroTipoGlobal || 'Todas';
+  const ehPerguntaPk = !!(textoTemplate && normalizarTexto(textoTemplate).includes(' pk '));
+
   let nomes = [];
   try {
     if (sufixo === 'FC') {
       // ✅ só as frentes concluídas — essas perguntas são exclusivas dessa aba
-      (window.todasFrentesConcluidas || []).forEach(f => nomes.push(formatarTitulo(f.Nome)));
+      (window.todasFrentesConcluidas || []).forEach(data => {
+        if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
+        if (ehPerguntaPk && !frenteTemPk(data)) return;
+        nomes.push(formatarTitulo(data.Nome));
+      });
     } else {
       const snap = await db.collection('Frentes').get();
-      snap.forEach(doc => nomes.push(formatarTitulo(doc.data().Nome)));
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
+        if (ehPerguntaPk && !frenteTemPk(data)) return;
+        nomes.push(formatarTitulo(data.Nome));
+      });
     }
   } catch (e) { /* ignora */ }
 
   if (timeoutsSugestoes[sufixo]) clearTimeout(timeoutsSugestoes[sufixo]);
 
   if (nomes.length === 0) {
-    container.style.display = 'none';
+    container.innerHTML = `<div style="padding:10px 14px; font-size:11.5px; color:var(--text-soft);">Nenhuma frente encontrada${tipoAtivo !== 'Todas' ? ` no filtro "${tipoAtivo}"` : ''}${ehPerguntaPk ? ' com PK cadastrado' : ''}.</div>`;
     return;
   }
 
@@ -6113,7 +6152,7 @@ async function buscarInteligente(sufixo) {
   // perguntaTermino, senão "terminar" já capturava essa pergunta antes
   const perguntaQuantoFalta = termo.includes('falta') && (termo.includes('terminar') || termo.includes('concluir') || termo.includes('acabar'));
   const perguntaInicioFrente = termo.includes('iniciou') || (termo.includes('quando') && termo.includes('inicio') && perguntaTemFrente);
-  const perguntaTermino = !perguntaQuantoFalta && (termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu'));
+  const perguntaTermino = !perguntaQuantoFalta && (termo.includes('termina') || termo.includes('terminar') || termo.includes('conclu') || termo.includes('previsao de termino'));
   const perguntaMediaDiaria = termo.includes('media');
   const perguntaMaiorAvanco = termo.includes('maior avanco') || (termo.includes('maior') && termo.includes('avanco'));
   const perguntaDiasSemAvanco = termo.includes('sem avanco') || termo.includes('dias parados') || termo.includes('dias parado');
@@ -6358,7 +6397,7 @@ async function montarRespostaDetonacoes(data, rotulo) {
           avancosDoDia.push({
             frente: formatarTitulo(f.Nome), etapa: et.Etapa,
             pkInicial: dia.PkInicial, pkFinal: dia.PkFinal,
-            avanco: dia.DiarioRealizado, observacao: dia.Observacoes,
+            avanco: dia.DiarioRealizado, observacao: dia.Observacoes, unidade: et.Unidade || 'm',
           });
         }
       });
@@ -6382,7 +6421,7 @@ async function montarRespostaDetonacoes(data, rotulo) {
   if (avancosDoDia.length > 0) {
     html += `<div style="font-size:12px; color:var(--text-soft); margin:12px 0 8px;">Avanço registrado nesse dia:</div>`;
     avancosDoDia.forEach(a => {
-      html += `<div class="subtitulo2">${a.frente} — ${a.etapa}: PK ${a.pkInicial || '-'} a ${a.pkFinal || '-'}, avanço <b>${a.avanco}m</b>${a.observacao ? ' · ' + a.observacao : ''}</div>`;
+      html += `<div class="subtitulo2">${a.frente} — ${a.etapa}: PK ${a.pkInicial || '-'} a ${a.pkFinal || '-'}, avanço <b>${a.avanco}${a.unidade}</b>${a.observacao ? ' · ' + a.observacao : ''}</div>`;
     });
   }
 
@@ -6595,13 +6634,14 @@ async function montarRespostaQuantoFalta(termo) {
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — quanto falta por etapa:</div>`;
   let temAlgumaFalta = false;
   etapas.forEach(et => {
+    const unidade = et.Unidade || 'm';
     const realizado = et.TotalRealizado || 0;
     const previsto = et.TotalPrevisto || 0;
     const falta = Math.max(0, previsto - realizado);
     if (falta > 0) temAlgumaFalta = true;
     const cor = falta > 0 ? 'var(--ink)' : '#4F7A2E';
-    const texto = falta > 0 ? `faltam <b>${formatarNumeroBR(falta)}m</b>` : 'concluída';
-    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${formatarNumeroBR(realizado)}m de ${formatarNumeroBR(previsto)}m)</div>`;
+    const texto = falta > 0 ? `faltam <b>${formatarNumeroBR(falta)}${unidade}</b>` : 'concluída';
+    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${formatarNumeroBR(realizado)}${unidade} de ${formatarNumeroBR(previsto)}${unidade})</div>`;
   });
   if (!temAlgumaFalta) {
     html += `<div style="font-size:11px; color:#4F7A2E; margin-top:8px;">Todas as etapas estão concluídas.</div>`;
@@ -6661,7 +6701,7 @@ async function montarRespostaMediaDiaria(termo) {
     if (dias > 0) {
       algumaEtapaComDados = true;
       const media = Math.round((soma / dias) * 100) / 100;
-      html += `<div class="subtitulo2">${et.Etapa}: <b>${media}m/dia</b> (${dias} dia(s) com avanço)</div>`;
+      html += `<div class="subtitulo2">${et.Etapa}: <b>${media}${et.Unidade || 'm'}/dia</b> (${dias} dia(s) com avanço)</div>`;
     }
   });
 
@@ -6676,12 +6716,15 @@ async function montarRespostaMediaDiaria(termo) {
 async function montarRespostaMaiorAvanco(termo) {
   const frenteEspecifica = await acharFrentePorNome(termo);
 
-  let melhor = null;
+  // ✅ % e m não podem ser comparados no mesmo "maior valor" — por isso
+  // guardamos o melhor de cada unidade separadamente
+  const melhorPorUnidade = {};
   function considerar(nomeFrente, avancoPorEtapa) {
     (avancoPorEtapa || []).forEach(et => {
+      const unidade = et.Unidade || 'm';
       (et.Dias || []).forEach(d => {
-        if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && (!melhor || d.DiarioRealizado > melhor.avanco)) {
-          melhor = { frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: d.Data, avanco: d.DiarioRealizado, obs: d.Observacoes };
+        if (d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && (!melhorPorUnidade[unidade] || d.DiarioRealizado > melhorPorUnidade[unidade].avanco)) {
+          melhorPorUnidade[unidade] = { frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: d.Data, avanco: d.DiarioRealizado, obs: d.Observacoes, unidade };
         }
       });
     });
@@ -6697,11 +6740,15 @@ async function montarRespostaMaiorAvanco(termo) {
     });
   }
 
-  if (!melhor) {
+  const unidades = Object.keys(melhorPorUnidade);
+  if (unidades.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhum avanço registrado.</p>`;
   }
 
-  return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Maior avanço registrado: <b>${melhor.frente}</b> — ${melhor.etapa} em ${melhor.data}: <b>${melhor.avanco}m</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
+  return unidades.map(u => {
+    const melhor = melhorPorUnidade[u];
+    return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">Maior avanço registrado${unidades.length > 1 ? ` (em ${u})` : ''}: <b>${melhor.frente}</b> — ${melhor.etapa} em ${melhor.data}: <b>${melhor.avanco}${u}</b>${melhor.obs ? ' · ' + melhor.obs : ''}</div>`;
+  }).join('');
 }
 
 // ✅ "quantos dias sem avanço tivemos essa semana/mês" — compara o
@@ -6751,7 +6798,7 @@ async function montarRespostaAvancoTotalGeral(termo) {
 
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — avanço total realizado até agora:</div>`;
   etapas.forEach(et => {
-    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.TotalRealizado || 0}m</b> realizado (de ${et.TotalPrevisto || 0}m previstos)</div>`;
+    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.TotalRealizado || 0}${et.Unidade || 'm'}</b> realizado (de ${et.TotalPrevisto || 0}${et.Unidade || 'm'} previstos)</div>`;
   });
   html += notaSituacaoEm(frente);
   return html;
@@ -6774,7 +6821,7 @@ async function montarRespostaObservacaoDia(termo, periodo) {
   (frente.AvancoPorEtapa || []).forEach(et => {
     const dia = (et.Dias || []).find(d => d.Data === dataStr);
     if (dia && (dia.Observacoes || (dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0))) {
-      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes, unidade: et.Unidade || 'm' });
     }
   });
 
@@ -6784,7 +6831,7 @@ async function montarRespostaObservacaoDia(termo, periodo) {
 
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo} (${dataStr}):</div>`;
   itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.etapa}${(i.avanco !== null && i.avanco !== undefined && i.avanco > 0) ? ': avanço <b>' + i.avanco + 'm</b>' : ''}${i.obs ? ' · ' + i.obs : ''}</div>`;
+    html += `<div class="subtitulo2">${i.etapa}${(i.avanco !== null && i.avanco !== undefined && i.avanco > 0) ? ': avanço <b>' + i.avanco + i.unidade + '</b>' : ''}${i.obs ? ' · ' + i.obs : ''}</div>`;
   });
   return html;
 }
@@ -6867,34 +6914,43 @@ async function montarRespostaTotalAvancoPeriodo(termo, periodo) {
     return d && d >= periodo.inicio && d <= periodo.fim;
   }
 
+  // ✅ soma separado por unidade (% e m não podem ser somados juntos)
   function somarFrente(f) {
-    let total = 0;
-    let dias = 0;
+    const porUnidade = {};
     (f.AvancoPorEtapa || []).forEach(et => {
+      const unidade = et.Unidade || 'm';
       (et.Dias || []).forEach(dia => {
         if (noPeriodo(dia.Data) && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-          total += dia.DiarioRealizado;
-          dias++;
+          if (!porUnidade[unidade]) porUnidade[unidade] = { total: 0, dias: 0 };
+          porUnidade[unidade].total += dia.DiarioRealizado;
+          porUnidade[unidade].dias++;
         }
       });
     });
-    return { total: Math.round(total * 100) / 100, dias };
+    Object.keys(porUnidade).forEach(u => { porUnidade[u].total = Math.round(porUnidade[u].total * 100) / 100; });
+    return porUnidade;
   }
 
   if (frente) {
-    const { total, dias } = somarFrente(frente);
-    if (total === 0) {
+    const porUnidade = somarFrente(frente);
+    const unidades = Object.keys(porUnidade);
+    if (unidades.length === 0) {
       return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei avanço registrado em ${formatarTitulo(frente.Nome)} para ${periodo.rotulo}.</p>`;
     }
-    return `<div style="font-size:13px; color:var(--ink); font-weight:600; margin-top:10px; text-align:left;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo}: <b>${total}m</b> de avanço (${dias} dia(s) com registro).</div>`;
+    return unidades.map(u => {
+      const { total, dias } = porUnidade[u];
+      return `<div style="font-size:13px; color:var(--ink); font-weight:600; margin-top:10px; text-align:left;">${formatarTitulo(frente.Nome)} — ${periodo.rotulo}: <b>${total}${u}</b> de avanço (${dias} dia(s) com registro).</div>`;
+    }).join('');
   }
 
   const snap = await db.collection('Frentes').get();
   const itens = [];
   snap.forEach(doc => {
     const f = doc.data();
-    const { total, dias } = somarFrente(f);
-    if (total > 0) itens.push({ nome: formatarTitulo(f.Nome), total, dias });
+    const porUnidade = somarFrente(f);
+    Object.keys(porUnidade).forEach(u => {
+      if (porUnidade[u].total > 0) itens.push({ nome: formatarTitulo(f.Nome), total: porUnidade[u].total, dias: porUnidade[u].dias, unidade: u });
+    });
   });
 
   if (itens.length === 0) {
@@ -6903,7 +6959,7 @@ async function montarRespostaTotalAvancoPeriodo(termo, periodo) {
 
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">Avanço em ${periodo.rotulo}:</div>`;
   itens.forEach(i => {
-    html += `<div class="subtitulo2">${i.nome}: <b>${i.total}m</b> (${i.dias} dia(s))</div>`;
+    html += `<div class="subtitulo2">${i.nome}: <b>${i.total}${i.unidade}</b> (${i.dias} dia(s))</div>`;
   });
   return html;
 }
@@ -6931,7 +6987,7 @@ function avancosDaFrenteNaData(frente, dataStr) {
   (frente.AvancoPorEtapa || []).forEach(et => {
     const dia = (et.Dias || []).find(d => d.Data === dataStr);
     if (dia && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+      itens.push({ etapa: et.Etapa, avanco: dia.DiarioRealizado, obs: dia.Observacoes, unidade: et.Unidade || 'm' });
     }
   });
   return itens;
@@ -6968,7 +7024,7 @@ async function montarRespostaDetonouFrente(termo, periodo) {
     const fogoTxt = fogos.length > 0 ? fogos.map(f => `Fogo ${f.Evento}`).join(', ') : '';
     let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Sim — ${formatarTitulo(frente.Nome)} teve detonação em ${periodo.rotulo} (${dataStr}).</div>`;
     avancos.forEach(a => {
-      html += `<div class="subtitulo2">${a.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${a.avanco}m</b>${a.obs ? ' · ' + a.obs : ''}</div>`;
+      html += `<div class="subtitulo2">${a.etapa}${fogoTxt ? ' — ' + fogoTxt : ''}: avanço <b>${a.avanco}${a.unidade}</b>${a.obs ? ' · ' + a.obs : ''}</div>`;
     });
     if (avancos.length === 0) {
       fogosDaFrentePelaDescricao.forEach(f => {
@@ -7234,7 +7290,7 @@ async function montarRespostaAvancoData(termo, periodo) {
     (avancoPorEtapa || []).forEach(et => {
       (et.Dias || []).forEach(dia => {
         if (diaNoPeriodo(dia.Data) && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
-          destino.push({ frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: dia.Data, avanco: dia.DiarioRealizado, obs: dia.Observacoes });
+          destino.push({ frente: formatarTitulo(nomeFrente), etapa: et.Etapa, data: dia.Data, avanco: dia.DiarioRealizado, obs: dia.Observacoes, unidade: et.Unidade || 'm' });
         }
       });
     });
@@ -7264,14 +7320,14 @@ async function montarRespostaAvancoData(termo, periodo) {
 
   if (periodo.tipo === 'intervalo') {
     // ✅ período com mais de um dia — agrupa por data pra não repetir
-    const itensAgrupados = itens.map(i => ({ data: i.data, frente: `${i.frente} — ${i.etapa}`, tarefa: 'avanço', valor: `${i.avanco}m${i.obs ? ' · ' + i.obs : ''}` }));
+    const itensAgrupados = itens.map(i => ({ data: i.data, frente: `${i.frente} — ${i.etapa}`, tarefa: 'avanço', valor: `${i.avanco}${i.unidade}${i.obs ? ' · ' + i.obs : ''}` }));
     html += montarBlocosPorDia(itensAgrupados, 'data');
   } else {
     // ✅ um único dia — data já está no título, não precisa repetir
     html += `<div style="margin-top:10px;">${itens.map(i => `
       <div style="margin-bottom:9px;">
         <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.frente} — ${i.etapa}</div>
-        <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">avanço <b style="color:var(--ink);">${i.avanco}m</b>${i.obs ? ' · ' + i.obs : ''}</div>
+        <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">avanço <b style="color:var(--ink);">${i.avanco}${i.unidade}</b>${i.obs ? ' · ' + i.obs : ''}</div>
       </div>
     `).join('')}</div>`;
   }
