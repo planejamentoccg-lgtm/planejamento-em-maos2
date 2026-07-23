@@ -4124,10 +4124,12 @@ function renderizarFrentesFiltradas() {
     if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
 
     // ✅ se todas as etapas do avanço físico já bateram o previsto, essa
-    // frente saiu daqui — ela só aparece em "Frentes concluídas" agora
-    const etapasAvanco = data.AvancoPorEtapa || [];
+    // frente saiu daqui — ela só aparece em "Frentes concluídas" agora.
+    // Usa Etapas (aba "Planejamento em Mãos"), não AvancoPorEtapa (aba
+    // específica, que pode ter outros serviços descritos no meio)
+    const etapasAvanco = data.Etapas || [];
     const jaConcluida = etapasAvanco.length > 0 && etapasAvanco.every(et =>
-      (et.TotalPrevisto || 0) > 0 && (et.TotalRealizado || 0) >= (et.TotalPrevisto || 0)
+      (et.TotalNum || 0) > 0 && (et.RealizadoNum || 0) >= (et.TotalNum || 0)
     );
     if (jaConcluida) return;
 
@@ -4288,12 +4290,13 @@ async function carregarFrentesConcluidas() {
 
   snap.forEach(doc => {
     const data = doc.data();
-    const etapas = data.AvancoPorEtapa || [];
+    const etapas = data.Etapas || [];
 
-    // ✅ só é "concluída" se TODAS as etapas bateram o previsto — uma só
-    // em andamento ou não iniciada já tira ela dessa lista
+    // ✅ só é "concluída" se TODAS as etapas bateram o previsto (fonte:
+    // aba "Planejamento em Mãos") — uma só em andamento ou não iniciada
+    // já tira ela dessa lista
     const concluida = etapas.length > 0 && etapas.every(et =>
-      (et.TotalPrevisto || 0) > 0 && (et.TotalRealizado || 0) >= (et.TotalPrevisto || 0)
+      (et.TotalNum || 0) > 0 && (et.RealizadoNum || 0) >= (et.TotalNum || 0)
     );
     if (!concluida) return;
 
@@ -6626,7 +6629,10 @@ async function montarRespostaQuantoFalta(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
   }
 
-  const etapas = frente.AvancoPorEtapa || [];
+  // ✅ usa Etapas (vem direto da aba "Planejamento em Mãos", coluna
+  // Total) — não AvancoPorEtapa, que vem da aba específica de cada
+  // frente e pode ter outros serviços descritos no meio das colunas
+  const etapas = frente.Etapas || [];
   if (etapas.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
   }
@@ -6635,13 +6641,13 @@ async function montarRespostaQuantoFalta(termo) {
   let temAlgumaFalta = false;
   etapas.forEach(et => {
     const unidade = et.Unidade || 'm';
-    const realizado = et.TotalRealizado || 0;
-    const previsto = et.TotalPrevisto || 0;
-    const falta = Math.max(0, previsto - realizado);
+    const realizado = et.RealizadoNum || 0;
+    const total = et.TotalNum || 0;
+    const falta = Math.max(0, total - realizado);
     if (falta > 0) temAlgumaFalta = true;
     const cor = falta > 0 ? 'var(--ink)' : '#4F7A2E';
     const texto = falta > 0 ? `faltam <b>${formatarNumeroBR(falta)}${unidade}</b>` : 'concluída';
-    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${formatarNumeroBR(realizado)}${unidade} de ${formatarNumeroBR(previsto)}${unidade})</div>`;
+    html += `<div class="subtitulo2">${et.Etapa}: <span style="color:${cor};">${texto}</span> (${formatarNumeroBR(realizado)}${unidade} de ${formatarNumeroBR(total)}${unidade})</div>`;
   });
   if (!temAlgumaFalta) {
     html += `<div style="font-size:11px; color:#4F7A2E; margin-top:8px;">Todas as etapas estão concluídas.</div>`;
@@ -6791,14 +6797,17 @@ async function montarRespostaAvancoTotalGeral(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
   }
 
-  const etapas = frente.AvancoPorEtapa || [];
+  // ✅ Etapas vem da aba "Planejamento em Mãos" — fonte confiável pra
+  // total/realizado (a aba específica de cada frente pode ter outros
+  // serviços descritos no meio das colunas)
+  const etapas = frente.Etapas || [];
   if (etapas.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de avanço detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
   }
 
   let html = `<div style="font-size:12px; color:var(--text-soft); margin:10px 0 8px; text-align:left;">${formatarTitulo(frente.Nome)} — avanço total realizado até agora:</div>`;
   etapas.forEach(et => {
-    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.TotalRealizado || 0}${et.Unidade || 'm'}</b> realizado (de ${et.TotalPrevisto || 0}${et.Unidade || 'm'} previstos)</div>`;
+    html += `<div class="subtitulo2">${et.Etapa}: <b>${et.RealizadoNum || 0}${et.Unidade || 'm'}</b> realizado (de ${et.TotalNum || 0}${et.Unidade || 'm'} no total)</div>`;
   });
   html += notaSituacaoEm(frente);
   return html;
