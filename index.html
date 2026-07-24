@@ -3225,7 +3225,16 @@ function renderizarCronogramaGeral() {
       </div>
     </div>
     <section class="secaoNova">
-      <div style="display:flex; justify-content:flex-end; margin-bottom:14px;">
+      <div class="caixaBusca" style="position:relative;">
+        <input type="text" id="inputBuscaC" placeholder="Pergunte algo... ex: o que mudou no replanejamento?"
+               oninput="mostrarSugestoes('C')" onfocus="mostrarSugestoes('C')"
+               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('C')">
+        <button class="btnBusca" onclick="buscarInteligenteCronograma('C')">Buscar</button>
+        <div class="sugestoesBusca" id="sugestoesBuscaC" style="display:none;"></div>
+      </div>
+      <div id="resultadoBuscaC"></div>
+
+      <div style="display:flex; justify-content:flex-end; margin:20px 0 14px;">
         <span onclick="alternarLinhaBaseCronograma()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:var(--accent); cursor:pointer; text-decoration:underline;">
           ${mostrarLinhaBaseCronograma ? 'ocultar linha de base' : 'mostrar linha de base'}
         </span>
@@ -3234,15 +3243,6 @@ function renderizarCronogramaGeral() {
       ${ganttHtml}
 
       ${curvaSHtml}
-
-      <div class="caixaBusca" style="position:relative; margin-top:20px;">
-        <input type="text" id="inputBuscaC" placeholder="Pergunte algo... ex: o que mudou no replanejamento?"
-               oninput="mostrarSugestoes('C')" onfocus="mostrarSugestoes('C')"
-               onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('C')">
-        <button class="btnBusca" onclick="buscarInteligenteCronograma('C')">Buscar</button>
-        <div class="sugestoesBusca" id="sugestoesBuscaC" style="display:none;"></div>
-      </div>
-      <div id="resultadoBuscaC"></div>
     </section>
   `;
 }
@@ -3788,6 +3788,31 @@ function ehItemFolha(item, indice, arvoreOrdenada) {
   return proximo[4] <= item[4]; // próximo não é mais fundo => não tem filhos
 }
 
+// ✅ rastreabilidade igual à do caminho crítico: monta o caminho
+// (breadcrumb) de um item da árvore de 445 tarefas, subindo pelos pais
+// na mesma área (nível menor = mais pra cima na hierarquia). Ignora o
+// nível 2 (a macro-atividade) porque essa já aparece como cabeçalho de
+// grupo nos resultados da busca — aqui só entra o caminho INTERMEDIÁRIO.
+function construirCaminhoCronograma(itemAlvo) {
+  const arr = CRONOGRAMA_ARVORE_COMPLETA;
+  const idx = arr.indexOf(itemAlvo);
+  if (idx === -1) return [];
+
+  const caminho = [];
+  let nivelAtual = itemAlvo[4];
+
+  for (let i = idx - 1; i >= 0; i--) {
+    const item = arr[i];
+    if (item[5] !== itemAlvo[5]) break; // saiu da área da tarefa alvo
+    if (item[4] < nivelAtual) {
+      if (item[4] > 2) caminho.unshift(item[1]); // nível 2 = macro-atividade, já é o cabeçalho de grupo
+      nivelAtual = item[4];
+    }
+  }
+
+  return caminho;
+}
+
 function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
   const datas = extrairDuasDatasCompletas(termoOriginal);
   if (!datas) {
@@ -3809,11 +3834,17 @@ function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
   }
 
   const mostrados = itens.slice(0, 30);
-  const itensAgrupados = mostrados.map(i => ({ area: i[5], nome: i[1], periodo: `${i[2]} → ${i[3]}` }));
+  const itensAgrupados = mostrados.map(i => ({
+    area: i[5],
+    bc: construirCaminhoCronograma(i).join(' › '),
+    nome: i[1],
+    periodo: `${i[2]} → ${i[3]}`,
+  }));
 
   let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Previsto de ${rotuloInicio} até ${rotuloFim} (${itens.length} item(ns)):</div>`;
   html += montarBlocosAgrupados(itensAgrupados, 'area', i => `
     <div style="margin-bottom:9px;">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
       <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
       <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
     </div>
@@ -3850,12 +3881,18 @@ function montarRespostaPrevistoIntervaloAtividade(nomeAtividade, termoOriginal) 
   const mostrados = itens.slice(0, 30);
   const itensAgrupados = mostrados.map(i => {
     const d = parseDataCompleta(i[2]);
-    return { mes: `${MESES_NOME_CAL[d.getMonth()]}/${d.getFullYear()}`, nome: i[1], periodo: `${i[2]} → ${i[3]}` };
+    return {
+      mes: `${MESES_NOME_CAL[d.getMonth()]}/${d.getFullYear()}`,
+      bc: construirCaminhoCronograma(i).join(' › '),
+      nome: i[1],
+      periodo: `${i[2]} → ${i[3]}`,
+    };
   });
 
   let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">Previsto pra ${nomeAtividade}, de ${rotuloInicio} até ${rotuloFim} (${itens.length} tarefa(s)):</div>`;
   html += montarBlocosAgrupados(itensAgrupados, 'mes', i => `
     <div style="margin-bottom:9px;">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
       <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${i.nome}</div>
       <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
     </div>
@@ -4557,6 +4594,21 @@ async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
 
+  // ✅ "Última atualização" da Six Week — vem do Firestore
+  // (Config/SixWeek, campo UltimaAtualizacao), preenchido pelo Apps
+  // Script que sincroniza a planilha da Six Week a partir da célula
+  // logo abaixo do cabeçalho "Última atualização" na planilha.
+  let ultimaAtualizacaoSixWeekStr = '-';
+  try {
+    const docAtualizacaoSixWeek = await db.collection("Config").doc("SixWeek").get();
+    if (docAtualizacaoSixWeek.exists && docAtualizacaoSixWeek.data().UltimaAtualizacao) {
+      const d = docAtualizacaoSixWeek.data().UltimaAtualizacao.toDate();
+      ultimaAtualizacaoSixWeekStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+  } catch (e) {
+    console.log('Não consegui carregar a última atualização da Six Week:', e);
+  }
+
   container.innerHTML = `
     <div id="topo">
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
@@ -4575,6 +4627,8 @@ async function carregarProximasSemanas() {
     <div class="heroNovo">
       <div class="eyebrow">Planejamento em mãos</div>
       <h1 style="font-size:26px;">Six Week</h1>
+      <div style="font-size:11px; color:#A9B7B1; margin-top:8px;">Última atualização: ${ultimaAtualizacaoSixWeekStr}</div>
+      <div style="font-size:11px; color:#A9B7B1; margin-top:2px;">Atualizado de forma quinzenal</div>
     </div>
 
     <section class="secaoNova">
