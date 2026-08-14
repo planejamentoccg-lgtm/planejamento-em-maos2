@@ -2080,12 +2080,29 @@ async function criarNovaSenha() {
 }
 
 // ✅ LOGIN
+// ✅ identificador de dispositivo ESTÁVEL — antes o app usava
+// navigator.userAgent, mas essa string pode mudar sozinha (atualização
+// do navegador ou do sistema operacional), fazendo o mesmo aparelho
+// parecer um dispositivo "novo" e disparar o bloqueio de "já logado em
+// 2 dispositivos" por engano. Agora geramos um ID aleatório uma única
+// vez e guardamos no localStorage do navegador — ele só muda se a
+// pessoa limpar os dados do site ou usar outro navegador/aparelho de
+// verdade.
+function obterIdDispositivo() {
+  let id = localStorage.getItem('idDispositivoPlanejamento');
+  if (!id) {
+    id = 'disp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('idDispositivoPlanejamento', id);
+  }
+  return id;
+}
+
 async function login() {
 
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
 
-  const dispositivoAtual = navigator.userAgent;
+  const dispositivoAtual = obterIdDispositivo();
 
   const ref = db.collection("Sessoes").doc(email);
   const doc = await ref.get();
@@ -2141,7 +2158,7 @@ async function logout() {
   const ref = db.collection("Sessoes").doc(email);
   const doc = await ref.get();
   if (doc.exists) {
-    const dispositivos = (doc.data().dispositivos || []).filter(d => d !== navigator.userAgent);
+    const dispositivos = (doc.data().dispositivos || []).filter(d => d !== obterIdDispositivo());
     if (dispositivos.length > 0) {
       await ref.set({ dispositivos, data: new Date() });
     } else {
