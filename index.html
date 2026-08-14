@@ -2107,22 +2107,34 @@ async function login() {
   const ref = db.collection("Sessoes").doc(email);
   const doc = await ref.get();
 
-  // ✅ permite até 2 dispositivos cadastrados por conta — só bloqueia
-  // um TERCEIRO dispositivo diferente
+  // ✅ permite até 2 dispositivos cadastrados por conta — se bater no
+  // limite, oferece a opção de desconectar os outros e continuar aqui
+  // mesmo (em vez de só travar e mandar a pessoa mexer no Firestore) —
+  // cobre tanto dispositivo "fantasma" antigo quanto o app instalado e
+  // o navegador contando como dois dispositivos separados no mesmo PC
   let dispositivos = [];
+  let forcarDesconexao = false;
   if (doc.exists) {
     dispositivos = doc.data().dispositivos || [];
     if (!dispositivos.includes(dispositivoAtual) && dispositivos.length >= 2) {
-      alert("Este usuário já está logado em 2 dispositivos. Saia de um deles pra entrar em um novo.");
-      return;
+      const continuar = confirm(
+        "Este usuário já está logado em 2 dispositivos.\n\n" +
+        "Se for você mesma em outro aparelho ou aba, pode desconectar os outros e continuar por aqui."
+      );
+      if (!continuar) return;
+      forcarDesconexao = true;
     }
   }
 
   try {
     await auth.signInWithEmailAndPassword(email, senha);
 
-    // ✅ salva o dispositivo atual na lista, se ainda não estiver nela
-    if (!dispositivos.includes(dispositivoAtual)) {
+    // ✅ salva o dispositivo atual na lista — se a pessoa escolheu
+    // "continuar por aqui" no aviso acima, essa lista vira só este
+    // dispositivo, desconectando os outros
+    if (forcarDesconexao) {
+      dispositivos = [dispositivoAtual];
+    } else if (!dispositivos.includes(dispositivoAtual)) {
       dispositivos.push(dispositivoAtual);
     }
     await db.collection("Sessoes").doc(email).set({
