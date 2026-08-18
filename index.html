@@ -1692,6 +1692,15 @@ body.tema-escuro .iconeIndicador{
   }
 }
 
+@keyframes flashDestaqueCrono {
+  0%, 100% { background: transparent; }
+  25%, 75% { background: rgba(143, 184, 75, 0.22); }
+}
+.arvItemDestacado {
+  animation: flashDestaqueCrono 2.2s ease;
+  border-radius: 6px;
+}
+
   </style>
 </head>
 
@@ -2951,7 +2960,7 @@ function renderizarCronogramaGeral() {
     </div>
     <section class="secaoNova">
       <div class="caixaBusca" style="position:relative;">
-        <input type="text" id="inputBuscaC" placeholder="Pergunte algo... ex: o que mudou no replanejamento?"
+        <input type="text" id="inputBuscaC" placeholder="Busque um período ou o nome de uma tarefa... ex: Passagem de Emergência"
                oninput="mostrarSugestoes('C')" onfocus="mostrarSugestoes('C')"
                onkeypress="if(event.key==='Enter') buscarInteligenteCronograma('C')">
         <button class="btnBusca" onclick="buscarInteligenteCronograma('C')">Buscar</button>
@@ -3470,7 +3479,7 @@ function renderizarNoArvoreCronograma(nomeAtividade, item, itensArea, profundida
 
   return `
     <div>
-      <div class="linhaArvoreCrono" style="padding:10px 2px; ${temFilhos ? 'cursor:pointer;' : ''} border-bottom:1px solid var(--line);"
+      <div class="linhaArvoreCrono" id="arvItem_${id}" style="padding:10px 2px; ${temFilhos ? 'cursor:pointer;' : ''} border-bottom:1px solid var(--line);"
            ${temFilhos ? `onclick="alternarExpandirArvoreCronograma('${idExp}')"` : ''}>
         <div style="display:flex; align-items:flex-start; gap:7px; min-width:0;">
           ${seta}
@@ -3536,6 +3545,79 @@ function construirCaminhoCronograma(itemAlvo) {
   }
 
   return caminho;
+}
+
+// ✅ busca por nome de tarefa na tela principal do Cronograma — pra
+// quando a pessoa não sabe o número da estrutura de tópicos nem a data,
+// só lembra de um pedaço do nome (ex: "Passagem de Emergência"). Mostra
+// os resultados agrupados por área com o mesmo estilo de rastreabilidade
+// (breadcrumb) usado no caminho crítico, e cada resultado é clicável —
+// toca e vai direto pra dentro da árvore daquela atividade, já aberta
+// até o item certo.
+function montarRespostaBuscaNomeCronograma(termoOriginal) {
+  const termoNorm = normalizarTexto(termoOriginal);
+  if (termoNorm.length < 3) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Digite pelo menos 3 letras do nome da tarefa.</p>`;
+  }
+
+  const encontrados = CRONOGRAMA_ARVORE_COMPLETA.filter(i => normalizarTexto(i[1]).includes(termoNorm));
+
+  if (encontrados.length === 0) {
+    return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não encontrei nenhuma tarefa com "${termoOriginal}" no nome. Tenta um termo mais curto, ou toque na caixinha pra buscar por período.</p>`;
+  }
+
+  const mostrados = encontrados.slice(0, 30);
+  const itensAgrupados = mostrados.map(i => ({
+    area: i[5], id: i[0],
+    bc: construirCaminhoCronograma(i).join(' › '),
+    nome: i[1], periodo: `${i[2]} → ${i[3]}`,
+  }));
+
+  let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 0; text-align:left;">${encontrados.length} resultado(s) pra "${termoOriginal}":</div>`;
+  html += montarBlocosAgrupados(itensAgrupados, 'area', i => `
+    <div style="margin-bottom:9px; cursor:pointer;" onclick="abrirItemCronogramaDaBusca('${i.area.replace(/'/g, "\\'")}', ${i.id})">
+      ${i.bc ? `<div style="font-size:9.5px; color:var(--text-soft);">${i.bc}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--accent); font-weight:600;">${i.nome} →</div>
+      <div style="font-size:11.5px; color:var(--text-soft); margin-top:1px;">${i.periodo}</div>
+    </div>
+  `);
+  if (encontrados.length > 30) {
+    html += `<div style="font-size:10.5px; color:var(--text-soft); margin-top:10px;">...e mais ${encontrados.length - 30}. Tenta um termo mais específico pra ver tudo listado.</div>`;
+  }
+  return html;
+}
+
+// ✅ abre a atividade certa e já expande todos os "pais" do item
+// encontrado na busca, pra ele aparecer visível assim que a tela
+// carregar — sem precisar tocar em nada pra ir descendo a árvore
+function abrirItemCronogramaDaBusca(area, itemId) {
+  let itensArea = CRONOGRAMA_ARVORE_COMPLETA.filter(i => i[5] === area).sort((a, b) => a[0] - b[0]);
+  let nivelRaiz = Math.min(...itensArea.map(i => i[4]));
+  let itensRaiz = itensArea.filter(i => i[4] === nivelRaiz);
+  if (itensRaiz.length === 1) {
+    itensArea = itensArea.filter(i => i[0] !== itensRaiz[0][0]);
+  }
+
+  const idx = itensArea.findIndex(i => i[0] === itemId);
+  if (idx !== -1) {
+    let nivelAtual = itensArea[idx][4];
+    for (let i = idx - 1; i >= 0; i--) {
+      if (itensArea[i][4] < nivelAtual) {
+        cronogramaArvoreExpandida['arv_' + itensArea[i][0]] = true;
+        nivelAtual = itensArea[i][4];
+      }
+    }
+  }
+
+  abrirSubTelaCronograma('atividade', area);
+
+  setTimeout(() => {
+    const el = document.getElementById('arvItem_' + itemId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('arvItemDestacado');
+    setTimeout(() => el.classList.remove('arvItemDestacado'), 2200);
+  }, 60);
 }
 
 function montarRespostaPrevistoIntervaloGeral(termoOriginal) {
@@ -3750,8 +3832,12 @@ async function buscarInteligenteCronograma(sufixo) {
   let html = '';
 
   if (sufixo === 'C') {
-    // ✅ tela principal do Cronograma Geral: só a pergunta de período
-    html = montarRespostaPrevistoIntervaloGeral(termoOriginal);
+    // ✅ tela principal do Cronograma Geral: se tiver duas datas, é a
+    // pergunta de período; senão, trata como busca por nome de tarefa
+    const temDuasDatas = !!extrairDuasDatasCompletas(termoOriginal);
+    html = temDuasDatas
+      ? montarRespostaPrevistoIntervaloGeral(termoOriginal)
+      : montarRespostaBuscaNomeCronograma(termoOriginal);
   } else if (sufixo === 'CD' && subTelaCronogramaTipo === 'critico') {
     if (termo.includes(' ate ')) {
       html = montarRespostaCaminhoCriticoIntervalo(termoOriginal);
@@ -5461,6 +5547,7 @@ const SUGESTOES_BUSCA_S = [
 // ✅ perguntas sugeridas na tela de CRONOGRAMA GERAL
 const SUGESTOES_BUSCA_C = [
   'O que está previsto para o dia [data] até o dia [data]',
+  'Passagem de Emergência',
 ];
 
 let timeoutsSugestoes = {};
