@@ -1928,6 +1928,7 @@ body.tema-escuro .iconeIndicador{
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
   
 <script>
 
@@ -2019,6 +2020,18 @@ if (ehIOS() && !appJaInstalado()) {
 }
 
 firebase.initializeApp(firebaseConfig);
+
+// ✅ App Check — garante que só ESTE app, rodando no domínio certo,
+// consegue falar com o Firestore, mesmo que alguém copie o
+// firebaseConfig (que é público por natureza) pra tentar montar uma
+// cópia em outro lugar. Site key pública, gerada no Firebase Console >
+// App Check > reCAPTCHA v3 — não é segredo, mas TROQUE pela chave real
+// antes de subir, senão o App Check não vai conseguir validar nada.
+firebase.appCheck().activate(
+  '6Lf4wIwtAAAAALeVd_9OIWDxLK0HuyTPEEXXkh7-',
+  true // isTokenAutoRefreshEnabled
+);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
