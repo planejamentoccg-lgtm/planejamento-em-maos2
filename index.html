@@ -5553,6 +5553,20 @@ const SUGESTOES_BUSCA_C = [
 let timeoutsSugestoes = {};
 let calendarioEstado = {};
 
+// ✅ alguns itens da lista de sugestões têm um texto mais amigável pra
+// MOSTRAR na tela, diferente do texto que de fato vai pra caixa de
+// busca quando a pessoa toca — sem essa separação, o rótulo bonito iria
+// parar dentro da busca e ela não acharia nada (ex: buscar por
+// "Localizar tarefa: Passagem de Emergência" ao invés de só
+// "Passagem de Emergência")
+const ROTULOS_SUGESTAO = {
+  'Passagem de Emergência': 'Buscar pelo nome de uma tarefa (ex: Passagem de Emergência)',
+};
+
+function rotuloSugestao(s) {
+  return ROTULOS_SUGESTAO[s] || s;
+}
+
 function mostrarSugestoes(sufixo) {
   const input = document.getElementById('inputBusca' + sufixo);
   const container = document.getElementById('sugestoesBusca' + sufixo);
@@ -5583,7 +5597,7 @@ function mostrarSugestoes(sufixo) {
   }
 
   container.innerHTML = filtradas.map(s =>
-    `<div class="sugestaoItem" data-completo="${s.replace(/"/g, '&quot;')}" onmousedown="selecionarSugestao('${sufixo}', this)">${s}</div>`
+    `<div class="sugestaoItem" data-completo="${s.replace(/"/g, '&quot;')}" onmousedown="selecionarSugestao('${sufixo}', this)">${rotuloSugestao(s)}</div>`
   ).join('');
   container.style.display = 'block';
 }
