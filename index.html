@@ -2113,6 +2113,19 @@ async function login() {
 
   const dispositivoAtual = obterIdDispositivo();
 
+  // ✅ autentica PRIMEIRO — as checagens de dispositivo (que leem o
+  // Firestore) só acontecem depois de confirmar e-mail/senha corretos.
+  // Antes dava pra consultar "Sessoes/{email}" sem saber a senha certa,
+  // só digitando um e-mail — isso fecha essa brecha e também deixa as
+  // regras de segurança do Firestore mais simples (exigir login pra
+  // tudo, sem precisar abrir uma exceção pra leitura antes do login).
+  try {
+    await auth.signInWithEmailAndPassword(email, senha);
+  } catch (e) {
+    alert(e.message);
+    return;
+  }
+
   const ref = db.collection("Sessoes").doc(email);
   const doc = await ref.get();
 
@@ -2130,46 +2143,42 @@ async function login() {
         "Este usuário já está logado em 2 dispositivos.\n\n" +
         "Se for você mesma em outro aparelho ou aba, pode desconectar os outros e continuar por aqui."
       );
-      if (!continuar) return;
+      if (!continuar) {
+        await auth.signOut(); // ✅ desfaz o login, já que a pessoa optou por não continuar
+        return;
+      }
       forcarDesconexao = true;
     }
   }
 
-  try {
-    await auth.signInWithEmailAndPassword(email, senha);
-
-    // ✅ salva o dispositivo atual na lista — se a pessoa escolheu
-    // "continuar por aqui" no aviso acima, essa lista vira só este
-    // dispositivo, desconectando os outros
-    if (forcarDesconexao) {
-      dispositivos = [dispositivoAtual];
-    } else if (!dispositivos.includes(dispositivoAtual)) {
-      dispositivos.push(dispositivoAtual);
-    }
-    await db.collection("Sessoes").doc(email).set({
-      dispositivos,
-      data: new Date()
-    });
-
-    // ✅ se essa pessoa ainda não trocou a senha temporária, pede antes
-    // de deixar entrar no app
-    const usuarioDoc = await db.collection("Usuarios").doc(email).get();
-    const jaTrocouSenha = usuarioDoc.exists && usuarioDoc.data().senhaAlterada === true;
-
-    if (!jaTrocouSenha) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("trocarSenha").style.display = "block";
-      return;
-    }
-
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").style.display = "block";
-
-    mostrarTelaFrentes();
-
-  } catch(e) {
-    alert(e.message);
+  // ✅ salva o dispositivo atual na lista — se a pessoa escolheu
+  // "continuar por aqui" no aviso acima, essa lista vira só este
+  // dispositivo, desconectando os outros
+  if (forcarDesconexao) {
+    dispositivos = [dispositivoAtual];
+  } else if (!dispositivos.includes(dispositivoAtual)) {
+    dispositivos.push(dispositivoAtual);
   }
+  await db.collection("Sessoes").doc(email).set({
+    dispositivos,
+    data: new Date()
+  });
+
+  // ✅ se essa pessoa ainda não trocou a senha temporária, pede antes
+  // de deixar entrar no app
+  const usuarioDoc = await db.collection("Usuarios").doc(email).get();
+  const jaTrocouSenha = usuarioDoc.exists && usuarioDoc.data().senhaAlterada === true;
+
+  if (!jaTrocouSenha) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("trocarSenha").style.display = "block";
+    return;
+  }
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  mostrarTelaFrentes();
 }
 async function logout() {
 
