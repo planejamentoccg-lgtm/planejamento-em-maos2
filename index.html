@@ -2027,8 +2027,11 @@ firebase.initializeApp(firebaseConfig);
 // cópia em outro lugar. Site key pública, gerada no Firebase Console >
 // App Check > reCAPTCHA v3 — não é segredo, mas TROQUE pela chave real
 // antes de subir, senão o App Check não vai conseguir validar nada.
+// ✅ chave criada como reCAPTCHA ENTERPRISE (não o v3 clássico) — por
+// isso usa o provider Enterprise explicitamente, não só a string da
+// chave (que o SDK trataria como v3 clássico por padrão)
 firebase.appCheck().activate(
-  '6LdfZYwtAAAAAEfJ483b0LQrBiCF2vcU3_1RlhUz',
+  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LdfZYwtAAAAAEfJ483b0LQrBiCF2vcU3_1RlhUz'),
   true // isTokenAutoRefreshEnabled
 );
 
@@ -5226,28 +5229,40 @@ function mostrarDesempenho() {
   `;
   }).join('');
 
-  // ✅ legenda em HTML — uma linha por etapa, com Previsto e Realizado
-  // lado a lado (a legenda nativa do gráfico foi desligada porque ela
-  // paginava e travava numa imagem estática)
-  const legendaHtml = etapas.length > 0 ? `
-    <div style="display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; font-family:'IBM Plex Sans',sans-serif; font-size:12px;">
-      ${etapas.map((et, i) => {
-        const cor = PALETA_ETAPAS_JS[i % PALETA_ETAPAS_JS.length];
-        return `
-        <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="width:16px; height:2px; background:${cor}; display:inline-block;"></span>
-            ${et.Etapa} - Previsto
-          </span>
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="width:16px; height:0; border-top:2px dashed ${cor}; display:inline-block;"></span>
-            ${et.Etapa} - Realizado
-          </span>
-        </div>
-        `;
-      }).join('')}
-    </div>
-  ` : '';
+  // ✅ legenda em HTML separada por gráfico — uma linha por etapa, com
+  // Previsto e Realizado lado a lado (a legenda nativa do gráfico foi
+  // desligada porque ela paginava e travava numa imagem estática).
+  // Cada gráfico (PNG) reinicia a paleta de cores do zero no script, então
+  // a legenda de cada um também reinicia — senão as cores não batem com
+  // a imagem quando a frente tem 2 gráficos. Dados antigos sem
+  // "GraficoIndice" marcado caem todos no gráfico 1.
+  function montarLegendaGrafico(etapasDoGrafico) {
+    if (etapasDoGrafico.length === 0) return '';
+    return `
+      <div style="display:flex; flex-direction:column; gap:8px; margin:10px 0 18px; font-family:'IBM Plex Sans',sans-serif; font-size:12px;">
+        ${etapasDoGrafico.map((et, i) => {
+          const cor = PALETA_ETAPAS_JS[i % PALETA_ETAPAS_JS.length];
+          return `
+          <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+            <span style="display:flex; align-items:center; gap:6px;">
+              <span style="width:16px; height:2px; background:${cor}; display:inline-block;"></span>
+              ${et.Etapa} - Previsto
+            </span>
+            <span style="display:flex; align-items:center; gap:6px;">
+              <span style="width:16px; height:0; border-top:2px dashed ${cor}; display:inline-block;"></span>
+              ${et.Etapa} - Realizado
+            </span>
+          </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  const etapasGrafico1 = etapas.filter(et => (et.GraficoIndice || 1) === 1);
+  const etapasGrafico2 = etapas.filter(et => et.GraficoIndice === 2);
+  const legenda1Html = montarLegendaGrafico(etapasGrafico1);
+  const legenda2Html = montarLegendaGrafico(etapasGrafico2);
 
   document.getElementById("desempenho").innerHTML = `
 
@@ -5257,14 +5272,14 @@ function mostrarDesempenho() {
 
       ${d.Grafico1 ? `
         <img src="${d.Grafico1}" 
-             style="width:100%; border-radius:10px; margin-bottom:15px;">
+             style="width:100%; border-radius:10px;">
+        ${legenda1Html}
       ` : ""}
-
-      ${legendaHtml}
 
       ${d.Grafico2 ? `
         <img src="${d.Grafico2}" 
              style="width:100%; border-radius:10px;">
+        ${legenda2Html}
       ` : ""}
 
     </div>
