@@ -3990,6 +3990,9 @@ function renderizarFrentesFiltradas() {
   let atrasadas = 0;
   let qtdFrentesAtivas = 0;
 
+  const cardsQuantificaveis = [];
+  const cardsNaoQuantificaveis = [];
+
   (window.todasFrentesAtivas || []).forEach(data => {
 
     // ✅ filtro por Tipo — "Todas" mostra todas, o resto compara com a
@@ -4016,15 +4019,105 @@ function renderizarFrentesFiltradas() {
     const estaParalisada = data.Paralisada === true || data.Paralisada === 'true';
     if (!estaParalisada) qtdFrentesAtivas++;
 
+    // ✅ pega a situação mais recente entre as etapas, pra mostrar no rodapé
+    let situacaoRecente = "";
+    (data.Etapas || []).forEach(etapa => {
+      if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
+    });
+
     const card = document.createElement("div");
     card.className = "frenteNova";
+    card.onclick = () => abrir(data);
+
+    // ✅ frentes onde NENHUMA etapa é quantificável (todas com Unidade
+    // "-") não têm % real pra comparar — o script sempre grava
+    // Percentual/Percentualprevisto como 0 nesse caso, o que fazia
+    // "0 < 0" dar falso e a frente aparecer sempre como "No prazo",
+    // mesmo bem atrasada. Pra essas, o prazo é calculado pela data
+    // (Final Previsto x Final Real/hoje) em vez de percentual, e elas
+    // ficam numa seção separada da lista pra não confundir com as que
+    // têm barrinha de %.
+    const todasNaoQuantificaveis = etapasDaFrente.length > 0 &&
+      etapasDaFrente.every(et => et.Unidade === '-');
+
+    if (estaParalisada) {
+      // status "paralisada" é igual pros dois tipos de frente
+    }
+
+    if (todasNaoQuantificaveis) {
+      let status = "ok";
+      let textoPrazo = "Sem Final Previsto cadastrado";
+      let corPrazo = "var(--text-soft)";
+
+      if (estaParalisada) {
+        status = "paralisada";
+      } else {
+        const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+        let maiorFp = null;
+        let todasComFr = etapasDaFrente.length > 0;
+        etapasDaFrente.forEach(et => {
+          const fp = parseDataCompleta(et.FinalPrevisto);
+          const fr = parseDataCompleta(et.FinalReal);
+          if (fp && (!maiorFp || fp > maiorFp)) maiorFp = fp;
+          if (!fr) todasComFr = false;
+        });
+
+        if (todasComFr) {
+          status = "ok";
+          textoPrazo = "Concluída";
+          corPrazo = "#43a047";
+          noPrazo++;
+        } else if (maiorFp) {
+          const diffDias = Math.round((hoje - maiorFp) / 86400000);
+          if (diffDias > 0) {
+            status = "atrasada";
+            textoPrazo = `Atrasada há ${diffDias} dia${diffDias === 1 ? '' : 's'}`;
+            corPrazo = "#e53935";
+            atrasadas++;
+          } else {
+            status = "ok";
+            textoPrazo = diffDias === 0 ? "Vence hoje" : `Faltam ${Math.abs(diffDias)} dia${Math.abs(diffDias) === 1 ? '' : 's'} para o previsto`;
+            corPrazo = "var(--ink)";
+            noPrazo++;
+          }
+        }
+      }
+
+      const rotuloStatus = status === "paralisada" ? "Paralisada" : status === "atrasada" ? "Em atraso" : "No prazo";
+      const classeStatus = status === "paralisada" ? "paralisada" : status === "atrasada" ? "atrasada" : "";
+      const notaParalisacaoHtml = status === "paralisada" && data.NotaParalisacao
+        ? `<div style="display:flex; align-items:flex-start; gap:5px; font-size:10.5px; color:#c0392b; margin-top:4px; text-align:left;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1.5px;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <span>${data.NotaParalisacao}</span>
+          </div>`
+        : "";
+
+      card.innerHTML = `
+        <div class="topo2">
+          <span class="nome2">${data.Nome}</span>
+          <span class="tagStatus ${classeStatus}">
+            <span class="ponto"></span>
+            ${rotuloStatus}
+          </span>
+        </div>
+
+        <div class="baixo2" style="margin-top:10px;">
+          <span style="color:${corPrazo}; font-weight:600; font-size:13px;">${textoPrazo}</span>
+          <span class="meta2">${situacaoRecente ? "situação em " + situacaoRecente : ""}</span>
+        </div>
+        ${notaParalisacaoHtml}
+      `;
+
+      cardsNaoQuantificaveis.push(card);
+      return;
+    }
 
     let progresso = data.Percentual || 0;
     let previsto = data.Percentualprevisto || 0;
 
     let status = "ok";
 
-    if (data.Paralisada === true || data.Paralisada === 'true') {
+    if (estaParalisada) {
       status = "paralisada";
     } else if (progresso < previsto) {
       status = "atrasada";
@@ -4032,12 +4125,6 @@ function renderizarFrentesFiltradas() {
     } else {
       noPrazo++;
     }
-
-    // ✅ pega a situação mais recente entre as etapas, pra mostrar no rodapé
-    let situacaoRecente = "";
-    (data.Etapas || []).forEach(etapa => {
-      if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
-    });
 
     const rotuloStatus = status === "paralisada" ? "Paralisada" : status === "atrasada" ? "Em atraso" : "No prazo";
     const classeStatus = status === "paralisada" ? "paralisada" : status === "atrasada" ? "atrasada" : "";
@@ -4078,11 +4165,27 @@ function renderizarFrentesFiltradas() {
       ${notaParalisacaoHtml}
     `;
 
-    card.onclick = () => abrir(data);
-
-    botoes.appendChild(card);
+    cardsQuantificaveis.push(card);
 
   });
+
+  // ✅ duas seções separadas, pra não misturar cards com barrinha de %
+  // com cards de prazo por data na mesma lista sem contexto
+  const tituloSecao = (texto) => {
+    const div = document.createElement("div");
+    div.style.cssText = "font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-soft); margin:18px 0 8px; text-align:left;";
+    div.textContent = texto;
+    return div;
+  };
+
+  if (cardsQuantificaveis.length > 0) {
+    botoes.appendChild(tituloSecao("Frentes com quantidade"));
+    cardsQuantificaveis.forEach(c => botoes.appendChild(c));
+  }
+  if (cardsNaoQuantificaveis.length > 0) {
+    botoes.appendChild(tituloSecao("Frentes sem quantidade (por prazo)"));
+    cardsNaoQuantificaveis.forEach(c => botoes.appendChild(c));
+  }
 
   // ✅ METRICAS
   document.getElementById("qtFrentes").innerText = qtdFrentesAtivas;
