@@ -553,6 +553,30 @@
   background: var(--accent);
   color: #fff;
 }
+
+/* ✅ menu de abas da Programação (Esta Semana / Six Week) — classe
+   própria pra não colidir com o toggle das outras telas */
+.menuBtnProg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.menuBtnProg span {
+  font-size: 11px;
+  margin-top: 4px;
+}
+.menuBtnProg.ativo {
+  color: var(--accent);
+  font-weight: 500;
+}
+.menuBtnProg.ativo .iconCircle {
+  background: var(--accent);
+  color: #fff;
+}
 .linkMarcarLidas {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 12px;
@@ -1879,7 +1903,7 @@ body.tema-escuro .iconeIndicador{
       <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/>
       </svg>
-      <span>Six Week</span>
+      <span>Programação</span>
     </div>
     <div class="navItem" id="navItemCronograma" onclick="mostrarTelaCronograma()">
       <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -4639,6 +4663,15 @@ function montarRespostaInicioConcluida(termoOriginal) {
   return `<div style="font-size:13px; color:var(--ink); text-align:left; margin-top:10px;">${formatarTitulo(frente.Nome)} iniciou em <b>${formatarDataCurta(menorData)}</b>.</div>`;
 }
 
+// ✅ alterna entre as abas da Programação (Esta Semana / Six Week)
+function mostrarAbaProgramacao(aba) {
+  document.querySelectorAll('.menuBtnProg').forEach(el => el.classList.remove('ativo'));
+  document.getElementById('painelProgEstaSemana').style.display = aba === 'estaSemana' ? 'block' : 'none';
+  document.getElementById('painelProgSixWeek').style.display = aba === 'sixWeek' ? 'block' : 'none';
+  if (aba === 'estaSemana') document.getElementById('abaProgEstaSemana').classList.add('ativo');
+  else document.getElementById('abaProgSixWeek').classList.add('ativo');
+}
+
 async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
@@ -4684,33 +4717,54 @@ async function carregarProximasSemanas() {
 
     <div class="heroNovo">
       <div class="eyebrow">Planejamento em mãos</div>
-      <h1 style="font-size:23px;">Six Week</h1>
-      <div style="font-size:12px; color:var(--text-soft); margin-top:10px; line-height:1.6;">Última atualização <b style="color:var(--ink); font-weight:600;">${ultimaAtualizacaoSixWeekStr}</b> · atualizado quinzenalmente</div>
+      <h1 style="font-size:23px;">Programação</h1>
+      <div style="font-size:12px; color:var(--text-soft); margin-top:10px; line-height:1.6;">Última atualização <b style="color:var(--painel-texto); font-weight:600;">${ultimaAtualizacaoSixWeekStr}</b> · atualizado quinzenalmente</div>
     </div>
 
-    <section class="secaoNova">
-      <div class="cabecalho">
-        <span class="tituloSecao">Six Week</span>
-        <button class="btnGantt" onclick="abrirGantt()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><path d="M4 4v16h16"/><path d="M8 16l4-6 3 3 5-7"/></svg>
-          Gráfico de Gantt
-        </button>
+    <div class="menuNovo" style="margin-top:-14px;">
+      <div class="menuBtnProg" id="abaProgEstaSemana" onclick="mostrarAbaProgramacao('estaSemana')">
+        <div class="iconCircle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h3"/></svg>
+        </div>
+        <span>Esta Semana</span>
       </div>
-      <hr class="regra">
-
-      <div class="caixaBusca" style="position:relative;">
-        <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
-               oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')"
-               onkeypress="if(event.key==='Enter') buscarInteligente('S')">
-        <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
-        <div class="sugestoesBusca" id="sugestoesBuscaS" style="display:none;"></div>
+      <div class="menuBtnProg ativo" id="abaProgSixWeek" onclick="mostrarAbaProgramacao('sixWeek')">
+        <div class="iconCircle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </div>
+        <span>Six Week</span>
       </div>
-      <div id="resultadoBuscaS"></div>
+    </div>
 
-      <div id="resumoHojeSemanas"></div>
+    <section class="secaoNova" style="padding-top:6px;">
 
-      <div id="rotuloPeriodoSemanas" style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-top:18px;"></div>
-      <div id="listaProximasSemanas" style="margin-top:6px;"></div>
+      <div id="painelProgEstaSemana" style="display:none;">
+        <p style="font-size:12.5px; color:var(--text-soft);">Em breve.</p>
+      </div>
+
+      <div id="painelProgSixWeek">
+        <div class="cabecalho">
+          <span class="tituloSecao">Six Week</span>
+          <button class="btnGantt" onclick="abrirGantt()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><path d="M4 4v16h16"/><path d="M8 16l4-6 3 3 5-7"/></svg>
+            Gráfico de Gantt
+          </button>
+        </div>
+        <hr class="regra">
+
+        <div class="caixaBusca" style="position:relative;">
+          <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
+                 oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')"
+                 onkeypress="if(event.key==='Enter') buscarInteligente('S')">
+          <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
+          <div class="sugestoesBusca" id="sugestoesBuscaS" style="display:none;"></div>
+        </div>
+        <div id="resultadoBuscaS"></div>
+
+        <div id="rotuloPeriodoSemanas" style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-top:18px;"></div>
+        <div id="listaProximasSemanas" style="margin-top:6px;"></div>
+      </div>
+
     </section>
   `;
 
@@ -4758,52 +4812,6 @@ async function carregarProximasSemanas() {
 
   // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
   window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
-
-  // ✅ resumo visual "previsto pra hoje" — bate o Diario de cada tarefa
-  // com a data de hoje (mesmo formato dd/MM salvo na planilha). Isso
-  // atualiza sozinho todo dia, porque é recalculado toda vez que a
-  // tela é carregada — não é um valor fixo salvo em lugar nenhum.
-  const hojeObj = new Date();
-  const hojeDDMM = `${String(hojeObj.getDate()).padStart(2, '0')}/${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
-  const itensHoje = [];
-  frentesSemanas.forEach(item => {
-    (item.tarefas || []).forEach(t => {
-      const diaHoje = (t.Diario || []).find(d => d.Data === hojeDDMM);
-      if (diaHoje) {
-        itensHoje.push({ frente: item.dados.Nome, tarefa: t.Nome, valor: diaHoje.Valor, unidade: t.Unidade || 'm' });
-      }
-    });
-  });
-
-  const resumoHojeEl = document.getElementById('resumoHojeSemanas');
-  if (resumoHojeEl) {
-    if (itensHoje.length === 0) {
-      resumoHojeEl.innerHTML = `
-        <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px; margin-top:16px;">
-          <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">Previsto para hoje · ${hojeDDMM}</div>
-          <div style="font-size:12.5px; color:var(--text-soft);">Nada previsto para hoje nessa janela de 6 semanas.</div>
-        </div>
-      `;
-    } else {
-      resumoHojeEl.innerHTML = `
-        <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px; margin-top:16px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
-            <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em;">Previsto para hoje · ${hojeDDMM}</div>
-            <div style="font-size:9.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace;">atualizado todo dia</div>
-          </div>
-          ${itensHoje.map((it, i) => {
-            const valorTexto = normalizarTexto(String(it.valor).trim()) === 's' ? 'sem quantidade prevista' : `${it.valor}${it.unidade}`;
-            return `
-            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:7px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
-              <span style="font-size:12.5px; color:var(--ink);">${it.tarefa}<span style="color:var(--text-soft); font-size:10.5px;"> · ${formatarTitulo(it.frente)}</span></span>
-              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; color:var(--accent-bright, var(--accent)); flex-shrink:0; white-space:nowrap;">${valorTexto}</span>
-            </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    }
-  }
 
   // ✅ intervalo mostrado ao lado de "Próximas 6 semanas" — prioriza o
   // período visível de verdade (calculado na planilha, a partir dos
