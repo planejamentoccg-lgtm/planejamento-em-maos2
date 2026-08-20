@@ -5076,7 +5076,7 @@ let menu = `
       <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em;">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
         <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos</span>
-        <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; color:${corDelta}; margin-left:auto;">${etapa.Desvio || '-'}</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-left:auto; text-align:right;"><span style="color:var(--text-soft); font-weight:400;">desvio </span><span style="color:${corDelta}; font-weight:600;">${etapa.Desvio || '-'}</span></span>
       </div>
       <div style="position:relative; height:3px; background:var(--line); border-radius:2px; margin-top:12px;">
         <div style="position:absolute; left:0; top:0; height:100%; border-radius:2px; width:${Math.min(Math.max(progressoPct,0),100)}%; background:${atrasada ? '#e0645a' : 'var(--accent)'};"></div>
