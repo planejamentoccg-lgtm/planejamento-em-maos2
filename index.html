@@ -4801,6 +4801,20 @@ async function carregarProximasSemanas() {
     console.log('Não consegui carregar a configuração da Six Week:', e);
   }
 
+  // ✅ "Esta Semana" tem sua própria "Última atualização" — vem de um
+  // documento separado (Config/ProgramacaoSemanal), porque é uma
+  // planilha diferente, atualizada semanalmente (não quinzenalmente)
+  let ultimaAtualizacaoEstaSemanaStr = '-';
+  try {
+    const docAtualizacaoEstaSemana = await db.collection("Config").doc("ProgramacaoSemanal").get();
+    if (docAtualizacaoEstaSemana.exists && docAtualizacaoEstaSemana.data().UltimaAtualizacao) {
+      const d = docAtualizacaoEstaSemana.data().UltimaAtualizacao.toDate();
+      ultimaAtualizacaoEstaSemanaStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+  } catch (e) {
+    console.log('Não consegui carregar a configuração da Esta Semana:', e);
+  }
+
   container.innerHTML = `
     <div id="topo">
       <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
@@ -4819,7 +4833,6 @@ async function carregarProximasSemanas() {
     <div class="heroNovo">
       <div class="eyebrow">Planejamento em mãos</div>
       <h1 style="font-size:23px;">Programação</h1>
-      <div style="font-size:12px; color:var(--text-soft); margin-top:10px; line-height:1.6;">Última atualização <b style="color:var(--painel-texto); font-weight:600;">${ultimaAtualizacaoSixWeekStr}</b> · atualizado quinzenalmente</div>
     </div>
 
     <div class="menuNovo" style="margin-top:-14px;">
@@ -4840,11 +4853,13 @@ async function carregarProximasSemanas() {
     <section class="secaoNova" style="padding-top:6px;">
 
       <div id="painelProgEstaSemana">
+        <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:14px;">Última atualização <b style="color:var(--ink); font-weight:600;">${ultimaAtualizacaoEstaSemanaStr}</b> · atualizado semanalmente</div>
         <div id="resumoHojeProgramacao"></div>
         <div id="calendarioEstaSemana" style="margin-top:20px;"></div>
       </div>
 
       <div id="painelProgSixWeek" style="display:none;">
+        <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:2px;">Última atualização <b style="color:var(--ink); font-weight:600;">${ultimaAtualizacaoSixWeekStr}</b> · atualizado quinzenalmente</div>
         <div class="cabecalho">
           <span class="tituloSecao">Six Week</span>
           <button class="btnGantt" onclick="abrirGantt()">
