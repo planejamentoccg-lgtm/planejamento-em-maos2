@@ -1360,27 +1360,52 @@ body.tema-escuro .iconeIndicador{
 
 .filtrosTipo{
   display:flex;
-  gap:8px;
+  justify-content:space-around;
+  align-items:center;
+  background:var(--card-fundo);
+  border-radius:4px;
+  border:1px solid var(--line);
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  padding:12px 10px;
   margin:10px 0 4px;
 }
 .filtroTipoBtn{
-  flex:1;
-  font-family:'IBM Plex Mono', monospace;
-  font-size:11px;
-  letter-spacing:0.04em;
-  text-transform:uppercase;
+  flex:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:12px;
   color:var(--text-soft);
-  background:var(--card-fundo);
-  border:1px solid var(--line);
-  border-radius:4px;
-  padding:8px 10px;
+  background:none;
+  border:none;
+  padding:0;
   cursor:pointer;
-  transition:background .15s, color .15s, border-color .15s;
 }
-.filtroTipoBtn:hover{ border-color:var(--accent); color:var(--ink); }
+.filtroTipoBtn span{
+  font-size:11px;
+  margin-top:4px;
+  text-transform:none;
+  letter-spacing:normal;
+}
+.iconCircleFiltro{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:var(--paper-2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text-soft);
+  transition:background .15s, color .15s;
+}
+.filtroTipoBtn:hover .iconCircleFiltro{ color:var(--ink); }
 .filtroTipoBtn.ativo{
+  color:var(--accent);
+  font-weight:500;
+}
+.filtroTipoBtn.ativo .iconCircleFiltro{
   background:var(--accent);
-  border-color:var(--accent);
   color:#fff;
 }
 
@@ -2997,7 +3022,7 @@ function renderizarCronogramaGeral() {
       </div>
     </div>
 
-    <section class="secaoNova">
+    <section class="secaoNova" style="padding-top:6px;">
 
       <div id="painelCronoGeral">
         <div class="caixaBusca" style="position:relative;">
@@ -3972,9 +3997,24 @@ async function carregarFrentes() {
     <section class="secaoNova">
 
       <div class="filtrosTipo" id="filtrosTipo">
-        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">Todas</button>
-        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">Escavação</button>
-        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">Civil</button>
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <span>Todas</span>
+        </button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <span>Escavação</span>
+        </button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesPorTipo('Civil')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="8" height="18" rx="1"/><rect x="14" y="9" width="6" height="12" rx="1"/><path d="M7.5 7h1M7.5 11h1M7.5 15h1M16 13h1M16 17h1"/></svg>
+          </div>
+          <span>Civil</span>
+        </button>
       </div>
 
       <div class="caixaBusca" style="position:relative;">
@@ -4278,9 +4318,24 @@ async function carregarFrentesConcluidas() {
 
     <section class="secaoNova">
       <div class="filtrosTipo" id="filtrosTipoFC">
-        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesConcluidasPorTipo('Todas')">Todas</button>
-        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">Escavação</button>
-        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesConcluidasPorTipo('Civil')">Civil</button>
+        <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesConcluidasPorTipo('Todas')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <span>Todas</span>
+        </button>
+        <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <span>Escavação</span>
+        </button>
+        <button class="filtroTipoBtn" data-tipo="Civil" onclick="filtrarFrentesConcluidasPorTipo('Civil')">
+          <div class="iconCircleFiltro">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="8" height="18" rx="1"/><rect x="14" y="9" width="6" height="12" rx="1"/><path d="M7.5 7h1M7.5 11h1M7.5 15h1M16 13h1M16 17h1"/></svg>
+          </div>
+          <span>Civil</span>
+        </button>
       </div>
 
       <div class="caixaBusca" style="position:relative;">
