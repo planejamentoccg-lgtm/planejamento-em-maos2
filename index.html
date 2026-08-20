@@ -3357,7 +3357,17 @@ function renderizarSubTelaCronograma(tipo, parametro) {
 // ✅ Concluído geral — real vs. esperado hoje, e status de cada atividade
 function conteudoDetalheMarcos() {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-  const marcos = CRONOGRAMA_GERAL_FILHOS['Marcos Contratuais'] || [];
+  const marcos = [...(CRONOGRAMA_GERAL_FILHOS['Marcos Contratuais'] || [])];
+
+  // ✅ ordena por data prevista — os sem data válida ficam por último
+  marcos.sort((a, b) => {
+    const da = parseDataCompleta(a.terminoPrevisto);
+    const db = parseDataCompleta(b.terminoPrevisto);
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return da - db;
+  });
 
   let html = '';
   marcos.forEach(m => {
