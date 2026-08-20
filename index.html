@@ -4179,11 +4179,11 @@ function renderizarFrentesFiltradas() {
   };
 
   if (cardsQuantificaveis.length > 0) {
-    botoes.appendChild(tituloSecao("Frentes com quantidade"));
+    botoes.appendChild(tituloSecao("Acompanhamento por avanço"));
     cardsQuantificaveis.forEach(c => botoes.appendChild(c));
   }
   if (cardsNaoQuantificaveis.length > 0) {
-    botoes.appendChild(tituloSecao("Frentes sem quantidade (por prazo)"));
+    botoes.appendChild(tituloSecao("Acompanhamento por prazo"));
     cardsNaoQuantificaveis.forEach(c => botoes.appendChild(c));
   }
 
@@ -4892,6 +4892,13 @@ function abrir(data) {
 
   window.frenteAtual = data; // ✅ COLOCA AQUI (primeira linha)
 
+  // ✅ frentes onde TODAS as etapas são "-" (sem quantidade) não têm %
+  // física real — por isso a tela delas não mostra Progresso Físico,
+  // Registro Fotográfico nem a aba de Desempenho (baseados em avanço/m
+  // ou %, que não existe pra essas)
+  const todasNaoQuantificaveis = (data.Etapas || []).length > 0 &&
+    (data.Etapas || []).every(et => et.Unidade === '-');
+
   esconderTelasPrincipais();
   document.getElementById("detalhe").style.display = "block";
 
@@ -4919,6 +4926,7 @@ let menu = `
     <span>Visão Geral</span>
   </div>
 
+  ${todasNaoQuantificaveis ? '' : `
   <div class="menuBtn" onclick="mostrarDesempenho()">
     <div class="iconCircle">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -4927,6 +4935,7 @@ let menu = `
     </div>
     <span>Desempenho</span>
   </div>
+  `}
 
   <div class="menuBtn" onclick="mostrarCronogramaFrente()">
     <div class="iconCircle">
@@ -5071,7 +5080,8 @@ let menu = `
 
   html += `</div>`;
 
-// ✅ PROGRESSO
+// ✅ PROGRESSO — só faz sentido pra frentes com quantidade real
+if (!todasNaoQuantificaveis) {
 const perc = data.Percentual || 0;
 const prev = data.Percentualprevisto || 0;
 const restante = Math.max(0, prev - perc);
@@ -5143,7 +5153,9 @@ html += `
 
 </div>
 `;
-  // ✅ FOTO
+}
+  // ✅ FOTO — também só pra frentes com quantidade
+  if (!todasNaoQuantificaveis) {
   html += `
   <div class="bloco">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
@@ -5159,6 +5171,7 @@ html += `
       : `<p style="font-size:12px; color:var(--text-soft); text-align:left;">Sem foto cadastrada ainda.</p>`}
   </div>
   `;
+  }
 
  // ✅ FINAL
 document.getElementById("conteudo").innerHTML = `
