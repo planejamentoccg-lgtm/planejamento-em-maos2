@@ -4672,6 +4672,97 @@ function mostrarAbaProgramacao(aba) {
   else document.getElementById('abaProgSixWeek').classList.add('ativo');
 }
 
+// ✅ aba "Esta Semana" — planilha diferente da Six Week (sem quantidade,
+// só as datas em que cada tarefa está prevista). Por isso vira um
+// calendário: dia grande + o que está previsto naquele dia.
+async function carregarProgramacaoSemanal() {
+  const resumoEl = document.getElementById('resumoHojeProgramacao');
+  const calEl = document.getElementById('calendarioEstaSemana');
+  if (!resumoEl || !calEl) return;
+
+  try {
+    const doc = await db.collection('Config').doc('ProgramacaoSemanal').get();
+    if (!doc.exists) {
+      calEl.innerHTML = `<p style="font-size:12.5px; color:var(--text-soft);">Ainda não tem dados sincronizados dessa planilha.</p>`;
+      return;
+    }
+    const dados = doc.data();
+    const tarefas = dados.Tarefas || [];
+
+    if (tarefas.length === 0) {
+      calEl.innerHTML = `<p style="font-size:12.5px; color:var(--text-soft);">Nenhuma tarefa cadastrada para essa semana.</p>`;
+      return;
+    }
+
+    // ✅ junta todos os dias únicos que aparecem em alguma tarefa, em
+    // ordem cronológica — a planilha já só traz os dias da semana atual
+    const diasSet = new Set();
+    tarefas.forEach(t => (t.DiasPrevistos || []).forEach(d => diasSet.add(d)));
+    const dias = Array.from(diasSet).sort((a, b) => {
+      const da = parseDiaMes(a), dbb = parseDiaMes(b);
+      if (!da || !dbb) return 0;
+      return da - dbb;
+    });
+
+    const DIA_SEMANA_ABREV = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+
+    // ✅ "previsto para hoje" — recalculado toda vez que a tela carrega
+    const hojeObj = new Date();
+    const hojeDDMM = `${String(hojeObj.getDate()).padStart(2, '0')}/${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+    const tarefasHoje = tarefas.filter(t => (t.DiasPrevistos || []).includes(hojeDDMM));
+
+    resumoEl.innerHTML = tarefasHoje.length === 0 ? `
+      <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
+        <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">Previsto para hoje · ${hojeDDMM}</div>
+        <div style="font-size:12.5px; color:var(--text-soft);">Nada previsto para hoje nessa semana.</div>
+      </div>
+    ` : `
+      <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+          <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em;">Previsto para hoje · ${hojeDDMM}</div>
+          <div style="font-size:9.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace;">atualizado todo dia</div>
+        </div>
+        ${tarefasHoje.map((t, i) => `
+          <div style="padding:7px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
+            <div style="font-size:12.5px; color:var(--ink); line-height:1.4;">${t.Descricao}</div>
+            ${t.Area ? `<div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${t.Area}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // ✅ calendário — um bloco por dia da semana, com a data grande
+    calEl.innerHTML = dias.map(diaStr => {
+      const dataObj = parseDiaMes(diaStr);
+      const diaNum = diaStr.split('/')[0];
+      const diaSemana = dataObj ? DIA_SEMANA_ABREV[dataObj.getDay()] : '';
+      const tarefasDoDia = tarefas.filter(t => (t.DiasPrevistos || []).includes(diaStr));
+      const ehHoje = diaStr === hojeDDMM;
+
+      return `
+      <div style="display:flex; gap:16px; padding:20px 0; border-bottom:1px solid var(--line);">
+        <div style="flex-shrink:0; width:46px; text-align:center;">
+          <div style="font-family:'Archivo',sans-serif; font-weight:900; font-size:26px; line-height:1; color:${ehHoje ? 'var(--accent-bright, var(--accent))' : 'var(--ink)'};">${diaNum}</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.08em; color:var(--text-soft); margin-top:2px;">${diaSemana}</div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          ${tarefasDoDia.length === 0 ? `<div style="font-size:12px; color:var(--text-soft); padding-top:4px;">Nada previsto.</div>` : tarefasDoDia.map((t, i) => `
+            <div style="padding:8px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
+              <div style="font-size:13px; color:var(--ink); line-height:1.4;">${t.Descricao}</div>
+              ${t.Area ? `<div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${t.Area}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    console.log('Não consegui carregar a Programação Semanal:', e);
+    calEl.innerHTML = `<p style="font-size:12.5px; color:var(--text-soft);">Não consegui carregar os dados agora.</p>`;
+  }
+}
+
 async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
@@ -4739,7 +4830,8 @@ async function carregarProximasSemanas() {
     <section class="secaoNova" style="padding-top:6px;">
 
       <div id="painelProgEstaSemana" style="display:none;">
-        <p style="font-size:12.5px; color:var(--text-soft);">Em breve.</p>
+        <div id="resumoHojeProgramacao"></div>
+        <div id="calendarioEstaSemana" style="margin-top:20px;"></div>
       </div>
 
       <div id="painelProgSixWeek">
@@ -4752,15 +4844,6 @@ async function carregarProximasSemanas() {
         </div>
         <hr class="regra">
 
-        <div class="caixaBusca" style="position:relative;">
-          <input type="text" id="inputBuscaS" placeholder="Pergunte algo... ex: o que está previsto para hoje?"
-                 oninput="mostrarSugestoes('S')" onfocus="mostrarSugestoes('S')"
-                 onkeypress="if(event.key==='Enter') buscarInteligente('S')">
-          <button class="btnBusca" onclick="buscarInteligente('S')">Buscar</button>
-          <div class="sugestoesBusca" id="sugestoesBuscaS" style="display:none;"></div>
-        </div>
-        <div id="resultadoBuscaS"></div>
-
         <div id="rotuloPeriodoSemanas" style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-top:18px;"></div>
         <div id="listaProximasSemanas" style="margin-top:6px;"></div>
       </div>
@@ -4769,6 +4852,8 @@ async function carregarProximasSemanas() {
   `;
 
   atualizarIconeTema();
+
+  carregarProgramacaoSemanal(); // ✅ aba "Esta Semana" — não precisa esperar (não trava a Six Week)
 
   const listaContainer = document.getElementById("listaProximasSemanas");
 
