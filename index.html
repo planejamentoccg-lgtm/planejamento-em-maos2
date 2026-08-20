@@ -2756,10 +2756,12 @@ function renderizarCronogramaGeral() {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // ✅ acha a janela de datas (mais cedo/mais tarde) entre tudo (previsto + linha de base)
+  // ✅ acha a janela de datas (mais cedo/mais tarde) só entre as datas
+  // PREVISTAS — sem a linha de base aqui, já que ela não aparece mais
+  // nessa lista (só na Curva S, mais embaixo)
   let menorData = null, maiorData = null;
   atividades.forEach(a => {
-    [a.inicioPrevisto, a.terminoPrevisto, a.inicioBase, a.terminoBase].forEach(d => {
+    [a.inicioPrevisto, a.terminoPrevisto].forEach(d => {
       const data = parseDataCompleta(d);
       if (!data) return;
       if (!menorData || data < menorData) menorData = data;
@@ -2810,49 +2812,20 @@ function renderizarCronogramaGeral() {
 
   function renderizarBarra(a) {
     const pIni = posicao(a.inicioPrevisto), pFim = posicao(a.terminoPrevisto);
-    const bIni = posicao(a.inicioBase), bFim = posicao(a.terminoBase);
-    const deltaTermino = variacaoDias(a.terminoPrevisto, a.terminoBase);
-    const deltaDuracao = variacaoDuracao(a);
 
-    // ✅ duas informações SEPARADAS e claras (pra não dar dupla
-    // interpretação): quanto o TÉRMINO deslocou vs. linha de base, e
-    // quanto a DURAÇÃO da tarefa mudou (ficou mais longa ou mais curta)
-    let textoTermino = 'Término: sem linha de base pra comparar';
-    let corTermino = 'var(--text-soft)';
-    if (deltaTermino !== null) {
-      if (deltaTermino === 0) { textoTermino = 'Término: igual à linha de base'; corTermino = '#4F7A2E'; }
-      else if (deltaTermino > 0) { textoTermino = `Término: ${deltaTermino} dias mais tarde que a linha de base`; corTermino = '#B23A3A'; }
-      else { textoTermino = `Término: ${Math.abs(deltaTermino)} dias mais cedo que a linha de base`; corTermino = '#4F7A2E'; }
-    }
-
-    let textoDuracao = '';
-    if (deltaDuracao !== null && deltaDuracao !== 0) {
-      const cor = deltaDuracao > 0 ? '#B23A3A' : '#4F7A2E';
-      const texto = deltaDuracao > 0 ? `${deltaDuracao} dias a mais` : `${Math.abs(deltaDuracao)} dias a menos`;
-      textoDuracao = `<div style="font-size:9.5px; color:${cor}; margin-top:1px;">Duração da tarefa: ${texto} que a linha de base</div>`;
-    }
-
-    // ✅ duas faixas empilhadas — previsto atual em cima, linha de base
-    // embaixo (âmbar tracejado, bem visível, nunca escondida)
     const barraAtual = (pIni !== null && pFim !== null)
-      ? `<div style="position:absolute; left:${pIni}%; width:${Math.max(pFim - pIni, 0.5)}%; top:0; height:9px; background:var(--accent); border-radius:3px; opacity:0.95;"></div>`
-      : '';
-    const barraBase = (bIni !== null && bFim !== null && mostrarLinhaBaseCronograma)
-      ? `<div style="position:absolute; left:${bIni}%; width:${Math.max(bFim - bIni, 0.5)}%; top:12px; height:7px; background:repeating-linear-gradient(90deg, #C77D22, #C77D22 4px, transparent 4px, transparent 7px); border-radius:3px;"></div>`
+      ? `<div style="position:absolute; left:${pIni}%; width:${Math.max(pFim - pIni, 0.5)}%; top:0; height:6px; background:var(--accent); border-radius:3px;"></div>`
       : '';
 
     return `
-      <div style="margin-bottom:20px; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
-        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">${a.nome}</div>
-        <div style="position:relative; height:19px;">
-          ${barraAtual}${barraBase}
+      <div style="margin-bottom:18px; cursor:pointer;" onclick="abrirSubTelaCronograma('atividade', '${a.nome.replace(/'/g, "\\'")}')">
+        <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:9px;">${a.nome}</div>
+        <div style="position:relative; height:6px; background:var(--line); border-radius:3px; margin-bottom:8px;">
+          ${barraAtual}
         </div>
-        <div style="font-size:10px; color:var(--text-soft); margin-top:4px;">
-          Previsto: ${a.inicioPrevisto || '-'} → ${a.terminoPrevisto || '-'}
+        <div style="font-size:10.5px; color:var(--text-soft);">
+          Previsto <span style="font-family:'IBM Plex Mono',monospace; color:var(--ink);">${a.inicioPrevisto || '-'} → ${a.terminoPrevisto || '-'}</span>
         </div>
-        ${a.inicioBase ? `<div style="font-size:10px; color:#C77D22; margin-top:1px;">Linha de base: ${a.inicioBase} → ${a.terminoBase}</div>` : ''}
-        <div style="font-size:9.5px; color:${corTermino}; margin-top:3px;">${textoTermino}</div>
-        ${textoDuracao}
       </div>`;
   }
 
@@ -2993,12 +2966,6 @@ function renderizarCronogramaGeral() {
       </div>
       <div id="resultadoBuscaC"></div>
 
-      <div style="display:flex; justify-content:flex-end; margin:20px 0 14px;">
-        <span onclick="alternarLinhaBaseCronograma()" style="font-size:10px; font-family:'IBM Plex Mono',monospace; color:var(--accent); cursor:pointer; text-decoration:underline;">
-          ${mostrarLinhaBaseCronograma ? 'ocultar linha de base' : 'mostrar linha de base'}
-        </span>
-      </div>
-
       ${ganttHtml}
 
       ${curvaSHtml}
@@ -3006,13 +2973,7 @@ function renderizarCronogramaGeral() {
   `;
 }
 
-let mostrarLinhaBaseCronograma = true;
 let cronogramaExpandidoMacro = {};
-
-function alternarLinhaBaseCronograma() {
-  mostrarLinhaBaseCronograma = !mostrarLinhaBaseCronograma;
-  document.getElementById('telaCronograma').innerHTML = renderizarCronogramaGeral();
-}
 
 function alternarExpandirMacroCronograma(id) {
   cronogramaExpandidoMacro[id] = !cronogramaExpandidoMacro[id];
