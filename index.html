@@ -3420,11 +3420,7 @@ function conteudoDetalheCaminhoCritico() {
 
   const MESES_NOME_CC = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-  let html = `<div style="font-size:11.5px; color:var(--text-soft); margin-bottom:16px; line-height:1.4;">
-    Esse é o caminho crítico inteiro da obra, do início ao fim — ${tarefas.length} tarefas que, juntas, determinam a data final. Cada uma mostra de onde ela vem (a frente/etapa exata), pra dar pra rastrear tudo.
-  </div>`;
-
-  html += `<div style="position:relative;">`;
+  let html = `<div style="position:relative;">`;
 
   let mesAnterior = null;
   tarefas.forEach((t, i) => {
@@ -4711,6 +4707,8 @@ async function carregarProximasSemanas() {
       </div>
       <div id="resultadoBuscaS"></div>
 
+      <div id="resumoHojeSemanas"></div>
+
       <div id="rotuloPeriodoSemanas" style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-top:18px;"></div>
       <div id="listaProximasSemanas" style="margin-top:6px;"></div>
     </section>
@@ -4760,6 +4758,52 @@ async function carregarProximasSemanas() {
 
   // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
   window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
+
+  // ✅ resumo visual "previsto pra hoje" — bate o Diario de cada tarefa
+  // com a data de hoje (mesmo formato dd/MM salvo na planilha). Isso
+  // atualiza sozinho todo dia, porque é recalculado toda vez que a
+  // tela é carregada — não é um valor fixo salvo em lugar nenhum.
+  const hojeObj = new Date();
+  const hojeDDMM = `${String(hojeObj.getDate()).padStart(2, '0')}/${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+  const itensHoje = [];
+  frentesSemanas.forEach(item => {
+    (item.tarefas || []).forEach(t => {
+      const diaHoje = (t.Diario || []).find(d => d.Data === hojeDDMM);
+      if (diaHoje) {
+        itensHoje.push({ frente: item.dados.Nome, tarefa: t.Nome, valor: diaHoje.Valor, unidade: t.Unidade || 'm' });
+      }
+    });
+  });
+
+  const resumoHojeEl = document.getElementById('resumoHojeSemanas');
+  if (resumoHojeEl) {
+    if (itensHoje.length === 0) {
+      resumoHojeEl.innerHTML = `
+        <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px; margin-top:16px;">
+          <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">Previsto para hoje · ${hojeDDMM}</div>
+          <div style="font-size:12.5px; color:var(--text-soft);">Nada previsto para hoje nessa janela de 6 semanas.</div>
+        </div>
+      `;
+    } else {
+      resumoHojeEl.innerHTML = `
+        <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px; margin-top:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em;">Previsto para hoje · ${hojeDDMM}</div>
+            <div style="font-size:9.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace;">atualizado todo dia</div>
+          </div>
+          ${itensHoje.map((it, i) => {
+            const valorTexto = normalizarTexto(String(it.valor).trim()) === 's' ? 'sem quantidade prevista' : `${it.valor}${it.unidade}`;
+            return `
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:7px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
+              <span style="font-size:12.5px; color:var(--ink);">${it.tarefa}<span style="color:var(--text-soft); font-size:10.5px;"> · ${formatarTitulo(it.frente)}</span></span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; color:var(--accent-bright, var(--accent)); flex-shrink:0; white-space:nowrap;">${valorTexto}</span>
+            </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+  }
 
   // ✅ intervalo mostrado ao lado de "Próximas 6 semanas" — prioriza o
   // período visível de verdade (calculado na planilha, a partir dos
