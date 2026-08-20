@@ -4534,19 +4534,28 @@ async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
 
-  // ✅ "Última atualização" da Six Week — vem do Firestore
-  // (Config/SixWeek, campo UltimaAtualizacao), preenchido pelo Apps
-  // Script que sincroniza a planilha da Six Week a partir da célula
-  // logo abaixo do cabeçalho "Última atualização" na planilha.
+  // ✅ "Última atualização" e o período visível (Início/Fim) da Six Week
+  // — os dois vêm do Firestore (Config/SixWeek), preenchidos pelo Apps
+  // Script que sincroniza a planilha. O período visível é calculado lá
+  // a partir das colunas de semana que estão realmente visíveis na
+  // planilha (os "quadradinhos" do cabeçalho, ignorando ocultas) — não
+  // dá pra calcular isso só a partir das tarefas aqui no app, porque uma
+  // tarefa pode não ter nenhum dia previsto dentro do período mostrado.
   let ultimaAtualizacaoSixWeekStr = '-';
+  let periodoVisivelInicio = null, periodoVisivelFim = null;
   try {
     const docAtualizacaoSixWeek = await db.collection("Config").doc("SixWeek").get();
-    if (docAtualizacaoSixWeek.exists && docAtualizacaoSixWeek.data().UltimaAtualizacao) {
-      const d = docAtualizacaoSixWeek.data().UltimaAtualizacao.toDate();
-      ultimaAtualizacaoSixWeekStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    if (docAtualizacaoSixWeek.exists) {
+      const dadosConfig = docAtualizacaoSixWeek.data();
+      if (dadosConfig.UltimaAtualizacao) {
+        const d = dadosConfig.UltimaAtualizacao.toDate();
+        ultimaAtualizacaoSixWeekStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      }
+      if (dadosConfig.PeriodoInicio) periodoVisivelInicio = dadosConfig.PeriodoInicio.toDate();
+      if (dadosConfig.PeriodoFim) periodoVisivelFim = dadosConfig.PeriodoFim.toDate();
     }
   } catch (e) {
-    console.log('Não consegui carregar a última atualização da Six Week:', e);
+    console.log('Não consegui carregar a configuração da Six Week:', e);
   }
 
   container.innerHTML = `
@@ -4639,13 +4648,18 @@ async function carregarProximasSemanas() {
   // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
   window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
 
-  // ✅ intervalo geral (do início mais cedo ao término mais tarde entre
-  // todas as frentes) — mostrado ao lado do rótulo "Próximas 6 semanas"
-  let inicioGeral = null, terminoGeral = null;
-  frentesSemanas.forEach(item => {
-    if (item.menorInicio && (!inicioGeral || item.menorInicio < inicioGeral)) inicioGeral = item.menorInicio;
-    if (item.maiorTermino && (!terminoGeral || item.maiorTermino > terminoGeral)) terminoGeral = item.maiorTermino;
-  });
+  // ✅ intervalo mostrado ao lado de "Próximas 6 semanas" — prioriza o
+  // período visível de verdade (calculado na planilha, a partir dos
+  // "quadradinhos"/colunas de semana que estão visíveis); só cai no
+  // cálculo por tarefas se esses campos ainda não tiverem sido
+  // sincronizados (compatibilidade com dados antigos)
+  let inicioGeral = periodoVisivelInicio, terminoGeral = periodoVisivelFim;
+  if (!inicioGeral || !terminoGeral) {
+    frentesSemanas.forEach(item => {
+      if (item.menorInicio && (!inicioGeral || item.menorInicio < inicioGeral)) inicioGeral = item.menorInicio;
+      if (item.maiorTermino && (!terminoGeral || item.maiorTermino > terminoGeral)) terminoGeral = item.maiorTermino;
+    });
+  }
   const rotuloPeriodoEl = document.getElementById('rotuloPeriodoSemanas');
   if (rotuloPeriodoEl) {
     rotuloPeriodoEl.innerHTML = inicioGeral && terminoGeral
