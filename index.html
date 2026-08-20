@@ -5175,6 +5175,21 @@ function statusRealizado(etapa) {
   return `${periodo} — em andamento`;
 }
 
+// ✅ abre/fecha a linha do tempo dia a dia de uma etapa (começa fechada,
+// pra não poluir a tela com muitos dias de uma vez)
+function toggleLinhaTempoEtapa(id) {
+  const lista = document.getElementById(id);
+  const seta = document.getElementById(id + '_seta');
+  const aberta = lista.style.maxHeight && lista.style.maxHeight !== '0px';
+  if (aberta) {
+    lista.style.maxHeight = '0px';
+    seta.style.transform = 'rotate(0deg)';
+  } else {
+    lista.style.maxHeight = lista.scrollHeight + 'px';
+    seta.style.transform = 'rotate(180deg)';
+  }
+}
+
 function mostrarDesempenho() {
 
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
@@ -5252,7 +5267,7 @@ function mostrarDesempenho() {
   // valores DO DIA (não acumulado), adaptando à unidade de cada etapa.
   // PK só aparece se a etapa realmente tiver esse dado (não existe pra
   // etapas em % ou "und", por exemplo — some sozinho nesses casos).
-  const tabelasHtml = etapas.map(et => {
+  const tabelasHtml = etapas.map((et, idxEt) => {
     const todosDias = et.Dias || [];
     const primeiroIndice = todosDias.findIndex(dia =>
       (dia.Previsto !== null && dia.Previsto !== undefined && dia.Previsto > 0) ||
@@ -5271,11 +5286,16 @@ function mostrarDesempenho() {
       return temPrevisto || temRealizado || temPkAqui || dia.Observacoes;
     });
     if (diasComConteudo.length === 0) return '';
+    const idTimeline = `linhaTempo_${idxEt}`;
 
     return `
     <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line);">
       <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left; color:var(--ink);">Linha do tempo — ${et.Etapa}</div>
-      <div style="font-size:11px; color:var(--text-soft); margin-bottom:10px; text-align:left;">dia a dia, ${dias[0].Data} a ${dias[dias.length - 1].Data}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; cursor:pointer;" onclick="toggleLinhaTempoEtapa('${idTimeline}')">
+        <span style="font-size:11px; color:var(--text-soft); text-align:left;">${diasComConteudo.length} dia${diasComConteudo.length === 1 ? '' : 's'} registrado${diasComConteudo.length === 1 ? '' : 's'}, ${dias[0].Data} a ${dias[dias.length - 1].Data}</span>
+        <span id="${idTimeline}_seta" style="font-size:11px; color:var(--accent-bright, var(--accent)); font-weight:600; flex-shrink:0; transition:transform .2s; display:inline-block;">▾</span>
+      </div>
+      <div id="${idTimeline}" style="max-height:0; overflow:hidden; transition:max-height .3s ease;">
       ${diasComConteudo.map((dia, i) => {
         const dp = dia.DiarioPrevisto;
         const dr = dia.DiarioRealizado;
@@ -5301,6 +5321,7 @@ function mostrarDesempenho() {
         </div>
         `;
       }).join('')}
+      </div>
     </div>
     `;
   }).join('');
