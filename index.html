@@ -4909,7 +4909,7 @@ function abrir(data) {
   bannerEl.innerHTML = `
     <div class="heroNovo" style="width:100%;">
       <div class="eyebrow">Frentes de Serviço</div>
-      <h1 style="font-size:26px; margin-bottom:0;">${data.Nome}</h1>
+      <h1 style="font-size:21px;">${data.Nome}</h1>
     </div>
   `;
   
@@ -5185,6 +5185,18 @@ function mostrarDesempenho() {
       ? ` — produtividade de <b>${prodReal}${unidade}</b> por avanço contra ${prodPrev}${unidade} previstos`
       : '';
 
+    // ✅ dias em que havia algo previsto pra acontecer naquele dia, mas
+    // nada foi realizado — explica o caso confuso de "produtividade por
+    // avanço maior que o previsto, mas terminou atrasado": não é que
+    // cada avanço rendeu menos, é que teve dia parado no meio do caminho
+    const diasParados = (et.Dias || []).filter(d =>
+      (d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0) &&
+      (d.DiarioRealizado === null || d.DiarioRealizado === undefined || d.DiarioRealizado <= 0)
+    ).length;
+    const paradoTexto = diasParados > 0
+      ? `, com <b>${diasParados} dia${diasParados === 1 ? '' : 's'}</b> sem nada realizado apesar de ter algo previsto`
+      : '';
+
     if (!et.InicioRealizado) {
       return `<b>${et.Etapa}</b> ainda não foi iniciada.`;
     }
@@ -5199,7 +5211,7 @@ function mostrarDesempenho() {
       let diffTexto = '';
       if (tp && tr) {
         const diff = Math.round((tr - tp) / 86400000);
-        if (diff > 0) diffTexto = ` (${diff} dia${diff === 1 ? '' : 's'} além do previsto)`;
+        if (diff > 0) diffTexto = ` (${diff} dia${diff === 1 ? '' : 's'} além do previsto${paradoTexto})`;
         else if (diff < 0) diffTexto = `, <b>${Math.abs(diff)} dia${Math.abs(diff) === 1 ? '' : 's'} adiantado</b>`;
         else diffTexto = ' (no prazo)';
       }
@@ -5211,7 +5223,7 @@ function mostrarDesempenho() {
     let atrasoTexto = '';
     if (tp && hoje > tp) {
       const diff = Math.round((hoje - tp) / 86400000);
-      atrasoTexto = `, já <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>`;
+      atrasoTexto = `, já <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>${paradoTexto}`;
     }
     return `<b${tp && hoje > tp ? ' style="color:#e0645a;"' : ''}>${et.Etapa}</b> em andamento desde ${et.InicioRealizado}${atrasoTexto}${prodTexto}.`;
   }
@@ -5237,11 +5249,21 @@ function mostrarDesempenho() {
     if (dias.length === 0) return '';
     const unidade = et.Unidade || 'm';
 
+    // ✅ não mostra linha pra dia sem nada acontecendo (sem previsto, sem
+    // realizado, sem PK, sem observação) — só engordava a lista à toa
+    const diasComConteudo = dias.filter(dia => {
+      const temPrevisto = dia.DiarioPrevisto !== null && dia.DiarioPrevisto !== undefined && dia.DiarioPrevisto !== 0;
+      const temRealizado = dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado !== 0;
+      const temPkAqui = dia.PkInicial || dia.PkFinal;
+      return temPrevisto || temRealizado || temPkAqui || dia.Observacoes;
+    });
+    if (diasComConteudo.length === 0) return '';
+
     return `
     <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line);">
       <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left; color:var(--ink);">Linha do tempo — ${et.Etapa}</div>
       <div style="font-size:11px; color:var(--text-soft); margin-bottom:10px; text-align:left;">dia a dia, ${dias[0].Data} a ${dias[dias.length - 1].Data}</div>
-      ${dias.map((dia, i) => {
+      ${diasComConteudo.map((dia, i) => {
         const dp = dia.DiarioPrevisto;
         const dr = dia.DiarioRealizado;
         const dpTexto = (dp === null || dp === undefined) ? '-' : `${dp}${unidade}`;
