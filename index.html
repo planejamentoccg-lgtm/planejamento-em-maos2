@@ -3408,7 +3408,15 @@ function linhaDependenciaCritico(nome, trava, travadaPor, aninhado) {
 }
 
 function conteudoDetalheCaminhoCritico() {
-  const tarefas = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+  // ✅ tira tarefas que já terminaram (e, por consequência, meses que
+  // já ficaram inteiramente pra trás somem sozinhos da lista, já que
+  // não sobra nenhuma tarefa deles pra mostrar)
+  const tarefas = CRONOGRAMA_CAMINHO_CRITICO_COMPLETO.filter(t => {
+    const dataTermino = parseDataCompleta(t.termino);
+    return !dataTermino || dataTermino >= hoje;
+  });
 
   const MESES_NOME_CC = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
