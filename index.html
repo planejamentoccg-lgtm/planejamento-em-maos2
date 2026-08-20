@@ -4680,6 +4680,26 @@ async function carregarProgramacaoSemanal() {
   const calEl = document.getElementById('calendarioEstaSemana');
   if (!resumoEl || !calEl) return;
 
+  // ✅ a planilha guarda "FRENTE - o resto da atividade" tudo junto e em
+  // CAIXA ALTA — separa as duas partes (a frente vem primeiro) e aplica
+  // o mesmo title-case usado no resto do app, em vez de mostrar cru
+  function montarFrenteAtividade(descricaoBruta) {
+    const partes = String(descricaoBruta || '').split(' - ');
+    const frente = partes.length > 1 ? formatarTitulo(partes[0]) : '';
+    const atividade = formatarTitulo(partes.length > 1 ? partes.slice(1).join(' - ') : descricaoBruta);
+    return { frente, atividade };
+  }
+
+  function montarLinhaTarefa(t, comBorda) {
+    const { frente, atividade } = montarFrenteAtividade(t.Descricao);
+    return `
+      <div style="padding:10px 0; ${comBorda ? 'border-top:1px solid var(--line);' : ''}">
+        ${frente ? `<div style="font-size:10.5px; font-weight:600; color:var(--accent-bright, var(--accent)); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px;">${frente}</div>` : ''}
+        <div style="font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--ink); line-height:1.45;">${atividade}</div>
+      </div>
+    `;
+  }
+
   try {
     const doc = await db.collection('Config').doc('ProgramacaoSemanal').get();
     if (!doc.exists) {
@@ -4718,16 +4738,11 @@ async function carregarProgramacaoSemanal() {
       </div>
     ` : `
       <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:8px; flex-wrap:wrap;">
           <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em;">Previsto para hoje · ${hojeDDMM}</div>
           <div style="font-size:9.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace;">atualizado todo dia</div>
         </div>
-        ${tarefasHoje.map((t, i) => `
-          <div style="padding:7px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
-            <div style="font-size:12.5px; color:var(--ink); line-height:1.4;">${t.Descricao}</div>
-            ${t.Area ? `<div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${t.Area}</div>` : ''}
-          </div>
-        `).join('')}
+        ${tarefasHoje.map((t, i) => montarLinhaTarefa(t, i > 0)).join('')}
       </div>
     `;
 
@@ -4741,17 +4756,12 @@ async function carregarProgramacaoSemanal() {
 
       return `
       <div style="display:flex; gap:16px; padding:20px 0; border-bottom:1px solid var(--line);">
-        <div style="flex-shrink:0; width:46px; text-align:center;">
+        <div style="flex-shrink:0; width:46px; text-align:center; padding-top:2px;">
           <div style="font-family:'Archivo',sans-serif; font-weight:900; font-size:26px; line-height:1; color:${ehHoje ? 'var(--accent-bright, var(--accent))' : 'var(--ink)'};">${diaNum}</div>
-          <div style="font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.08em; color:var(--text-soft); margin-top:2px;">${diaSemana}</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.08em; color:var(--text-soft); margin-top:3px;">${diaSemana}</div>
         </div>
         <div style="flex:1; min-width:0;">
-          ${tarefasDoDia.length === 0 ? `<div style="font-size:12px; color:var(--text-soft); padding-top:4px;">Nada previsto.</div>` : tarefasDoDia.map((t, i) => `
-            <div style="padding:8px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''}">
-              <div style="font-size:13px; color:var(--ink); line-height:1.4;">${t.Descricao}</div>
-              ${t.Area ? `<div style="font-size:10.5px; color:var(--text-soft); margin-top:2px;">${t.Area}</div>` : ''}
-            </div>
-          `).join('')}
+          ${tarefasDoDia.length === 0 ? `<div style="font-size:12px; color:var(--text-soft); padding-top:4px;">Nada previsto.</div>` : tarefasDoDia.map((t, i) => montarLinhaTarefa(t, i > 0)).join('')}
         </div>
       </div>
       `;
@@ -4813,13 +4823,13 @@ async function carregarProximasSemanas() {
     </div>
 
     <div class="menuNovo" style="margin-top:-14px;">
-      <div class="menuBtnProg" id="abaProgEstaSemana" onclick="mostrarAbaProgramacao('estaSemana')">
+      <div class="menuBtnProg ativo" id="abaProgEstaSemana" onclick="mostrarAbaProgramacao('estaSemana')">
         <div class="iconCircle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h3"/></svg>
         </div>
         <span>Esta Semana</span>
       </div>
-      <div class="menuBtnProg ativo" id="abaProgSixWeek" onclick="mostrarAbaProgramacao('sixWeek')">
+      <div class="menuBtnProg" id="abaProgSixWeek" onclick="mostrarAbaProgramacao('sixWeek')">
         <div class="iconCircle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         </div>
@@ -4829,12 +4839,12 @@ async function carregarProximasSemanas() {
 
     <section class="secaoNova" style="padding-top:6px;">
 
-      <div id="painelProgEstaSemana" style="display:none;">
+      <div id="painelProgEstaSemana">
         <div id="resumoHojeProgramacao"></div>
         <div id="calendarioEstaSemana" style="margin-top:20px;"></div>
       </div>
 
-      <div id="painelProgSixWeek">
+      <div id="painelProgSixWeek" style="display:none;">
         <div class="cabecalho">
           <span class="tituloSecao">Six Week</span>
           <button class="btnGantt" onclick="abrirGantt()">
