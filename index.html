@@ -4983,23 +4983,34 @@ let menu = `
     const prevTotal = data.Percentualprevisto || 0;
     const corTotal = percTotal < prevTotal ? '#e0645a' : 'var(--accent-bright, var(--accent))';
 
-    // ✅ monta a frase citando as etapas atrasadas/no prazo PELO NOME —
-    // nada de "1 etapa atrasada" genérico
+    // ✅ monta a frase citando as etapas PELO NOME — mas agora com 3
+    // categorias de verdade (atrasada / adiantada / exatamente no
+    // previsto), em vez de só "atrasada ou não". Usa os números brutos
+    // (RealizadoNum/PrevistoNum) em vez do texto formatado do Desvio,
+    // que é mais confiável pra essa comparação.
     const etapasQuant = (data.Etapas || []).filter(et => et.Unidade !== '-');
     const atrasadasNomes = [];
-    const okNomes = [];
+    const adiantadasNomes = [];
+    const exatasNomes = [];
     etapasQuant.forEach(et => {
-      const d = parseFloat(String(et.Desvio || '0').replace(',', '.'));
-      if (d < -0.001) atrasadasNomes.push(et.Etapa);
-      else okNomes.push(et.Etapa);
+      const prev = et.PrevistoNum ?? 0;
+      const real = et.RealizadoNum ?? 0;
+      const diff = Math.round((real - prev) * 100) / 100;
+      if (diff < 0) atrasadasNomes.push(et.Etapa);
+      else if (diff > 0) adiantadasNomes.push(et.Etapa);
+      else exatasNomes.push(et.Etapa);
     });
-    let frase = '';
+    const partesFrase = [];
     if (atrasadasNomes.length > 0) {
-      frase += `<b style="color:#e0645a;">${atrasadasNomes.join(', ')}</b> ${atrasadasNomes.length === 1 ? 'está' : 'estão'} atrasada${atrasadasNomes.length === 1 ? '' : 's'}. `;
+      partesFrase.push(`<b style="color:#e0645a;">${atrasadasNomes.join(', ')}</b> ${atrasadasNomes.length === 1 ? 'está' : 'estão'} atrasada${atrasadasNomes.length === 1 ? '' : 's'}`);
     }
-    if (okNomes.length > 0) {
-      frase += `${okNomes.join(', ')} ${okNomes.length === 1 ? 'segue' : 'seguem'} <b style="color:var(--accent-bright, var(--accent));">exatamente</b> no previsto.`;
+    if (adiantadasNomes.length > 0) {
+      partesFrase.push(`<b style="color:var(--accent-bright, var(--accent));">${adiantadasNomes.join(', ')}</b> ${adiantadasNomes.length === 1 ? 'está' : 'estão'} adiantada${adiantadasNomes.length === 1 ? '' : 's'}`);
     }
+    if (exatasNomes.length > 0) {
+      partesFrase.push(`${exatasNomes.join(', ')} ${exatasNomes.length === 1 ? 'segue' : 'seguem'} exatamente no previsto`);
+    }
+    let frase = partesFrase.length > 0 ? partesFrase.join('. ') + '.' : '';
 
     html += `
     <div style="padding:24px 20px 20px; border-bottom:1px solid var(--line);">
@@ -5060,9 +5071,15 @@ let menu = `
       return;
     }
 
-    const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
-    const atrasada = desvioNum < -0.001;
-    const corDelta = atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))';
+    // ✅ 3 estados de verdade (atrasada / adiantada / exatamente no
+    // previsto), usando os números brutos em vez do texto do Desvio
+    const prevNumEtapa = etapa.PrevistoNum ?? 0;
+    const realNumEtapa = etapa.RealizadoNum ?? 0;
+    const diffEtapa = Math.round((realNumEtapa - prevNumEtapa) * 100) / 100;
+    const atrasada = diffEtapa < 0;
+    const adiantada = diffEtapa > 0;
+    const corDelta = atrasada ? '#e0645a' : (adiantada ? 'var(--accent-bright, var(--accent))' : 'var(--ink)');
+    const rotuloTag = atrasada ? 'Atrasado' : (adiantada ? 'Adiantado' : 'No prazo');
     const totalNum = etapa.TotalNum;
     const progressoPct = etapa.ProgressoFisicoRealizado ?? (totalNum ? (etapa.RealizadoNum / totalNum * 100) : 0);
     const previstoPct = etapa.ProgressoFisicoPrevisto ?? (totalNum ? (etapa.PrevistoNum / totalNum * 100) : 0);
@@ -5071,7 +5088,7 @@ let menu = `
     <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
         <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">${etapa.Etapa || 'Etapa'}</span>
-        <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))'}; flex-shrink:0;">${atrasada ? 'Atrasado' : 'No prazo'}</span>
+        <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corDelta}; flex-shrink:0;">${rotuloTag}</span>
       </div>
       <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em; color:var(--ink);">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
