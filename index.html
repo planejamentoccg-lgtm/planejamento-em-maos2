@@ -4662,13 +4662,21 @@ async function carregarProximasSemanas() {
     const mes2 = item.menorInicio ? MESES_ABREV[item.menorInicio.getMonth()] : '';
 
     const linhasTarefas = item.tarefas.map(t => {
+      const bruto = t.TotalPrevisto;
+      const ehZero = (typeof bruto === 'number' && bruto === 0) || String(bruto ?? '').trim() === '0';
+      const semQuantidade = !ehZero && normalizarTexto(String(bruto ?? '').trim()) === 's';
       const valor = formatarQuantidadePrevista(t);
-      const semQuantidade = valor === 'Sem quantidade Prevista';
+
+      // ✅ zero não é informação nenhuma pra mostrar (fica estranho tipo
+      // "0" solto do lado) — só mostra quando há um valor de verdade, e
+      // sempre com o rótulo "previsto" na frente pra não ficar ambíguo
+      const valorHtml = ehZero ? '' : `<span style="flex-shrink:0; white-space:nowrap; text-align:right;"><span style="font-family:'IBM Plex Sans',sans-serif; font-size:11px; color:var(--text-soft);">previsto </span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:${semQuantidade ? 'var(--text-soft)' : 'var(--accent-bright, var(--accent))'};">${valor}</span></span>`;
+
       return `
       <div style="padding:9px 0; border-top:1px solid var(--line);">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
           <span style="font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--ink); line-height:1.4;">${t.Nome}${t.Subgrupo ? ' <span style="color:var(--text-soft); font-size:11px;">(' + t.Subgrupo + ')</span>' : ''}</span>
-          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:${semQuantidade ? 'var(--text-soft)' : 'var(--accent-bright, var(--accent))'}; flex-shrink:0; white-space:nowrap;">${valor}</span>
+          ${valorHtml}
         </div>
       </div>
       `;
