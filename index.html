@@ -4951,227 +4951,141 @@ let menu = `
   // ✅ IMPORTANTE: cria o html ANTES
   let html = "";
 
-  // ✅ INDICADORES PRINCIPAIS — um bloco por Etapa (Piloto, Alargamento, Arco Invertido...)
-  html += `
-  <div class="bloco">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-      <img src="https://i.imgur.com/z4pj59F.png" style="width:18px;">
-      <span style="font-size:13px; font-weight:600;">
-        INDICADORES PRINCIPAIS
-      </span>
+  // ✅ formata um número respeitando a unidade da etapa (m/%/und) — sem
+  // isso, tudo que não fosse metro ficava com "m" grudado errado
+  function formatarNumUnidade(valor, unidade) {
+    if (valor === null || valor === undefined) return '-';
+    const casas = unidade === '%' ? 1 : 2;
+    const texto = Number(valor).toFixed(casas).replace('.', ',').replace(/,0+$/, '').replace(/(,\d*?)0+$/, '$1').replace(/,$/, '');
+    return `${texto}${unidade === 'und' ? ' und' : unidade}`;
+  }
+
+  // ✅ FOTO — primeira coisa da tela, só pra frentes com quantidade real
+  // (uma frente 100% por prazo não tem "avanço" pra fotografar do
+  // mesmo jeito)
+  if (!todasNaoQuantificaveis) {
+    html += `
+    <div style="margin:0 -18px 4px;">
+      ${data.Imagem
+        ? `<img src="${data.Imagem}" style="width:100%; display:block;">`
+        : `<div style="background:var(--paper-2); padding:44px 16px; text-align:center; color:var(--text-soft); font-size:12px;">Sem foto cadastrada ainda.</div>`}
     </div>
-  `;
+    ${data.situacaoRecenteFoto ? `<div style="font-size:11px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin:8px 0 0;">${data.situacaoRecenteFoto}</div>` : ''}
+    `;
+  }
+
+  // ✅ PROGRESSO TOTAL DA FRENTE — número "manchete", igual ao mockup.
+  // Só faz sentido pra frentes com quantidade (percentual já vem
+  // normalizado 0-100 do script, independente da unidade de cada etapa)
+  if (!todasNaoQuantificaveis) {
+    const percTotal = data.Percentual || 0;
+    const prevTotal = data.Percentualprevisto || 0;
+    const corTotal = percTotal < prevTotal ? '#e0645a' : 'var(--accent-bright, var(--accent))';
+
+    // ✅ monta a frase citando as etapas atrasadas/no prazo PELO NOME —
+    // nada de "1 etapa atrasada" genérico
+    const etapasQuant = (data.Etapas || []).filter(et => et.Unidade !== '-');
+    const atrasadasNomes = [];
+    const okNomes = [];
+    etapasQuant.forEach(et => {
+      const d = parseFloat(String(et.Desvio || '0').replace(',', '.'));
+      if (d < -0.001) atrasadasNomes.push(et.Etapa);
+      else okNomes.push(et.Etapa);
+    });
+    let frase = '';
+    if (atrasadasNomes.length > 0) {
+      frase += `<b style="color:#e0645a;">${atrasadasNomes.join(', ')}</b> ${atrasadasNomes.length === 1 ? 'está' : 'estão'} atrasada${atrasadasNomes.length === 1 ? '' : 's'}. `;
+    }
+    if (okNomes.length > 0) {
+      frase += `${okNomes.join(', ')} ${okNomes.length === 1 ? 'segue' : 'seguem'} <b style="color:var(--accent-bright, var(--accent));">exatamente</b> no previsto.`;
+    }
+
+    html += `
+    <div style="padding:24px 0 20px; border-bottom:1px solid var(--line);">
+      <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;">Progresso total da frente</div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Archivo',sans-serif; font-weight:900; font-size:40px; letter-spacing:-0.02em; color:var(--accent-bright, var(--accent));">${percTotal}%</span>
+        <span style="font-size:13px; color:var(--text-soft);">realizado · <b style="color:var(--ink);">${prevTotal}%</b> previsto pra hoje</span>
+      </div>
+      <div style="position:relative; height:4px; background:var(--line); border-radius:2px; margin-top:14px;">
+        <div style="position:absolute; left:0; top:0; height:100%; border-radius:2px; width:${Math.min(percTotal,100)}%; background:${corTotal};"></div>
+        <div style="position:absolute; top:-4px; width:2px; height:12px; background:var(--text-soft); border-radius:1px; left:${Math.min(prevTotal,100)}%;"></div>
+      </div>
+      ${frase ? `<div style="font-size:13px; line-height:1.6; margin-top:12px; color:var(--text-soft);">${frase}</div>` : ''}
+    </div>
+    `;
+  }
+
+  // ✅ POR ETAPA — lista fluida, sem caixinha nem ícone: nome grande,
+  // status, número "manchete" com a unidade certa, linha fina de
+  // progresso. Etapas não-quantificáveis usam o prazo (Final Previsto/
+  // Final Real) em vez de número, igual já era.
+  html += `<div style="margin-top:${todasNaoQuantificaveis ? '4' : '4'}px; font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin:22px 0 4px;">Por etapa</div>`;
 
   (data.Etapas || []).forEach((etapa, i) => {
-    const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
-    const corDesvio = desvioNum < 0 ? '#e53935' : '#43a047';
     const ehNaoQuantificavel = etapa.Unidade === '-';
+    const ultima = i === (data.Etapas || []).length - 1;
 
-    // ✅ etapas sem quantidade (Unidade "-") não têm Total/Previsto/
-    // Realizado/Desvio numérico — o que importa pra elas é só o prazo:
-    // Final Previsto vs Final Real (ou vs hoje, se ainda não terminou)
-    let indicadoresHtml;
     if (ehNaoQuantificavel) {
       const fp = parseDataCompleta(etapa.FinalPrevisto);
       const fr = parseDataCompleta(etapa.FinalReal);
       const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
 
-      let textoPrazo, corPrazo;
+      let textoPrazo, corPrazo, tag, classeTag;
       if (fp && fr) {
         const diffDias = Math.round((fr - fp) / 86400000);
-        if (diffDias > 0) { textoPrazo = `Concluído com ${diffDias}d de atraso`; corPrazo = '#e53935'; }
-        else if (diffDias < 0) { textoPrazo = `Concluído ${Math.abs(diffDias)}d adiantado`; corPrazo = '#43a047'; }
-        else { textoPrazo = 'Concluído no prazo'; corPrazo = '#43a047'; }
+        if (diffDias > 0) { textoPrazo = `Concluído com ${diffDias}d de atraso`; corPrazo = '#e0645a'; tag = 'Concluído'; }
+        else if (diffDias < 0) { textoPrazo = `Concluído ${Math.abs(diffDias)}d adiantado`; corPrazo = 'var(--accent-bright, var(--accent))'; tag = 'Concluído'; }
+        else { textoPrazo = 'Concluído no prazo'; corPrazo = 'var(--accent-bright, var(--accent))'; tag = 'Concluído'; }
       } else if (fp && !fr) {
         const diffDias = Math.round((hoje - fp) / 86400000);
-        if (diffDias > 0) { textoPrazo = `Atrasado (${diffDias}d além do previsto)`; corPrazo = '#e53935'; }
-        else { textoPrazo = 'No prazo'; corPrazo = 'var(--ink)'; }
+        if (diffDias > 0) { textoPrazo = `Atrasado (${diffDias}d além do previsto)`; corPrazo = '#e0645a'; tag = 'Atrasado'; }
+        else { textoPrazo = 'No prazo'; corPrazo = 'var(--ink)'; tag = 'No prazo'; }
       } else {
-        textoPrazo = 'Sem Final Previsto cadastrado'; corPrazo = 'var(--text-soft)';
+        textoPrazo = 'Sem Final Previsto cadastrado'; corPrazo = 'var(--text-soft)'; tag = '';
       }
 
-      indicadoresHtml = `
-      <div class="gridIndicadores">
-        <div class="cardIndicador">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Final Previsto</div>
-            <div style="font-size:15px; margin-top:4px;">${etapa.FinalPrevisto || "-"}</div>
-          </div>
+      html += `
+      <div style="padding:18px 0; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+          <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
+          ${tag ? `<span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo}; flex-shrink:0;">${tag}</span>` : ''}
         </div>
-        <div class="cardIndicador">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Final Real</div>
-            <div style="font-size:15px; margin-top:4px;">${etapa.FinalReal || "-"}</div>
-          </div>
-        </div>
-        <div class="cardIndicador" style="grid-column: span 2;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Prazo</div>
-            <div style="font-size:15px; margin-top:4px; color:${corPrazo};">${textoPrazo}</div>
-          </div>
-        </div>
+        <div style="font-size:13.5px; font-weight:600; color:${corPrazo}; margin-top:8px;">${textoPrazo}</div>
+        <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Previsto: ${etapa.FinalPrevisto || '-'} · Real: ${etapa.FinalReal || '-'}</div>
+        ${etapa.InformacoesAdicionais ? `<div style="font-size:12px; color:var(--text-soft); margin-top:8px; line-height:1.5;">${etapa.InformacoesAdicionais}</div>` : ''}
       </div>
       `;
-    } else {
-      indicadoresHtml = `
-      <div class="gridIndicadores">
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Total</div>
-            <div style="font-size:15px; margin-top:4px;">${etapa.Total || "-"}</div>
-          </div>
-          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/8384/8384450.png"
-               style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
-        </div>
-
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Avanço</div>
-            <div style="font-size:15px; margin-top:4px;">${etapa.Realizado || "-"}</div>
-          </div>
-          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
-               style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
-        </div>
-
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Previsto</div>
-            <div style="font-size:15px; margin-top:4px;">${etapa.Previsto || "-"}</div>
-          </div>
-          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/6797/6797554.png"
-               style="width:14px; position:absolute; bottom:10px; right:10px; opacity:0.6;">
-        </div>
-
-        <div class="cardIndicador" style="position:relative;">
-          <div style="text-align:left;">
-            <div style="font-size:12px; font-weight:600;">Desvio</div>
-            <div style="font-size:15px; margin-top:4px; color:${corDesvio};">
-              ${etapa.Desvio || "-"}
-            </div>
-          </div>
-          <img class="iconeIndicador" src="https://cdn-icons-png.flaticon.com/128/481/481099.png"
-               style="width:14px; position:absolute; bottom:10px; right:10px;">
-        </div>
-      </div>
-      `;
+      return;
     }
 
+    const desvioNum = parseFloat(String(etapa.Desvio || '0').replace(',', '.'));
+    const atrasada = desvioNum < -0.001;
+    const corDelta = atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))';
+    const totalNum = etapa.TotalNum;
+    const progressoPct = etapa.ProgressoFisicoRealizado ?? (totalNum ? (etapa.RealizadoNum / totalNum * 100) : 0);
+    const previstoPct = etapa.ProgressoFisicoPrevisto ?? (totalNum ? (etapa.PrevistoNum / totalNum * 100) : 0);
+
     html += `
-    <div style="${i > 0 ? 'margin-top:20px; padding-top:16px; border-top:1px solid #eee;' : ''}">
-
-      <div style="font-size:13px; font-weight:600; color:#1f6e8c; margin-bottom:6px; text-align:left;">
-        ${etapa.Etapa || 'Etapa'}
+    <div style="padding:18px 0; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
+      <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+        <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
+        <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))'}; flex-shrink:0;">${atrasada ? 'Atrasado' : 'No prazo'}</span>
       </div>
-
-      <div style="font-size:12px; color:var(--text-soft); margin-bottom:12px; text-align:left;">
-        Situação em <b>${etapa.Situacao || "-"}</b>
+      <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:26px; letter-spacing:-0.02em;">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
+        <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; color:${corDelta}; margin-left:auto;">${etapa.Desvio || '-'}</span>
       </div>
-
-      ${indicadoresHtml}
-
-      ${etapa.InformacoesAdicionais ? `
-        <div style="margin-top:12px; padding:10px 12px; background:var(--paper-2); border-radius:6px; font-size:12.5px; color:var(--ink); text-align:left; line-height:1.5;">
-          ${etapa.InformacoesAdicionais}
-        </div>
-      ` : ''}
+      <div style="position:relative; height:3px; background:var(--line); border-radius:2px; margin-top:12px;">
+        <div style="position:absolute; left:0; top:0; height:100%; border-radius:2px; width:${Math.min(Math.max(progressoPct,0),100)}%; background:${atrasada ? '#e0645a' : 'var(--accent)'};"></div>
+        <div style="position:absolute; top:-3px; width:2px; height:9px; background:var(--text-soft); border-radius:1px; left:${Math.min(Math.max(previstoPct,0),100)}%;"></div>
+      </div>
+      ${etapa.InformacoesAdicionais ? `<div style="font-size:12px; color:var(--text-soft); margin-top:10px; line-height:1.5;">${etapa.InformacoesAdicionais}</div>` : ''}
+      ${!todasNaoQuantificaveis ? `<div style="font-size:11px; color:var(--text-soft); margin-top:10px;">Situação em <b style="color:var(--ink);">${etapa.Situacao || '-'}</b> · <span style="color:var(--accent-bright, var(--accent)); font-weight:600; cursor:pointer;" onclick="event.stopPropagation(); mostrarDesempenho();">ver histórico dia a dia →</span></div>` : ''}
     </div>
     `;
   });
-
-  html += `</div>`;
-
-// ✅ PROGRESSO — só faz sentido pra frentes com quantidade real
-if (!todasNaoQuantificaveis) {
-const perc = data.Percentual || 0;
-const prev = data.Percentualprevisto || 0;
-const restante = Math.max(0, prev - perc);
-                          
-// cálculo opcional de restante
-const percReal = Math.min(perc, 100);
-const prevReal = Math.min(Math.max(prev, percReal), 100);
-html += `
-<div class="bloco">
-
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
-    <img src="https://i.imgur.com/RjGiUQ4.png" 
-         style="width:18px;">
-    <span style="font-size:13px; font-weight:600;">
-      PROGRESSO FÍSICO
-    </span>
-  </div>
-
-<div style="display:flex; align-items:center; gap:20px;">
-
-  <!-- CÍRCULO -->
-  <div style="
-    width:110px;
-    height:110px;
-    border-radius:50%;
-    background: conic-gradient(
-      var(--accent) ${percReal}%,
-      var(--line-dark) ${percReal}% ${prevReal}%,
-      var(--paper-2) ${prevReal}% 100%
-    );
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  ">
-
-    <div style="
-      width:80px;
-      height:80px;
-      background:var(--card-fundo);
-      border-radius:50%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:bold;
-      color:var(--accent);
-      font-size:18px
-    ">
-      ${perc}%
-    </div>
-
-  </div>
-
-  <!-- ✅ LEGENDA -->
-  <div style="font-size:13px;">
-
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-      <span style="width:10px; height:10px; background:var(--accent); border-radius:50%;"></span>
-      Realizado: ${perc}%
-    </div>
-
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-      <span style="width:10px; height:10px; background:var(--line-dark); border-radius:50%;"></span>
-      Previsto: ${prev}%
-    </div>
-
-  </div>
-
-</div>
-
-</div>
-`;
-}
-  // ✅ FOTO — também só pra frentes com quantidade
-  if (!todasNaoQuantificaveis) {
-  html += `
-  <div class="bloco">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
-      <img src="https://i.imgur.com/DQZ7PM1.png" 
-           style="width:18px;">
-      <span style="font-size:13px; font-weight:600;">
-        REGISTRO FOTOGRÁFICO
-      </span>
-    </div>
-
-    ${data.Imagem
-      ? `<img src="${data.Imagem}" style="width:100%; border-radius:10px;">`
-      : `<p style="font-size:12px; color:var(--text-soft); text-align:left;">Sem foto cadastrada ainda.</p>`}
-  </div>
-  `;
-  }
 
  // ✅ FINAL
 document.getElementById("conteudo").innerHTML = `
@@ -5260,52 +5174,58 @@ function mostrarDesempenho() {
 
   const etapas = d.AvancoPorEtapa || [];
 
-  // ✅ resumo de início/término previsto e realizado, uma linha por etapa
+  // ✅ resumo em texto corrido — uma frase por etapa, sem caixinha nem
+  // grade de indicadores repetidos
+  function montarResumoFluidoEtapa(et) {
+    const unidade = et.Unidade || 'm';
+    const prodPrev = et.Produtividade && et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista : null;
+    const prodReal = et.Produtividade && et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada : null;
+    const prodTexto = (prodPrev !== null && prodReal !== null)
+      ? ` — produtividade de <b>${prodReal}${unidade}</b> por avanço contra ${prodPrev}${unidade} previstos`
+      : '';
+
+    if (!et.InicioRealizado) {
+      return `<b>${et.Etapa}</b> ainda não foi iniciada.`;
+    }
+
+    const totalPrevisto = et.TotalPrevisto || 0;
+    const totalRealizado = et.TotalRealizado || 0;
+    const concluida = totalPrevisto > 0 && totalRealizado >= totalPrevisto - 0.05;
+
+    if (concluida) {
+      const tp = parseDiaMes(et.TerminoPrevisto);
+      const tr = parseDiaMes(et.TerminoRealizado);
+      let diffTexto = '';
+      if (tp && tr) {
+        const diff = Math.round((tr - tp) / 86400000);
+        if (diff > 0) diffTexto = ` (${diff} dia${diff === 1 ? '' : 's'} além do previsto)`;
+        else if (diff < 0) diffTexto = `, <b>${Math.abs(diff)} dia${Math.abs(diff) === 1 ? '' : 's'} adiantado</b>`;
+        else diffTexto = ' (no prazo)';
+      }
+      return `<b>${et.Etapa}</b> concluído entre ${et.InicioRealizado} e ${et.TerminoRealizado}${diffTexto}${prodTexto}.`;
+    }
+
+    const tp = parseDiaMes(et.TerminoPrevisto);
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    let atrasoTexto = '';
+    if (tp && hoje > tp) {
+      const diff = Math.round((hoje - tp) / 86400000);
+      atrasoTexto = `, já <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>`;
+    }
+    return `<b${tp && hoje > tp ? ' style="color:#e0645a;"' : ''}>${et.Etapa}</b> em andamento desde ${et.InicioRealizado}${atrasoTexto}${prodTexto}.`;
+  }
+
   const resumoHtml = etapas.length > 0 ? `
-    <div class="bloco">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-        <span style="font-size:13px; font-weight:600;">RESUMO POR ETAPA</span>
-      </div>
-      ${etapas.map((et, i) => `
-        <div style="${i > 0 ? 'margin-top:14px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
-          <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:6px; text-align:left;">
-            ${et.Etapa}
-          </div>
-          <div class="gridIndicadores">
-            <div class="cardIndicador">
-              <div style="text-align:left;">
-                <div style="font-size:11px; font-weight:600;">Previsto</div>
-                <div style="font-size:13px; margin-top:4px;">${et.InicioPrevisto || '-'} até ${et.TerminoPrevisto || '-'}</div>
-              </div>
-            </div>
-            <div class="cardIndicador">
-              <div style="text-align:left;">
-                <div style="font-size:11px; font-weight:600;">Realizado</div>
-                <div style="font-size:13px; margin-top:4px;">${statusRealizado(et)}</div>
-              </div>
-            </div>
-            ${et.Produtividade ? `
-            <div class="cardIndicador">
-              <div style="text-align:left;">
-                <div style="font-size:11px; font-weight:600;">Produtividade Prevista por Avanço (média)</div>
-                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista + (et.Unidade || 'm') : '-'}</div>
-              </div>
-            </div>
-            <div class="cardIndicador">
-              <div style="text-align:left;">
-                <div style="font-size:11px; font-weight:600;">Produtividade Realizada por Avanço (média)</div>
-                <div style="font-size:13px; margin-top:4px;">${et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada + (et.Unidade || 'm') : '-'}</div>
-              </div>
-            </div>
-            ` : ''}
-          </div>
-        </div>
-      `).join('')}
+    <div style="padding:22px 0 6px; font-size:13px; color:var(--text-soft); line-height:1.75; text-align:left;">
+      ${etapas.map(et => montarResumoFluidoEtapa(et)).join('<br><br>')}
     </div>
   ` : '';
 
-  // ✅ uma tabela por etapa (não soma etapas juntas), começando só a
-  // partir do primeiro dia que já tem algum previsto ou realizado
+  // ✅ linha do tempo dia a dia — sem agrupar, mas cada linha é enxuta:
+  // só cresce quando aquele dia tem PK e/ou observação de verdade. Usa
+  // valores DO DIA (não acumulado), adaptando à unidade de cada etapa.
+  // PK só aparece se a etapa realmente tiver esse dado (não existe pra
+  // etapas em % ou "und", por exemplo — some sozinho nesses casos).
   const tabelasHtml = etapas.map(et => {
     const todosDias = et.Dias || [];
     const primeiroIndice = todosDias.findIndex(dia =>
@@ -5313,36 +5233,40 @@ function mostrarDesempenho() {
       (dia.Realizado !== null && dia.Realizado !== undefined && dia.Realizado > 0)
     );
     const dias = primeiroIndice >= 0 ? todosDias.slice(primeiroIndice) : todosDias;
+    if (dias.length === 0) return '';
+    const unidade = et.Unidade || 'm';
 
     return `
-    <div class="bloco">
-      <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px; text-align:left;">
-        ${et.Etapa}
-      </div>
-      <div style="max-height:340px; overflow-y:auto; border:1px solid var(--line); border-radius:6px;">
-        <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'IBM Plex Sans',sans-serif;">
-          <thead>
-            <tr style="position:sticky; top:0; background:var(--paper-2);">
-              <th style="padding:8px; text-align:left;">Data</th>
-              <th style="padding:8px; text-align:right;">Previsto acumulado (${et.Unidade || 'm'})</th>
-              <th style="padding:8px; text-align:right;">Realizado acumulado (${et.Unidade || 'm'})</th>
-              <th style="padding:8px; text-align:left;">Observações</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${dias.map(dia => `
-              <tr style="border-top:1px solid var(--line);">
-                <td style="padding:6px 8px; white-space:nowrap;">${dia.Data}</td>
-                <td style="padding:6px 8px; text-align:right;">${dia.Previsto === null || dia.Previsto === undefined ? '-' : dia.Previsto}</td>
-                <td style="padding:6px 8px; text-align:right;">${dia.Realizado === null || dia.Realizado === undefined ? '-' : dia.Realizado}</td>
-                <td style="padding:6px 8px; color:var(--text-soft);">${dia.Observacoes || ''}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+    <div style="margin-top:30px; padding-top:24px; border-top:1px solid var(--line);">
+      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left;">Linha do tempo — ${et.Etapa}</div>
+      <div style="font-size:11px; color:var(--text-soft); margin-bottom:10px; text-align:left;">dia a dia, ${dias[0].Data} a ${dias[dias.length - 1].Data}</div>
+      ${dias.map((dia, i) => {
+        const dp = dia.DiarioPrevisto;
+        const dr = dia.DiarioRealizado;
+        const dpTexto = (dp === null || dp === undefined) ? '-' : `${dp}${unidade}`;
+        const drTexto = (dr === null || dr === undefined) ? '-' : `${dr}${unidade}`;
+        let corReal = 'var(--ink)';
+        if (dp !== null && dp !== undefined && dr !== null && dr !== undefined) {
+          corReal = dr > dp ? 'var(--accent)' : (dr < dp ? '#e0645a' : 'var(--ink)');
+        }
+        const temPk = dia.PkInicial || dia.PkFinal;
+        const pkIguais = dia.PkInicial && dia.PkFinal && dia.PkInicial === dia.PkFinal;
+        return `
+        <div style="display:flex; gap:14px; padding:9px 0; ${i > 0 ? 'border-top:1px solid var(--line);' : ''} text-align:left;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-soft); flex-shrink:0; width:34px; padding-top:1px;">${dia.Data}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:12.5px; display:flex; gap:10px; flex-wrap:wrap;">
+              <span style="color:var(--text-soft);">previsto no dia ${dpTexto}</span>
+              <span style="font-weight:600; color:${corReal};">realizado no dia ${drTexto}</span>
+            </div>
+            ${temPk ? `<div style="font-size:11.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin-top:2px;">PK <b style="color:var(--ink); font-weight:600;">${dia.PkInicial || '-'}</b> a <b style="color:var(--ink); font-weight:600;">${dia.PkFinal || '-'}</b>${pkIguais ? ' <span style="opacity:.6;">(sem avanço registrado)</span>' : ''}</div>` : ''}
+            ${dia.Observacoes ? `<div style="font-size:11.5px; color:var(--text-soft); line-height:1.55; margin-top:4px;">${dia.Observacoes}</div>` : ''}
+          </div>
+        </div>
+        `;
+      }).join('')}
     </div>
-  `;
+    `;
   }).join('');
 
   // ✅ legenda em HTML separada por gráfico — uma linha por etapa, com
@@ -5384,17 +5308,18 @@ function mostrarDesempenho() {
 
     ${resumoHtml}
 
-    <div class="bloco">
+    <div style="padding:20px 0; border-top:1px solid var(--line);">
 
       ${d.Grafico1 ? `
+        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left;">Avanço diário</div>
         <img src="${d.Grafico1}" 
-             style="width:100%; border-radius:10px;">
+             style="width:100%; border-radius:6px;">
         ${legenda1Html}
       ` : ""}
 
       ${d.Grafico2 ? `
         <img src="${d.Grafico2}" 
-             style="width:100%; border-radius:10px;">
+             style="width:100%; border-radius:6px; margin-top:24px;">
         ${legenda2Html}
       ` : ""}
 
