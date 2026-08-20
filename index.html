@@ -2997,9 +2997,6 @@ function renderizarCronogramaGeral() {
       <div class="eyebrow">Cronograma Geral</div>
       <h1 style="font-size:24px; color:#fff;">${CRONOGRAMA_GERAL_INFO.titulo}</h1>
       <div style="font-size:11px; color:#E0A94B; font-weight:600; margin-top:2px;">Em Aprovação</div>
-      <div style="margin-top:10px;">
-        <span style="font-size:11px; color:#A9B7B1;">Corte em ${CRONOGRAMA_GERAL_INFO.corte}</span>
-      </div>
     </div>
 
     <div class="menuNovo">
@@ -4027,15 +4024,13 @@ async function carregarFrentes() {
       </div>
       <div id="resultadoBuscaF"></div>
 
-      <div class="cabecalho" style="margin-top:20px;">
-        <span class="tituloSecao">Frentes de serviço</span>
-        <span class="contagemSecao" id="contagemFrentes">00</span>
-      </div>
-      <hr class="regra">
-      <div style="text-align:right; margin-bottom:10px;">
-        <span onclick="mostrarTelaFrentesConcluidas()" style="cursor:pointer; font-size:11.5px; color:var(--accent); font-weight:600;">Frentes concluídas →</span>
-      </div>
       <div id="botoes"></div>
+
+      <div style="text-align:center; margin-top:30px;">
+        <button onclick="mostrarTelaFrentesConcluidas()" style="background:var(--card-fundo); border:1px solid var(--line); border-radius:8px; padding:12px 20px; font-size:13px; font-weight:600; color:var(--accent); cursor:pointer; font-family:'IBM Plex Sans',sans-serif;">
+          Ver frentes concluídas →
+        </button>
+      </div>
     </section>
   `;
 
@@ -4273,7 +4268,6 @@ function renderizarFrentesFiltradas() {
   document.getElementById("qtFrentes").innerText = qtdFrentesAtivas;
   document.getElementById("noPrazo").innerText = noPrazo;
   document.getElementById("atrasadas").innerText = atrasadas;
-  document.getElementById("contagemFrentes").innerText = String(qtdFrentesAtivas).padStart(2, "0");
 }
 
 // ✅ chamado pelos 3 botões (Geral/Escavação/Civil) — troca o filtro e
