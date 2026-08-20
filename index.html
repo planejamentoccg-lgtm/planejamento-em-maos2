@@ -5049,7 +5049,7 @@ let menu = `
       html += `
       <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
-          <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
+          <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">${etapa.Etapa || 'Etapa'}</span>
           ${tag ? `<span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo}; flex-shrink:0;">${tag}</span>` : ''}
         </div>
         <div style="font-size:13.5px; font-weight:600; color:${corPrazo}; margin-top:8px;">${textoPrazo}</div>
@@ -5070,11 +5070,11 @@ let menu = `
     html += `
     <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
-        <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
+        <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">${etapa.Etapa || 'Etapa'}</span>
         <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))'}; flex-shrink:0;">${atrasada ? 'Atrasado' : 'No prazo'}</span>
       </div>
       <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
-        <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em;">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
+        <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em; color:var(--ink);">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
         <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos</span>
         <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-left:auto; text-align:right;"><span style="color:var(--text-soft); font-weight:400;">desvio </span><span style="color:${corDelta}; font-weight:600;">${etapa.Desvio || '-'}</span></span>
       </div>
@@ -5239,7 +5239,7 @@ function mostrarDesempenho() {
 
     return `
     <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line);">
-      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left;">Linha do tempo — ${et.Etapa}</div>
+      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left; color:var(--ink);">Linha do tempo — ${et.Etapa}</div>
       <div style="font-size:11px; color:var(--text-soft); margin-bottom:10px; text-align:left;">dia a dia, ${dias[0].Data} a ${dias[dias.length - 1].Data}</div>
       ${dias.map((dia, i) => {
         const dp = dia.DiarioPrevisto;
@@ -5312,7 +5312,7 @@ function mostrarDesempenho() {
     <div style="padding:20px 20px; border-top:1px solid var(--line);">
 
       ${d.Grafico1 ? `
-        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left;">Avanço diário</div>
+        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left; color:var(--ink);">Avanço diário</div>
         <img src="${d.Grafico1}" 
              style="width:100%; border-radius:6px;">
         ${legenda1Html}
