@@ -5243,60 +5243,86 @@ function mostrarDesempenho() {
 
   // ✅ resumo em texto corrido — uma frase por etapa, sem caixinha nem
   // grade de indicadores repetidos
-  function montarResumoFluidoEtapa(et) {
+  function montarResumoTopicosEtapa(et, idx) {
     const unidade = et.Unidade || 'm';
-    const prodPrev = et.Produtividade && et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista : null;
-    const prodReal = et.Produtividade && et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada : null;
-    const prodTexto = (prodPrev !== null && prodReal !== null)
-      ? ` — produtividade de <b>${prodReal}${unidade}</b> por avanço contra ${prodPrev}${unidade} previstos`
-      : '';
-
-    // ✅ dias em que havia algo previsto pra acontecer naquele dia, mas
-    // nada foi realizado — explica o caso confuso de "produtividade por
-    // avanço maior que o previsto, mas terminou atrasado": não é que
-    // cada avanço rendeu menos, é que teve dia parado no meio do caminho
-    const diasParados = (et.Dias || []).filter(d =>
-      (d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0) &&
-      (d.DiarioRealizado === null || d.DiarioRealizado === undefined || d.DiarioRealizado <= 0)
-    ).length;
-    const paradoTexto = diasParados > 0
-      ? `, com <b>${diasParados} dia${diasParados === 1 ? '' : 's'}</b> sem nada realizado apesar de ter algo previsto`
-      : '';
+    const semBorda = idx === 0 ? 'border-top:none;' : 'border-top:1px solid var(--line);';
 
     if (!et.InicioRealizado) {
-      return `<b>${et.Etapa}</b> ainda não foi iniciada.`;
+      return `
+      <div style="padding:16px 0; ${semBorda}">
+        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin-bottom:6px;">${et.Etapa}</div>
+        <div style="font-size:12.5px; color:var(--text-soft);">Ainda não foi iniciada.</div>
+      </div>
+      `;
     }
 
     const totalPrevisto = et.TotalPrevisto || 0;
     const totalRealizado = et.TotalRealizado || 0;
     const concluida = totalPrevisto > 0 && totalRealizado >= totalPrevisto - 0.05;
 
+    // ✅ tópico 1 — status: em andamento ou concluído, e quantos dias de
+    // adiantamento/atraso (ou "no prazo")
+    let topico1;
     if (concluida) {
       const tp = parseDiaMes(et.TerminoPrevisto);
       const tr = parseDiaMes(et.TerminoRealizado);
-      let diffTexto = '';
+      let diffTexto = 'no prazo';
+      let cor = 'var(--ink)';
       if (tp && tr) {
         const diff = Math.round((tr - tp) / 86400000);
-        if (diff > 0) diffTexto = ` (${diff} dia${diff === 1 ? '' : 's'} além do previsto${paradoTexto})`;
-        else if (diff < 0) diffTexto = `, <b>${Math.abs(diff)} dia${Math.abs(diff) === 1 ? '' : 's'} adiantado</b>`;
-        else diffTexto = ' (no prazo)';
+        if (diff > 0) { diffTexto = `${diff} dia${diff === 1 ? '' : 's'} além do previsto`; cor = '#e0645a'; }
+        else if (diff < 0) { diffTexto = `${Math.abs(diff)} dia${Math.abs(diff) === 1 ? '' : 's'} adiantado`; cor = 'var(--accent-bright, var(--accent))'; }
       }
-      return `<b>${et.Etapa}</b> concluído entre ${et.InicioRealizado} e ${et.TerminoRealizado}${diffTexto}${prodTexto}.`;
+      topico1 = `Concluído entre ${et.InicioRealizado} e ${et.TerminoRealizado} — <b style="color:${cor};">${diffTexto}</b>`;
+    } else {
+      const tp = parseDiaMes(et.TerminoPrevisto);
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      if (tp && hoje > tp) {
+        const diff = Math.round((hoje - tp) / 86400000);
+        topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>`;
+      } else {
+        topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:var(--ink);">no prazo</b>`;
+      }
     }
 
-    const tp = parseDiaMes(et.TerminoPrevisto);
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    let atrasoTexto = '';
-    if (tp && hoje > tp) {
-      const diff = Math.round((hoje - tp) / 86400000);
-      atrasoTexto = `, já <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>${paradoTexto}`;
-    }
-    return `<b${tp && hoje > tp ? ' style="color:#e0645a;"' : ''}>${et.Etapa}</b> em andamento desde ${et.InicioRealizado}${atrasoTexto}${prodTexto}.`;
+    // ✅ tópico 2 — quantos dias tiveram algo previsto mas nada foi
+    // realizado (explica atraso mesmo com bom avanço nos dias que
+    // realmente aconteceram)
+    const diasParados = (et.Dias || []).filter(d =>
+      (d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0) &&
+      (d.DiarioRealizado === null || d.DiarioRealizado === undefined || d.DiarioRealizado <= 0)
+    ).length;
+    const topico2 = diasParados > 0
+      ? `<b>${diasParados} dia${diasParados === 1 ? '' : 's'}</b> sem nada realizado apesar de ter algo previsto`
+      : null;
+
+    // ✅ tópico 3 — avanço por dia esperado x realizado (não chamamos de
+    // "produtividade" porque nem toda etapa tem detonação — algumas são
+    // avanço contínuo, tipo civil)
+    const prodPrev = et.Produtividade && et.Produtividade.MediaPrevista !== null && et.Produtividade.MediaPrevista !== undefined ? et.Produtividade.MediaPrevista : null;
+    const prodReal = et.Produtividade && et.Produtividade.MediaRealizada !== null && et.Produtividade.MediaRealizada !== undefined ? et.Produtividade.MediaRealizada : null;
+    const topico3 = (prodPrev !== null && prodReal !== null)
+      ? `Avanço por dia esperado: <b style="color:var(--ink);">${prodPrev}${unidade}</b> · realizado: <b style="color:${prodReal >= prodPrev ? 'var(--accent-bright, var(--accent))' : '#e0645a'};">${prodReal}${unidade}</b>`
+      : null;
+
+    const topicos = [topico1, topico2, topico3].filter(Boolean);
+
+    return `
+    <div style="padding:18px 0; ${semBorda}">
+      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin-bottom:10px;">${et.Etapa}</div>
+      ${topicos.map(t => `
+        <div style="display:flex; gap:9px; margin-bottom:7px; font-size:12.5px; color:var(--text-soft); line-height:1.5;">
+          <span style="color:var(--accent-bright, var(--accent)); flex-shrink:0;">•</span>
+          <span>${t}</span>
+        </div>
+      `).join('')}
+    </div>
+    `;
   }
 
   const resumoHtml = etapas.length > 0 ? `
-    <div style="padding:22px 20px 6px; font-size:13px; color:var(--text-soft); line-height:1.75; text-align:left;">
-      ${etapas.map(et => montarResumoFluidoEtapa(et)).join('<br><br>')}
+    <div style="padding:6px 20px 0;">
+      ${etapas.map((et, idx) => montarResumoTopicosEtapa(et, idx)).join('')}
     </div>
   ` : '';
 
@@ -7762,4 +7788,3 @@ async function carregarContadorNotif() {
 
 </body>
 </html>
-    
