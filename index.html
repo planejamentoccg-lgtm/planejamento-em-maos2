@@ -1367,7 +1367,8 @@ body.tema-escuro .iconeIndicador{
   border:1px solid var(--line);
   box-shadow:0 4px 12px rgba(0,0,0,0.08);
   padding:12px 10px;
-  margin:10px 0 4px;
+  margin:-40px 0 4px;
+  position:relative;
 }
 .filtroTipoBtn{
   flex:none;
@@ -4005,7 +4006,7 @@ async function carregarFrentes() {
         </button>
         <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesPorTipo('Escavação')">
           <div class="iconCircleFiltro">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="13" width="8" height="5" rx="1"/><path d="M11 14l7-7"/><path d="M18 7l3 1.5-1.5 3-3-1.5z"/><path d="M2 20h20"/></svg>
           </div>
           <span>Escavação</span>
         </button>
@@ -4326,7 +4327,7 @@ async function carregarFrentesConcluidas() {
         </button>
         <button class="filtroTipoBtn" data-tipo="Escavação" onclick="filtrarFrentesConcluidasPorTipo('Escavação')">
           <div class="iconCircleFiltro">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="13" width="8" height="5" rx="1"/><path d="M11 14l7-7"/><path d="M18 7l3 1.5-1.5 3-3-1.5z"/><path d="M2 20h20"/></svg>
           </div>
           <span>Escavação</span>
         </button>
