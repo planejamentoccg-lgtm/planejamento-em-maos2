@@ -4962,15 +4962,18 @@ let menu = `
 
   // ✅ FOTO — primeira coisa da tela, só pra frentes com quantidade real
   // (uma frente 100% por prazo não tem "avanço" pra fotografar do
-  // mesmo jeito)
+  // mesmo jeito). Sem margem negativa aqui: o container já não tem
+  // preenchimento lateral próprio, então width:100% já fica na borda —
+  // uma margem negativa em cima disso só empurrava a página pra fora
+  // da tela.
   if (!todasNaoQuantificaveis) {
     html += `
-    <div style="margin:0 -18px 4px;">
+    <div>
       ${data.Imagem
         ? `<img src="${data.Imagem}" style="width:100%; display:block;">`
         : `<div style="background:var(--paper-2); padding:44px 16px; text-align:center; color:var(--text-soft); font-size:12px;">Sem foto cadastrada ainda.</div>`}
     </div>
-    ${data.situacaoRecenteFoto ? `<div style="font-size:11px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin:8px 0 0;">${data.situacaoRecenteFoto}</div>` : ''}
+    ${data.situacaoRecenteFoto ? `<div style="font-size:11px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin:8px 20px 0; text-align:left;">${data.situacaoRecenteFoto}</div>` : ''}
     `;
   }
 
@@ -5001,7 +5004,7 @@ let menu = `
     }
 
     html += `
-    <div style="padding:24px 0 20px; border-bottom:1px solid var(--line);">
+    <div style="padding:24px 20px 20px; border-bottom:1px solid var(--line);">
       <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;">Progresso total da frente</div>
       <div style="display:flex; align-items:baseline; gap:10px;">
         <span style="font-family:'Archivo',sans-serif; font-weight:900; font-size:40px; letter-spacing:-0.02em; color:var(--accent-bright, var(--accent));">${percTotal}%</span>
@@ -5020,7 +5023,7 @@ let menu = `
   // status, número "manchete" com a unidade certa, linha fina de
   // progresso. Etapas não-quantificáveis usam o prazo (Final Previsto/
   // Final Real) em vez de número, igual já era.
-  html += `<div style="margin-top:${todasNaoQuantificaveis ? '4' : '4'}px; font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin:22px 0 4px;">Por etapa</div>`;
+  html += `<div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin:22px 0 4px; padding:0 20px;">Por etapa</div>`;
 
   (data.Etapas || []).forEach((etapa, i) => {
     const ehNaoQuantificavel = etapa.Unidade === '-';
@@ -5046,7 +5049,7 @@ let menu = `
       }
 
       html += `
-      <div style="padding:18px 0; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
+      <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
           <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
           ${tag ? `<span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo}; flex-shrink:0;">${tag}</span>` : ''}
@@ -5067,7 +5070,7 @@ let menu = `
     const previstoPct = etapa.ProgressoFisicoPrevisto ?? (totalNum ? (etapa.PrevistoNum / totalNum * 100) : 0);
 
     html += `
-    <div style="padding:18px 0; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
+    <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
         <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px;">${etapa.Etapa || 'Etapa'}</span>
         <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${atrasada ? '#e0645a' : 'var(--accent-bright, var(--accent))'}; flex-shrink:0;">${atrasada ? 'Atrasado' : 'No prazo'}</span>
@@ -5216,7 +5219,7 @@ function mostrarDesempenho() {
   }
 
   const resumoHtml = etapas.length > 0 ? `
-    <div style="padding:22px 0 6px; font-size:13px; color:var(--text-soft); line-height:1.75; text-align:left;">
+    <div style="padding:22px 20px 6px; font-size:13px; color:var(--text-soft); line-height:1.75; text-align:left;">
       ${etapas.map(et => montarResumoFluidoEtapa(et)).join('<br><br>')}
     </div>
   ` : '';
@@ -5237,7 +5240,7 @@ function mostrarDesempenho() {
     const unidade = et.Unidade || 'm';
 
     return `
-    <div style="margin-top:30px; padding-top:24px; border-top:1px solid var(--line);">
+    <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line);">
       <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:2px; text-align:left;">Linha do tempo — ${et.Etapa}</div>
       <div style="font-size:11px; color:var(--text-soft); margin-bottom:10px; text-align:left;">dia a dia, ${dias[0].Data} a ${dias[dias.length - 1].Data}</div>
       ${dias.map((dia, i) => {
@@ -5308,7 +5311,7 @@ function mostrarDesempenho() {
 
     ${resumoHtml}
 
-    <div style="padding:20px 0; border-top:1px solid var(--line);">
+    <div style="padding:20px 20px; border-top:1px solid var(--line);">
 
       ${d.Grafico1 ? `
         <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left;">Avanço diário</div>
