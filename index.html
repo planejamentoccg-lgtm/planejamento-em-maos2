@@ -4147,8 +4147,6 @@ async function carregarFrentes() {
 
     <section class="secaoNova">
 
-      <div id="cardFrentesPendentes"></div>
-
       <div class="filtrosTipo" id="filtrosTipo">
         <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">
           <div class="iconCircleFiltro">
@@ -4169,6 +4167,8 @@ async function carregarFrentes() {
           <span>Civil</span>
         </button>
       </div>
+
+      <div id="cardFrentesPendentes" style="margin-top:24px;"></div>
 
       <div class="caixaBusca" style="position:relative;">
         <input type="text" id="inputBuscaF" placeholder="Pergunte algo... ex: quais detonações tivemos ontem?"
