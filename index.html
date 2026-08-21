@@ -2538,6 +2538,16 @@ function acharItensCronogramaPorNumero(numeroAlvo) {
   });
 }
 
+// ✅ abre/fecha uma seção da árvore do Cronograma de uma frente
+function toggleSecaoCronograma(id) {
+  const corpo = document.getElementById(id);
+  const seta = document.getElementById(id + '_seta');
+  const aberto = corpo.style.display === 'block';
+  corpo.style.display = aberto ? 'none' : 'block';
+  corpo.style.marginTop = aberto ? '0' : '14px';
+  seta.style.transform = aberto ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
 function mostrarCronogramaFrente() {
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
   document.querySelectorAll(".menuBtn")[2].classList.add("ativo");
@@ -2551,7 +2561,7 @@ function mostrarCronogramaFrente() {
   const numero = d.NumeroCronograma;
 
   if (!numero) {
-    container.innerHTML = `<div class="bloco"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Essa frente ainda não tem o número do cronograma cadastrado (coluna "Nº no cronograma" na aba "Nome das Frentes").</p></div>`;
+    container.innerHTML = `<div style="padding:20px;"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Essa frente ainda não tem o número do cronograma cadastrado (coluna "Nº no cronograma" na aba "Nome das Frentes").</p></div>`;
     return;
   }
 
@@ -2564,7 +2574,7 @@ function mostrarCronogramaFrente() {
   const numeros = calcularNumerosEstrutura();
 
   if (itens.length === 0) {
-    container.innerHTML = `<div class="bloco"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Não encontrei o item "${numero}" no cronograma geral.</p></div>`;
+    container.innerHTML = `<div style="padding:20px;"><p style="font-size:13px; color:var(--text-soft); text-align:left;">Não encontrei o item "${numero}" no cronograma geral.</p></div>`;
     return;
   }
 
@@ -2575,74 +2585,89 @@ function mostrarCronogramaFrente() {
   const itemRaiz = itens.find(item => numeros[item[0]] === numero);
   const nivelRaiz = itemRaiz ? itemRaiz[4] : Math.min(...itens.map(i => i[4]));
 
-  // ✅ marca quais itens TÊM subitens dentro dessa listagem — esses
-  // ficam destacados independente da profundidade deles, pra
-  // diferenciar "isso agrupa outras coisas" de "isso é uma tarefa do
-  // dia a dia mesmo"
-  const numerosDaLista = itens.map(item => numeros[item[0]]);
-  const temFilhos = new Set();
-  numerosDaLista.forEach(numAtual => {
-    const ehPaiDeAlguem = numerosDaLista.some(outro => outro !== numAtual && outro.startsWith(numAtual + '.'));
-    if (ehPaiDeAlguem) temFilhos.add(numAtual);
+  let html = `<div style="padding:0 20px 20px;"><div style="font-size:11px; color:var(--text-soft); margin-bottom:20px; text-align:left;">${itens.length} tarefas no cronograma geral dessa frente.</div>`;
+
+  // ✅ monta a árvore de verdade (pai → filhos) a partir da lista achatada,
+  // usando o número da estrutura de tópicos pra achar quem é filho de quem
+  const porNumero = {};
+  itens.forEach(item => {
+    porNumero[numeros[item[0]]] = { item, numero: numeros[item[0]], filhos: [] };
+  });
+  let noRaiz = null;
+  Object.values(porNumero).forEach(no => {
+    const partesNumero = no.numero.split('.');
+    const numeroPai = partesNumero.slice(0, -1).join('.');
+    if (porNumero[numeroPai]) porNumero[numeroPai].filhos.push(no);
+    else noRaiz = no;
   });
 
-  let html = `<div class="bloco"><div style="font-size:11px; color:var(--text-soft); margin-bottom:14px; text-align:left;">Item ${numero} do cronograma geral — ${itens.length} tarefa(s).</div>`;
+  function estiloPorNivel(nivelRelativo, temFilhos) {
+    if (nivelRelativo === 1) return { tamanho: '16px', peso: '700', cor: 'var(--ink)', dataCor: 'var(--text-soft)' };
+    if (nivelRelativo === 2) return temFilhos
+      ? { tamanho: '14px', peso: '700', cor: 'var(--ink)', dataCor: 'var(--text-soft)' }
+      : { tamanho: '13px', peso: '500', cor: 'var(--ink)', dataCor: 'var(--text-soft)' };
+    const fundura = nivelRelativo - 3;
+    return temFilhos
+      ? { tamanho: Math.max(12, 13 - fundura * 0.5) + 'px', peso: '700', cor: 'var(--ink)', dataCor: 'var(--text-soft)' }
+      : { tamanho: Math.max(10.5, 12 - fundura * 0.5) + 'px', peso: '400', cor: 'var(--text-soft)', dataCor: 'var(--text-soft)' };
+  }
 
-  itens.forEach((item, i) => {
-    // ✅ nível RELATIVO ao item principal dessa frente — define se é
-    // título (a própria frente), subtítulo (a "fase" dela) ou uma
-    // linha normal (a tarefa do dia a dia). A partir do nível 2, o
-    // tamanho/recuo/opacidade vão diminuindo aos poucos a cada nível
-    // (em vez de "achatar" tudo igual de uma vez), pra continuar dando
-    // pra perceber a profundidade mesmo em itens com muitos níveis.
-    const nivelRelativo = item[4] - nivelRaiz;
-    const numeroAtual = numeros[item[0]];
-    const ehPai = temFilhos.has(numeroAtual);
-    let tamanho, peso, cor, corData, recuo, corLinha, corBolinha, opacidade;
+  let contadorSecao = 0;
+  function renderNo(no, idPai) {
+    const nivelRelativo = no.item[4] - nivelRaiz;
+    const temFilhos = no.filhos.length > 0;
+
+    // ✅ RAIZ — manchete grande, sem código de estrutura de tópicos à vista
     if (nivelRelativo <= 0) {
-      // TÍTULO — a própria frente
-      tamanho = '14px'; peso = '700'; cor = 'var(--accent)'; corData = 'var(--ink)';
-      recuo = 0; corLinha = 'var(--accent)'; corBolinha = 'var(--accent)'; opacidade = 1;
-    } else if (nivelRelativo === 1) {
-      // SUBTÍTULO — a fase dela
-      tamanho = '12.5px'; peso = '600'; cor = 'var(--ink)'; corData = 'var(--text-soft)';
-      recuo = 14; corLinha = 'var(--line)'; corBolinha = 'var(--ink)'; opacidade = 1;
-    } else {
-      // LINHAS MAIS FUNDAS — cada nível a mais reduz um pouco o
-      // tamanho, aumenta o recuo, e reduz a opacidade, com pisos
-      // mínimos pra continuar legível mesmo em 6, 7, 8 níveis
-      const fundura = nivelRelativo - 2; // 0 no primeiro nível "normal", cresce dali
-      tamanho = Math.max(9, 11 - fundura * 0.4) + 'px';
-      peso = fundura === 0 ? '500' : '400';
-      cor = 'var(--text-soft)'; corData = 'var(--text-soft)';
-      recuo = 14 + Math.min(fundura + 1, 8) * 9;
-      corLinha = 'var(--line)'; corBolinha = 'var(--line)';
-      opacidade = Math.max(0.55, 1 - fundura * 0.06);
+      return `
+        <div style="margin-bottom:4px;">
+          <div style="font-family:'Archivo',sans-serif; font-weight:900; font-size:22px; letter-spacing:-0.02em; color:var(--ink); line-height:1.2;">${no.item[1]}</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-soft); margin-top:6px;">${no.item[2]} → ${no.item[3]}</div>
+        </div>
+        ${no.filhos.map(f => renderNo(f, idPai)).join('')}
+      `;
     }
 
-    // ✅ quem TEM subitens fica destacado — não esmaece, fica em negrito
-    // e com a cor mais forte, mesmo que esteja bem fundo na hierarquia.
-    // Só as "folhas" (sem filhos) é que vão esmaecendo com a profundidade.
-    if (ehPai && nivelRelativo > 1) {
-      opacidade = 1;
-      peso = '700';
-      cor = 'var(--ink)';
-      tamanho = Math.max(11, parseFloat(tamanho)) + 'px';
+    const estilo = estiloPorNivel(nivelRelativo, temFilhos);
+
+    // ✅ FOLHA (sem filhos) — linha simples com divisor, sem seta nem colapso
+    if (!temFilhos) {
+      return `
+        <div style="padding:9px 0; border-top:1px solid var(--line);">
+          <div style="font-size:${estilo.tamanho}; font-weight:${estilo.peso}; color:${estilo.cor}; line-height:1.4;">${no.item[1]}</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:${estilo.dataCor}; opacity:.8; margin-top:2px;">${no.item[2]} → ${no.item[3]}</div>
+        </div>
+      `;
     }
 
-    html += `
-      <div style="display:flex; gap:8px; padding:${nivelRelativo <= 0 ? '8' : '5'}px 0 ${nivelRelativo <= 0 ? '8' : '5'}px ${4 + recuo}px; border-left:2px solid ${corLinha}; margin-left:4px; opacity:${opacidade};">
-        <div style="flex-shrink:0; width:5px; height:5px; border-radius:50%; background:${corBolinha}; margin-top:6px; margin-left:${-7 - recuo}px;"></div>
-        <div style="flex:1; text-align:left;">
-          <div style="font-size:9px; color:var(--text-soft); margin-bottom:1px; opacity:0.8;">${numeros[item[0]]}</div>
-          <div style="font-size:${tamanho}; font-weight:${peso}; color:${cor};">${item[1]}</div>
-          <div style="font-size:10px; color:${corData}; margin-top:1px;">${item[2]} → ${item[3]}</div>
+    // ✅ SEÇÃO (tem filhos) — colapsável. Nível 1 (a "fase") começa
+    // aberta; a partir do nível 2, começa FECHADA — reduz a rolagem
+    // inicial quando tem muita coisa por baixo, sem esconder que existe
+    contadorSecao++;
+    const idSecao = `secaoCrono_${idPai}_${contadorSecao}`;
+    const abertoPorPadrao = nivelRelativo === 1;
+
+    return `
+      <div style="border-top:1px solid var(--line); padding:${nivelRelativo === 1 ? '16' : '10'}px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;" onclick="toggleSecaoCronograma('${idSecao}')">
+          <div>
+            <div style="font-family:'Archivo',sans-serif; font-weight:${estilo.peso}; font-size:${estilo.tamanho}; color:${estilo.cor};">${no.item[1]}</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:${estilo.dataCor}; margin-top:3px;">${no.item[2]} → ${no.item[3]}</div>
+          </div>
+          <div id="${idSecao}_seta" style="flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--paper-2); display:flex; align-items:center; justify-content:center; transition:transform .2s; transform:rotate(${abertoPorPadrao ? '0' : '-90'}deg);">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--accent-bright, var(--accent))" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div id="${idSecao}" style="display:${abertoPorPadrao ? 'block' : 'none'}; margin-top:${abertoPorPadrao ? '14' : '0'}px; padding-left:${nivelRelativo >= 2 ? '14' : '0'}px;">
+          ${no.filhos.map(f => renderNo(f, idSecao)).join('')}
         </div>
       </div>
     `;
-  });
+  }
 
+  if (noRaiz) html += renderNo(noRaiz, 'raiz');
   html += `</div>`;
+
   container.innerHTML = html;
 }
 
@@ -5560,13 +5585,23 @@ function mostrarDesempenho() {
       }
     }
 
-    // ✅ tópico 2 — quantos dias tiveram algo previsto mas nada foi
-    // realizado (explica atraso mesmo com bom avanço nos dias que
-    // realmente aconteceram)
-    const diasParados = (et.Dias || []).filter(d =>
-      (d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0) &&
-      (d.DiarioRealizado === null || d.DiarioRealizado === undefined || d.DiarioRealizado <= 0)
-    ).length;
+    // ✅ tópico 2 — quantos dias ficaram parados. Dois cuidados aqui:
+    // 1) se a etapa ainda está em andamento, só pode contar até a data
+    // de "Situação em" — senão pega dias que nem chegaram ainda e infla
+    // o número à toa.
+    // 2) NÃO é "dia X previsto sem realizado NESSE MESMO dia X" — porque
+    // o trabalho pode ter sido feito num dia diferente do planejado.
+    // É a CONTAGEM total: quantos dias tinham algo previsto menos
+    // quantos dias tiveram algo realizado (não precisa ser o mesmo dia).
+    const situacaoData = parseDiaMes(et.Situacao);
+    const diasConsiderados = (et.Dias || []).filter(d => {
+      if (!situacaoData) return true;
+      const dData = parseDiaMes(d.Data);
+      return !dData || dData <= situacaoData;
+    });
+    const qtdDiasPrevistos = diasConsiderados.filter(d => d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0).length;
+    const qtdDiasRealizados = diasConsiderados.filter(d => d.DiarioRealizado !== null && d.DiarioRealizado !== undefined && d.DiarioRealizado > 0).length;
+    const diasParados = Math.max(0, qtdDiasPrevistos - qtdDiasRealizados);
     const topico2 = diasParados > 0
       ? `<b>${diasParados} dia${diasParados === 1 ? '' : 's'}</b> sem nada realizado apesar de ter algo previsto`
       : null;
