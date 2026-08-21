@@ -4010,6 +4010,96 @@ async function buscarInteligenteCronograma(sufixo) {
   document.getElementById('sugestoesBusca' + sufixo).style.display = 'none';
 }
 
+// ✅ card "Previstas e ainda não iniciadas" no topo da tela de Frentes —
+// puxa da planilha "Cronograma Completo" (Config/FrentesPendentes),
+// onde cada item vai sendo marcado manualmente conforme começa de
+// verdade. Só mostra quem já passou da data prevista de início.
+async function carregarFrentesPendentes() {
+  const container = document.getElementById('cardFrentesPendentes');
+  if (!container) return;
+
+  try {
+    const doc = await db.collection('Config').doc('FrentesPendentes').get();
+    if (!doc.exists) return;
+
+    const todosItens = doc.data().Itens || [];
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+    const atrasados = todosItens
+      .filter(it => it.PrevistoIniciar && it.PrevistoIniciar.toDate() < hoje)
+      .sort((a, b) => a.PrevistoIniciar.toDate() - b.PrevistoIniciar.toDate());
+
+    if (atrasados.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const MOSTRAR_DE_CARA = 3;
+    const primeiros = atrasados.slice(0, MOSTRAR_DE_CARA);
+    const resto = atrasados.slice(MOSTRAR_DE_CARA);
+
+    function linhaItem(it) {
+      const d = it.PrevistoIniciar.toDate();
+      const diasAtraso = Math.round((hoje - d) / 86400000);
+      const dataStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const numeroSeguro = String(it.Numero || '').replace(/'/g, "\\'");
+      const areaSeguro = String(it.Area || '').replace(/'/g, "\\'");
+      return `
+        <div style="padding:10px 0; border-top:1px solid rgba(217,164,65,.2); cursor:pointer;" onclick="event.stopPropagation(); abrirItemPendenteCronograma('${areaSeguro}', '${numeroSeguro}')">
+          <div style="font-size:12.5px; color:var(--ink); font-weight:500; line-height:1.4;">${it.Tarefa || '-'}</div>
+          ${it.Caminho ? `<div style="font-size:10px; color:var(--text-soft); margin-top:2px;">${it.Area}${it.Caminho ? ' › ' + it.Caminho : ''}</div>` : `<div style="font-size:10px; color:var(--text-soft); margin-top:2px;">${it.Area || ''}</div>`}
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#D9A441; font-weight:600; margin-top:3px;">previsto ${dataStr} — ${diasAtraso} dia${diasAtraso === 1 ? '' : 's'} de atraso</div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = `
+      <div class="alertaFrentesPendentes" id="alertaFrentesPendentes" style="background:rgba(217,164,65,.10); border:1px solid rgba(217,164,65,.35); border-radius:12px; padding:16px 18px; margin-bottom:22px; cursor:pointer;" onclick="toggleAlertaFrentesPendentes()">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:26px; height:26px; border-radius:50%; background:#D9A441; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0F1A16" stroke-width="2.2"><path d="M12 8v5"/><circle cx="12" cy="16.5" r=".7" fill="#0F1A16"/><path d="M10.3 3.8L2.5 18a1.5 1.5 0 001.3 2.2h16.4a1.5 1.5 0 001.3-2.2L13.7 3.8a1.5 1.5 0 00-2.6 0z"/></svg>
+          </div>
+          <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Previstas e ainda não iniciadas</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#D9A441; margin-left:auto;">${atrasados.length}</div>
+          <div id="alertaFrentesPendentes_seta" style="flex-shrink:0; width:22px; height:22px; border-radius:50%; background:rgba(217,164,65,.18); display:flex; align-items:center; justify-content:center; transition:transform .2s;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#D9A441" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div id="alertaFrentesPendentes_corpo" style="display:none; margin-top:12px;" onclick="event.stopPropagation()">
+          ${primeiros.map(linhaItem).join('')}
+          ${resto.length > 0 ? `<div id="alertaFrentesPendentes_resto" style="display:none;">${resto.map(linhaItem).join('')}</div>
+          <a id="alertaFrentesPendentes_link" onclick="event.stopPropagation(); expandirRestoFrentesPendentes();" style="display:block; text-align:center; margin-top:12px; font-size:11.5px; color:#D9A441; font-weight:600; cursor:pointer;">Ver todas as ${atrasados.length} pendentes →</a>` : ''}
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.log('Não consegui carregar Frentes Pendentes:', e);
+  }
+}
+
+function toggleAlertaFrentesPendentes() {
+  const card = document.getElementById('alertaFrentesPendentes');
+  const corpo = document.getElementById('alertaFrentesPendentes_corpo');
+  const seta = document.getElementById('alertaFrentesPendentes_seta');
+  const aberto = corpo.style.display === 'block';
+  corpo.style.display = aberto ? 'none' : 'block';
+  seta.style.transform = aberto ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function expandirRestoFrentesPendentes() {
+  document.getElementById('alertaFrentesPendentes_resto').style.display = 'block';
+  document.getElementById('alertaFrentesPendentes_link').style.display = 'none';
+}
+
+// ✅ abre o item específico dentro do Cronograma (mesma navegação já
+// usada pela busca por nome — expande a árvore até lá e destaca)
+function abrirItemPendenteCronograma(area, numero) {
+  const numeros = calcularNumerosEstrutura();
+  const item = CRONOGRAMA_ARVORE_COMPLETA.find(i => numeros[i[0]] === numero);
+  if (!item) return;
+  abrirItemCronogramaDaBusca(area, item[0]);
+}
+
 async function carregarFrentes() {
 
   const lista = document.getElementById("lista");
@@ -4057,6 +4147,8 @@ async function carregarFrentes() {
 
     <section class="secaoNova">
 
+      <div id="cardFrentesPendentes"></div>
+
       <div class="filtrosTipo" id="filtrosTipo">
         <button class="filtroTipoBtn ativo" data-tipo="Todas" onclick="filtrarFrentesPorTipo('Todas')">
           <div class="iconCircleFiltro">
@@ -4098,6 +4190,8 @@ async function carregarFrentes() {
   `;
 
   atualizarIconeTema();
+
+  carregarFrentesPendentes(); // ✅ card "previstas e ainda não iniciadas" — não trava o resto
 
   const snap = await db.collection("Frentes").get();
   window.todasFrentesAtivas = [];
@@ -5607,24 +5701,32 @@ function mostrarDesempenho() {
     const nomeAlvo = normalizarTexto(et.Etapa || '');
     const etapaComSituacao = (d.Etapas || []).find(e => normalizarTexto(e.Etapa || '') === nomeAlvo);
 
-    // ✅ o campo Situacao pode vir como "18/08" OU "18/08/2026" — a
-    // parseDiaMes só entendia a primeira (2 partes), e caía silenciosamente
-    // pra "sem data de corte" na segunda, que é o formato real. Se ainda
-    // assim não achar nada, cai pra hoje como última reserva.
-    function parseSituacao(str) {
-      if (!str) return null;
-      const partes = String(str).trim().split('/');
-      if (partes.length === 2) return parseDiaMes(str);
-      if (partes.length === 3) {
-        const dia = parseInt(partes[0], 10);
-        const mes = parseInt(partes[1], 10) - 1;
-        let ano = parseInt(partes[2], 10);
-        if (isNaN(ano)) return null;
-        if (ano < 100) ano += 2000;
-        if (isNaN(dia) || isNaN(mes)) return null;
-        return new Date(ano, mes, dia);
+    // ✅ o campo Situacao pode vir de formas bem diferentes: um Timestamp
+    // do Firestore, "18/08", "18/08/2026", ou até "8/20/2026" — esse
+    // último é o formato AMERICANO (mês/dia/ano) que a planilha de
+    // origem usa pra data. Em vez de assumir uma ordem fixa, desambigua
+    // sozinho: se um dos dois primeiros números só pode ser dia (>12),
+    // usa ele como dia e o outro como mês.
+    function parseSituacao(valor) {
+      if (!valor) return null;
+      if (typeof valor.toDate === 'function') {
+        const dt = valor.toDate();
+        dt.setHours(0, 0, 0, 0);
+        return dt;
       }
-      return null;
+      const partes = String(valor).trim().split('/');
+      if (partes.length < 2) return null;
+      const a = parseInt(partes[0], 10);
+      const b = parseInt(partes[1], 10);
+      let ano = partes.length === 3 ? parseInt(partes[2], 10) : new Date().getFullYear();
+      if (isNaN(ano)) return null;
+      if (ano < 100) ano += 2000;
+      if (isNaN(a) || isNaN(b)) return null;
+      let dia, mes;
+      if (a > 12 && b <= 12) { dia = a; mes = b; }
+      else if (b > 12 && a <= 12) { dia = b; mes = a; }
+      else { dia = a; mes = b; } // ambíguo (os dois ≤12) — assume dd/MM
+      return new Date(ano, mes - 1, dia);
     }
 
     let situacaoData = etapaComSituacao ? parseSituacao(etapaComSituacao.Situacao) : null;
