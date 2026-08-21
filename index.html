@@ -5599,10 +5599,41 @@ function mostrarDesempenho() {
     // precisa achar a etapa "irmã" pelo nome pra pegar a data de corte
     // certa. Sem isso, o corte nunca acontecia e continuava contando
     // dias futuros que nem chegaram.
-    const etapaComSituacao = (d.Etapas || []).find(e => e.Etapa === et.Etapa);
-    const situacaoData = parseDiaMes(etapaComSituacao ? etapaComSituacao.Situacao : null);
+    // ⚠️ "et" aqui vem de AvancoPorEtapa, que NÃO tem o campo Situacao
+    // (isso só existe em Etapas, usado na Visão Geral) — por isso
+    // precisa achar a etapa "irmã" pelo nome pra pegar a data de corte
+    // certa. Nome comparado sem espaço/maiúscula pra não falhar por
+    // pequena diferença de formatação entre os dois arrays.
+    const nomeAlvo = normalizarTexto(et.Etapa || '');
+    const etapaComSituacao = (d.Etapas || []).find(e => normalizarTexto(e.Etapa || '') === nomeAlvo);
+
+    // ✅ o campo Situacao pode vir como "18/08" OU "18/08/2026" — a
+    // parseDiaMes só entendia a primeira (2 partes), e caía silenciosamente
+    // pra "sem data de corte" na segunda, que é o formato real. Se ainda
+    // assim não achar nada, cai pra hoje como última reserva.
+    function parseSituacao(str) {
+      if (!str) return null;
+      const partes = String(str).trim().split('/');
+      if (partes.length === 2) return parseDiaMes(str);
+      if (partes.length === 3) {
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10) - 1;
+        let ano = parseInt(partes[2], 10);
+        if (isNaN(ano)) return null;
+        if (ano < 100) ano += 2000;
+        if (isNaN(dia) || isNaN(mes)) return null;
+        return new Date(ano, mes, dia);
+      }
+      return null;
+    }
+
+    let situacaoData = etapaComSituacao ? parseSituacao(etapaComSituacao.Situacao) : null;
+    if (!situacaoData) {
+      const hojeCorte = new Date(); hojeCorte.setHours(0, 0, 0, 0);
+      situacaoData = hojeCorte;
+    }
+
     const diasConsiderados = (et.Dias || []).filter(d => {
-      if (!situacaoData) return true;
       const dData = parseDiaMes(d.Data);
       return !dData || dData <= situacaoData;
     });
