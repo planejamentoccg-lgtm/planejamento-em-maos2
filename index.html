@@ -5593,7 +5593,14 @@ function mostrarDesempenho() {
     // o trabalho pode ter sido feito num dia diferente do planejado.
     // É a CONTAGEM total: quantos dias tinham algo previsto menos
     // quantos dias tiveram algo realizado (não precisa ser o mesmo dia).
-    const situacaoData = parseDiaMes(et.Situacao);
+    //
+    // ⚠️ "et" aqui vem de AvancoPorEtapa, que NÃO tem o campo Situacao
+    // (isso só existe em Etapas, usado na Visão Geral) — por isso
+    // precisa achar a etapa "irmã" pelo nome pra pegar a data de corte
+    // certa. Sem isso, o corte nunca acontecia e continuava contando
+    // dias futuros que nem chegaram.
+    const etapaComSituacao = (d.Etapas || []).find(e => e.Etapa === et.Etapa);
+    const situacaoData = parseDiaMes(etapaComSituacao ? etapaComSituacao.Situacao : null);
     const diasConsiderados = (et.Dias || []).filter(d => {
       if (!situacaoData) return true;
       const dData = parseDiaMes(d.Data);
