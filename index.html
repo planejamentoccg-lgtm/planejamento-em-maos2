@@ -2585,7 +2585,7 @@ function mostrarCronogramaFrente() {
   const itemRaiz = itens.find(item => numeros[item[0]] === numero);
   const nivelRaiz = itemRaiz ? itemRaiz[4] : Math.min(...itens.map(i => i[4]));
 
-  let html = `<div style="padding:0 20px 20px;"><div style="font-size:11px; color:var(--text-soft); margin-bottom:20px; text-align:left;">${itens.length} tarefas no cronograma geral dessa frente.</div>`;
+  let html = `<div style="padding:0 20px 20px;"><div style="font-size:11px; color:var(--text-soft); margin-bottom:20px;">${itens.length} tarefas no cronograma geral dessa frente.</div>`;
 
   // ✅ monta a árvore de verdade (pai → filhos) a partir da lista achatada,
   // usando o número da estrutura de tópicos pra achar quem é filho de quem
@@ -4794,7 +4794,7 @@ function mostrarAbaProgramacao(aba) {
 // ✅ aba "Esta Semana" — planilha diferente da Six Week (sem quantidade,
 // só as datas em que cada tarefa está prevista). Por isso vira um
 // calendário: dia grande + o que está previsto naquele dia.
-async function carregarProgramacaoSemanal() {
+async function carregarProgramacaoSemanal(docPreCarregado) {
   const resumoEl = document.getElementById('resumoHojeProgramacao');
   const calEl = document.getElementById('calendarioEstaSemana');
   if (!resumoEl || !calEl) return;
@@ -4820,7 +4820,11 @@ async function carregarProgramacaoSemanal() {
   }
 
   try {
-    const doc = await db.collection('Config').doc('ProgramacaoSemanal').get();
+    // ✅ reaproveita o documento já buscado em carregarProximasSemanas
+    // (mesmo Config/ProgramacaoSemanal) em vez de buscar de novo — essa
+    // era uma leitura duplicada no Firestore, o que ajudava a deixar a
+    // tela mais lenta pra carregar
+    const doc = docPreCarregado || await db.collection('Config').doc('ProgramacaoSemanal').get();
     if (!doc.exists) {
       calEl.innerHTML = `<p style="font-size:12.5px; color:var(--text-soft);">Ainda não tem dados sincronizados dessa planilha.</p>`;
       return;
@@ -4857,10 +4861,7 @@ async function carregarProgramacaoSemanal() {
       </div>
     ` : `
       <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:8px; flex-wrap:wrap;">
-          <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em;">Previsto para hoje · ${hojeDDMM}</div>
-          <div style="font-size:9.5px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace;">atualizado todo dia</div>
-        </div>
+        <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Previsto para hoje · ${hojeDDMM}</div>
         ${tarefasHoje.map((t, i) => montarLinhaTarefa(t, i > 0)).join('')}
       </div>
     `;
@@ -4896,42 +4897,36 @@ async function carregarProximasSemanas() {
 
   const container = document.getElementById("telaProximasSemanas");
 
-  // ✅ "Última atualização" e o período visível (Início/Fim) da Six Week
-  // — os dois vêm do Firestore (Config/SixWeek), preenchidos pelo Apps
-  // Script que sincroniza a planilha. O período visível é calculado lá
-  // a partir das colunas de semana que estão realmente visíveis na
-  // planilha (os "quadradinhos" do cabeçalho, ignorando ocultas) — não
-  // dá pra calcular isso só a partir das tarefas aqui no app, porque uma
-  // tarefa pode não ter nenhum dia previsto dentro do período mostrado.
+  // ✅ as duas buscas de configuração rodam em PARALELO (antes rodavam
+  // uma esperando a outra terminar, dobrando o tempo até a tela sequer
+  // aparecer) — nenhuma depende do resultado da outra, então não tem
+  // motivo pra esperar em fila.
   let ultimaAtualizacaoSixWeekStr = '-';
   let periodoVisivelInicio = null, periodoVisivelFim = null;
-  try {
-    const docAtualizacaoSixWeek = await db.collection("Config").doc("SixWeek").get();
-    if (docAtualizacaoSixWeek.exists) {
-      const dadosConfig = docAtualizacaoSixWeek.data();
-      if (dadosConfig.UltimaAtualizacao) {
-        const d = dadosConfig.UltimaAtualizacao.toDate();
-        ultimaAtualizacaoSixWeekStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      }
-      if (dadosConfig.PeriodoInicio) periodoVisivelInicio = dadosConfig.PeriodoInicio.toDate();
-      if (dadosConfig.PeriodoFim) periodoVisivelFim = dadosConfig.PeriodoFim.toDate();
+  let ultimaAtualizacaoEstaSemanaStr = '-';
+  let docProgramacaoSemanalPreCarregado = null;
+
+  const [resultadoSixWeek, resultadoEstaSemana] = await Promise.all([
+    db.collection("Config").doc("SixWeek").get().catch(e => { console.log('Não consegui carregar a configuração da Six Week:', e); return null; }),
+    db.collection("Config").doc("ProgramacaoSemanal").get().catch(e => { console.log('Não consegui carregar a configuração da Esta Semana:', e); return null; }),
+  ]);
+
+  if (resultadoSixWeek && resultadoSixWeek.exists) {
+    const dadosConfig = resultadoSixWeek.data();
+    if (dadosConfig.UltimaAtualizacao) {
+      const d = dadosConfig.UltimaAtualizacao.toDate();
+      ultimaAtualizacaoSixWeekStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     }
-  } catch (e) {
-    console.log('Não consegui carregar a configuração da Six Week:', e);
+    if (dadosConfig.PeriodoInicio) periodoVisivelInicio = dadosConfig.PeriodoInicio.toDate();
+    if (dadosConfig.PeriodoFim) periodoVisivelFim = dadosConfig.PeriodoFim.toDate();
   }
 
-  // ✅ "Esta Semana" tem sua própria "Última atualização" — vem de um
-  // documento separado (Config/ProgramacaoSemanal), porque é uma
-  // planilha diferente, atualizada semanalmente (não quinzenalmente)
-  let ultimaAtualizacaoEstaSemanaStr = '-';
-  try {
-    const docAtualizacaoEstaSemana = await db.collection("Config").doc("ProgramacaoSemanal").get();
-    if (docAtualizacaoEstaSemana.exists && docAtualizacaoEstaSemana.data().UltimaAtualizacao) {
-      const d = docAtualizacaoEstaSemana.data().UltimaAtualizacao.toDate();
+  if (resultadoEstaSemana && resultadoEstaSemana.exists) {
+    docProgramacaoSemanalPreCarregado = resultadoEstaSemana; // ✅ reaproveitado abaixo — evita buscar esse mesmo documento de novo
+    if (resultadoEstaSemana.data().UltimaAtualizacao) {
+      const d = resultadoEstaSemana.data().UltimaAtualizacao.toDate();
       ultimaAtualizacaoEstaSemanaStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     }
-  } catch (e) {
-    console.log('Não consegui carregar a configuração da Esta Semana:', e);
   }
 
   container.innerHTML = `
@@ -4997,7 +4992,7 @@ async function carregarProximasSemanas() {
 
   atualizarIconeTema();
 
-  carregarProgramacaoSemanal(); // ✅ aba "Esta Semana" — não precisa esperar (não trava a Six Week)
+  carregarProgramacaoSemanal(docProgramacaoSemanalPreCarregado); // ✅ reaproveita o documento já buscado acima — não busca de novo, não precisa esperar (não trava a Six Week)
 
   const listaContainer = document.getElementById("listaProximasSemanas");
 
@@ -5131,16 +5126,16 @@ function criarBloco(s, titulo) {
   if (s.Realizado) html += '<p>' + s.Realizado + '</p>';
 
   if (s.Grafico && s.Grafico.startsWith("http"))
-    html += '<img src="' + s.Grafico + '">';
+    html += '<img src="' + s.Grafico + '" loading="lazy" decoding="async">';
 
   if (s.Imagem1 && s.Imagem1.startsWith("http"))
-    html += '<img src="' + s.Imagem1 + '">';
+    html += '<img src="' + s.Imagem1 + '" loading="lazy" decoding="async">';
 
   if (s.Imagem2 && s.Imagem2.startsWith("http"))
-    html += '<img src="' + s.Imagem2 + '">';
+    html += '<img src="' + s.Imagem2 + '" loading="lazy" decoding="async">';
 
   if (s.Imagem3 && s.Imagem3.startsWith("http"))
-    html += '<img src="' + s.Imagem3 + '">';
+    html += '<img src="' + s.Imagem3 + '" loading="lazy" decoding="async">';
 
   html += '</div>';
 
@@ -5396,7 +5391,10 @@ let menu = `
     html += `
     <div style="padding:0 20px; margin-top:20px;">
       ${data.Imagem
-        ? `<img src="${data.Imagem}" style="width:100%; display:block; border-radius:8px;">`
+        ? `<div style="position:relative; border-radius:8px; overflow:hidden; background:var(--paper-2); aspect-ratio:16/10;">
+             <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:11px; font-family:'IBM Plex Mono',monospace;">carregando foto…</div>
+             <img src="${data.Imagem}" decoding="async" style="position:relative; width:100%; display:block; opacity:0; transition:opacity .25s;" onload="this.style.opacity=1;">
+           </div>`
         : `<div style="background:var(--paper-2); border-radius:8px; padding:44px 16px; text-align:center; color:var(--text-soft); font-size:12px;">Sem foto cadastrada ainda.</div>`}
     </div>
     ${data.situacaoRecenteFoto ? `<div style="font-size:11px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin:8px 20px 0; text-align:left;">${data.situacaoRecenteFoto}</div>` : ''}
@@ -5885,13 +5883,13 @@ function mostrarDesempenho() {
 
       ${d.Grafico1 ? `
         <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left; color:var(--ink);">Avanço diário</div>
-        <img src="${d.Grafico1}" 
+        <img src="${d.Grafico1}" loading="lazy" decoding="async"
              style="width:100%; border-radius:6px;">
         ${legenda1Html}
       ` : ""}
 
       ${d.Grafico2 ? `
-        <img src="${d.Grafico2}" 
+        <img src="${d.Grafico2}" loading="lazy" decoding="async"
              style="width:100%; border-radius:6px; margin-top:24px;">
         ${legenda2Html}
       ` : ""}
