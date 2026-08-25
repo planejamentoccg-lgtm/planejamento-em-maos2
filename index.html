@@ -2585,7 +2585,7 @@ function mostrarCronogramaFrente() {
   const itemRaiz = itens.find(item => numeros[item[0]] === numero);
   const nivelRaiz = itemRaiz ? itemRaiz[4] : Math.min(...itens.map(i => i[4]));
 
-  let html = `<div style="padding:0 20px 20px;"><div style="font-size:11px; color:var(--text-soft); margin-bottom:20px;">${itens.length} tarefas no cronograma geral dessa frente.</div>`;
+  let html = `<div style="padding:0 20px 20px; text-align:center;"><div style="font-size:11px; color:var(--text-soft); margin-bottom:20px;">${itens.length} tarefas no cronograma geral dessa frente.</div>`;
 
   // ✅ monta a árvore de verdade (pai → filhos) a partir da lista achatada,
   // usando o número da estrutura de tópicos pra achar quem é filho de quem
@@ -2649,16 +2649,16 @@ function mostrarCronogramaFrente() {
 
     return `
       <div style="border-top:1px solid var(--line); padding:${nivelRelativo === 1 ? '16' : '10'}px 0;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;" onclick="toggleSecaoCronograma('${idSecao}')">
-          <div>
+        <div style="position:relative; cursor:pointer;" onclick="toggleSecaoCronograma('${idSecao}')">
+          <div style="padding-right:34px;">
             <div style="font-family:'Archivo',sans-serif; font-weight:${estilo.peso}; font-size:${estilo.tamanho}; color:${estilo.cor};">${no.item[1]}</div>
             <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:${estilo.dataCor}; margin-top:3px;">${no.item[2]} → ${no.item[3]}</div>
           </div>
-          <div id="${idSecao}_seta" style="flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--paper-2); display:flex; align-items:center; justify-content:center; transition:transform .2s; transform:rotate(${abertoPorPadrao ? '0' : '-90'}deg);">
+          <div id="${idSecao}_seta" style="position:absolute; right:0; top:50%; margin-top:-13px; flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--paper-2); display:flex; align-items:center; justify-content:center; transition:transform .2s; transform:rotate(${abertoPorPadrao ? '0' : '-90'}deg);">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--accent-bright, var(--accent))" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </div>
         </div>
-        <div id="${idSecao}" style="display:${abertoPorPadrao ? 'block' : 'none'}; margin-top:${abertoPorPadrao ? '14' : '0'}px; padding-left:${nivelRelativo >= 2 ? '14' : '0'}px;">
+        <div id="${idSecao}" style="display:${abertoPorPadrao ? 'block' : 'none'}; margin-top:${abertoPorPadrao ? '14' : '0'}px;">
           ${no.filhos.map(f => renderNo(f, idSecao)).join('')}
         </div>
       </div>
@@ -5391,10 +5391,7 @@ let menu = `
     html += `
     <div style="padding:0 20px; margin-top:20px;">
       ${data.Imagem
-        ? `<div style="position:relative; border-radius:8px; overflow:hidden; background:var(--paper-2); aspect-ratio:16/10;">
-             <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:11px; font-family:'IBM Plex Mono',monospace;">carregando foto…</div>
-             <img src="${data.Imagem}" decoding="async" style="position:relative; width:100%; display:block; opacity:0; transition:opacity .25s;" onload="this.style.opacity=1;">
-           </div>`
+        ? `<img src="${data.Imagem}" decoding="async" style="width:100%; display:block; border-radius:8px; background:var(--paper-2); min-height:80px;">`
         : `<div style="background:var(--paper-2); border-radius:8px; padding:44px 16px; text-align:center; color:var(--text-soft); font-size:12px;">Sem foto cadastrada ainda.</div>`}
     </div>
     ${data.situacaoRecenteFoto ? `<div style="font-size:11px; color:var(--text-soft); font-family:'IBM Plex Mono',monospace; margin:8px 20px 0; text-align:left;">${data.situacaoRecenteFoto}</div>` : ''}
