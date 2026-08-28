@@ -2550,7 +2550,7 @@ function toggleSecaoCronograma(id) {
 
 function mostrarCronogramaFrente() {
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
-  document.querySelectorAll(".menuBtn")[2].classList.add("ativo");
+  document.querySelector('.menuBtn[onclick*="mostrarCronogramaFrente"]').classList.add("ativo");
 
   document.getElementById("visaoGeral").style.display = "none";
   document.getElementById("desempenho").style.display = "none";
@@ -4209,6 +4209,23 @@ async function carregarFrentes() {
 
 // ✅ desenha a lista de cards + as métricas do painel considerando só as
 // frentes do Tipo selecionado ("Todas" = todas, sem filtro)
+// ✅ "concluída" pro campo PodeConcluir (calculado no Apps Script) exige
+// % realizada = 100%, o que frentes por prazo (Unidade "-" em todas as
+// etapas) nunca têm — o percentual delas é sempre 0, então PodeConcluir
+// nunca vira true pra elas e ficavam presas na lista de ativas pra
+// sempre. Aqui, pra esse tipo de frente, considera concluída quando
+// TODAS as etapas já têm Final Real preenchido (mesma regra 3 usada
+// pelas quantificáveis, só que sem depender do %, que não existe).
+function frenteEstaConcluida(data) {
+  if (data.PodeConcluir === true) return true;
+
+  const etapas = data.Etapas || [];
+  const todasNaoQuantificaveis = etapas.length > 0 && etapas.every(et => et.Unidade === '-');
+  if (!todasNaoQuantificaveis) return false;
+
+  return etapas.every(et => !!parseDataCompleta(et.FinalReal));
+}
+
 function renderizarFrentesFiltradas() {
 
   const botoes = document.getElementById("botoes");
@@ -4236,8 +4253,9 @@ function renderizarFrentesFiltradas() {
     // ✅ frente só sai daqui quando bate as 3 regras (nenhuma etapa em
     // andamento/a iniciar, % realizada soma 100%, todas as etapas com
     // Final Real preenchido) — calculado no Apps Script e gravado como
-    // PodeConcluir, pra não mover a frente sem querer
-    if (data.PodeConcluir === true) return;
+    // PodeConcluir, pra não mover a frente sem querer. Frentes por
+    // prazo usam uma regra equivalente sem o %, que elas não têm.
+    if (frenteEstaConcluida(data)) return;
 
     // ✅ se TODAS as etapas ainda estão "A iniciar" (nenhuma em andamento,
     // concluída ou paralisada ainda), a frente não aparece nem na lista
@@ -4513,8 +4531,9 @@ async function carregarFrentesConcluidas() {
 
     // ✅ só é "concluída" se as 3 regras baterem — nenhuma etapa em
     // andamento/a iniciar, % realizada soma 100%, e todas as etapas com
-    // Final Real preenchido (calculado no Apps Script, campo PodeConcluir)
-    if (data.PodeConcluir !== true) return;
+    // Final Real preenchido (calculado no Apps Script, campo PodeConcluir).
+    // Frentes por prazo usam uma regra equivalente sem o %, que elas não têm.
+    if (!frenteEstaConcluida(data)) return;
 
     window.todasFrentesConcluidas.push(data);
   });
@@ -5487,7 +5506,7 @@ let menu = `
           ${tag ? `<span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo}; flex-shrink:0;">${tag}</span>` : ''}
         </div>
         <div style="font-size:13.5px; font-weight:600; color:${corPrazo}; margin-top:8px;">${textoPrazo}</div>
-        <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Previsto: ${etapa.FinalPrevisto || '-'} · Real: ${etapa.FinalReal || '-'}</div>
+        <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Previsão de Término: ${etapa.FinalPrevisto || '-'} · Término Real: ${etapa.FinalReal || '-'}</div>
         ${etapa.InformacoesAdicionais ? `<div style="font-size:12px; color:var(--text-soft); margin-top:8px; line-height:1.5;">${etapa.InformacoesAdicionais}</div>` : ''}
       </div>
       `;
@@ -5572,7 +5591,7 @@ function voltarHome() {
 function mostrarVisao() {
 
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
-  document.querySelectorAll(".menuBtn")[0].classList.add("ativo");
+  document.querySelector('.menuBtn[onclick*="mostrarVisao"]').classList.add("ativo");
 
   document.getElementById("visaoGeral").style.display = "block";
   document.getElementById("desempenho").style.display = "none";
@@ -5620,7 +5639,7 @@ function toggleLinhaTempoEtapa(id) {
 function mostrarDesempenho() {
 
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
-  document.querySelectorAll(".menuBtn")[1].classList.add("ativo");
+  document.querySelector('.menuBtn[onclick*="mostrarDesempenho"]').classList.add("ativo");
 
   const d = window.frenteAtual;
 
