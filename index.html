@@ -5198,12 +5198,53 @@ function formatarTitulo(texto) {
 // ✅ converte "dd/MM" (formato salvo pelo script) em Date, usando o ano atual
 function parseDiaMes(str) {
   if (!str) return null;
-  const partes = str.split('/');
+  const partes = String(str).trim().split('/');
+
+  // ✅ "dd/MM/aaaa" — data completa, com ano de verdade. Antes essa
+  // função só aceitava "dd/MM" (2 partes) e descartava o ano quando ele
+  // vinha junto, retornando null — o que fazia comparações de data
+  // silenciosamente falharem ou (em outros lugares que faziam sua
+  // própria leitura) errarem o ano.
+  if (partes.length === 3) {
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10) - 1;
+    let ano = parseInt(partes[2], 10);
+    if (isNaN(dia) || isNaN(mes) || isNaN(ano)) return null;
+    if (ano < 100) ano += 2000;
+    return new Date(ano, mes, dia);
+  }
+
   if (partes.length !== 2) return null;
   const dia = parseInt(partes[0]);
   const mes = parseInt(partes[1]) - 1;
   if (isNaN(dia) || isNaN(mes)) return null;
   return new Date(new Date().getFullYear(), mes, dia);
+}
+
+// ✅ "dd/MM" sem ano — em vez de sempre assumir o ano atual (que quebra
+// pra qualquer data que caia em outro ano, tipo um término previsto pra
+// 2027 sendo lido como se fosse 2026 e "já ter passado" por engano),
+// escolhe entre os 3 anos próximos (âncora-1, âncora, âncora+1) o que
+// resulta na data mais PERTO da âncora. Pra comparar duas datas dd/MM
+// que podem estar em anos diferentes, use uma como âncora da outra.
+function parseDiaMesComAncora(str, ancora) {
+  if (!str || !ancora) return null;
+  const partes = String(str).trim().split('/');
+  if (partes.length !== 2) return null;
+  const dia = parseInt(partes[0], 10);
+  const mes = parseInt(partes[1], 10) - 1;
+  if (isNaN(dia) || isNaN(mes)) return null;
+
+  let melhorData = null, menorDiferenca = Infinity;
+  [ancora.getFullYear() - 1, ancora.getFullYear(), ancora.getFullYear() + 1].forEach(ano => {
+    const candidata = new Date(ano, mes, dia);
+    const diferenca = Math.abs(candidata - ancora);
+    if (diferenca < menorDiferenca) {
+      menorDiferenca = diferenca;
+      melhorData = candidata;
+    }
+  });
+  return melhorData;
 }
 
 function formatarData(dataStr) {
@@ -5534,9 +5575,10 @@ let menu = `
       </div>
       <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em; color:var(--ink);">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
-        <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos</span>
+        <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos até a data</span>
         <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-left:auto; text-align:right;"><span style="color:var(--text-soft); font-weight:400;">desvio </span><span style="color:${corDelta}; font-weight:600;">${etapa.Desvio || '-'}</span></span>
       </div>
+      <div style="font-size:11px; color:var(--text-soft); margin-top:3px;">Total da etapa: <b style="color:var(--ink);">${etapa.Total || '-'}</b></div>
       <div style="position:relative; height:3px; background:var(--line); border-radius:2px; margin-top:12px;">
         <div style="position:absolute; left:0; top:0; height:100%; border-radius:2px; width:${Math.min(Math.max(progressoPct,0),100)}%; background:${atrasada ? '#e0645a' : 'var(--accent)'};"></div>
         <div style="position:absolute; top:-3px; width:2px; height:9px; background:var(--text-soft); border-radius:1px; left:${Math.min(Math.max(previstoPct,0),100)}%;"></div>
@@ -5672,8 +5714,12 @@ function mostrarDesempenho() {
     // adiantamento/atraso (ou "no prazo")
     let topico1;
     if (concluida) {
-      const tp = parseDiaMes(et.TerminoPrevisto);
-      const tr = parseDiaMes(et.TerminoRealizado);
+      // ✅ âncora = início real da etapa (data confiável, sempre recente/
+      // atual) — a partir dela, acha o ano certo do término previsto e
+      // do término real, mesmo que um deles caia no ano seguinte
+      const ancoraInicio = parseDiaMes(et.InicioRealizado);
+      const tp = parseDiaMesComAncora(et.TerminoPrevisto, ancoraInicio) || parseDiaMes(et.TerminoPrevisto);
+      const tr = parseDiaMesComAncora(et.TerminoRealizado, ancoraInicio) || parseDiaMes(et.TerminoRealizado);
       let diffTexto = 'no prazo';
       let cor = 'var(--ink)';
       if (tp && tr) {
@@ -5683,13 +5729,26 @@ function mostrarDesempenho() {
       }
       topico1 = `Concluído entre ${et.InicioRealizado} e ${et.TerminoRealizado} — <b style="color:${cor};">${diffTexto}</b>`;
     } else {
-      const tp = parseDiaMes(et.TerminoPrevisto);
-      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-      if (tp && hoje > tp) {
-        const diff = Math.round((hoje - tp) / 86400000);
-        topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:#e0645a;">${diff} dia${diff === 1 ? '' : 's'} de atraso</b>`;
+      // ✅ mesma lógica de quantidade que a Visão Geral já usa
+      // (Realizado vs Previsto), em vez de comparar a data de término
+      // prevista com hoje — pra uma etapa que começou bem adiantada, a
+      // data de término prevista ainda reflete o cronograma antigo, e
+      // essa comparação de data sozinha não capta que ela está andando
+      // rápido (podia até acusar atraso onde não tem).
+      const etapaOriginalStatus = (d.Etapas || []).find(e => normalizarTexto(e.Etapa || '') === normalizarTexto(et.Etapa || ''));
+      if (etapaOriginalStatus) {
+        const prevNum = etapaOriginalStatus.PrevistoNum ?? 0;
+        const realNum = etapaOriginalStatus.RealizadoNum ?? 0;
+        const diffQtd = Math.round((realNum - prevNum) * 100) / 100;
+        if (diffQtd < 0) {
+          topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:#e0645a;">atrasada</b>`;
+        } else if (diffQtd > 0) {
+          topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:var(--accent-bright, var(--accent));">adiantada</b>`;
+        } else {
+          topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:var(--ink);">no prazo</b>`;
+        }
       } else {
-        topico1 = `Em andamento desde ${et.InicioRealizado} — <b style="color:var(--ink);">no prazo</b>`;
+        topico1 = `Em andamento desde ${et.InicioRealizado}`;
       }
     }
 
