@@ -5578,7 +5578,7 @@ let menu = `
         <span style="font-size:12.5px; color:var(--text-soft);">de <b style="color:var(--ink);">${etapa.Previsto || '-'}</b> previstos até a data</span>
         <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-left:auto; text-align:right;"><span style="color:var(--text-soft); font-weight:400;">desvio </span><span style="color:${corDelta}; font-weight:600;">${etapa.Desvio || '-'}</span></span>
       </div>
-      <div style="font-size:11px; color:var(--text-soft); margin-top:3px;">Total da etapa: <b style="color:var(--ink);">${etapa.Total || '-'}</b></div>
+      <div style="font-size:11px; color:var(--text-soft); margin-top:8px;">Total da etapa: <b style="color:var(--ink);">${etapa.Total || '-'}</b></div>
       <div style="position:relative; height:3px; background:var(--line); border-radius:2px; margin-top:12px;">
         <div style="position:absolute; left:0; top:0; height:100%; border-radius:2px; width:${Math.min(Math.max(progressoPct,0),100)}%; background:${atrasada ? '#e0645a' : 'var(--accent)'};"></div>
         <div style="position:absolute; top:-3px; width:2px; height:9px; background:var(--text-soft); border-radius:1px; left:${Math.min(Math.max(previstoPct,0),100)}%;"></div>
@@ -5808,8 +5808,16 @@ function mostrarDesempenho() {
       situacaoData = hojeCorte;
     }
 
+    // ⚠️ Dias[].Data vem só como "dd/MM" (sem ano) — pra saber se um dia
+    // específico já passou da "Situação em" ou não, não dá pra usar o
+    // ano atual sempre (mesmo bug de antes): um dia "05/01" que na
+    // verdade é janeiro de 2027 (porque a etapa só ia começar lá)
+    // ficava lido como janeiro DESSE ano, parecendo já ter passado, e
+    // contava como "previsto que não rolou" — mesmo sem nada ter sido
+    // previsto ainda de verdade. Usa a Situação em como âncora pra
+    // achar o ano certo de cada dia.
     const diasConsiderados = (et.Dias || []).filter(d => {
-      const dData = parseDiaMes(d.Data);
+      const dData = parseDiaMesComAncora(d.Data, situacaoData);
       return !dData || dData <= situacaoData;
     });
     const qtdDiasPrevistos = diasConsiderados.filter(d => d.DiarioPrevisto !== null && d.DiarioPrevisto !== undefined && d.DiarioPrevisto > 0).length;
