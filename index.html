@@ -5002,6 +5002,8 @@ async function carregarProximasSemanas() {
         </div>
         <hr class="regra">
 
+        <div id="resumoHojeSixWeek" style="margin-top:18px;"></div>
+
         <div id="rotuloPeriodoSemanas" style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; margin-top:18px;"></div>
         <div id="listaProximasSemanas" style="margin-top:6px;"></div>
       </div>
@@ -5055,6 +5057,11 @@ async function carregarProximasSemanas() {
 
   // ✅ guarda pra reaproveitar no gráfico de Gantt sem precisar buscar de novo
   window.todasFrentesSemanas = frentesSemanas.map(item => item.dados);
+
+  // ✅ mesmo quadro "Previsto para hoje" da aba Esta Semana, só que
+  // preenchido com os dados da própria Six Week (usa o Diario de cada
+  // tarefa, que já traz a quantidade prevista por dia)
+  renderizarResumoHojeSixWeek(frentesSemanas);
 
   // ✅ intervalo mostrado ao lado de "Próximas 6 semanas" — prioriza o
   // período visível de verdade (calculado na planilha, a partir dos
@@ -6223,6 +6230,52 @@ function formatarValorComUnidade(valorBruto, unidade) {
 
 function formatarQuantidadePrevista(t) {
   return formatarValorComUnidade(t.TotalPrevisto, t.Unidade);
+}
+
+// ✅ quadro "Previsto para hoje" da aba Six Week — mesmo formato do
+// quadro já usado na Esta Semana (resumoHojeProgramacao), mas com os
+// dados da própria Six Week: olha o Diario de cada tarefa de cada
+// frente e pega quem tem um dia previsto igual a hoje
+function renderizarResumoHojeSixWeek(frentesSemanas) {
+  const resumoEl = document.getElementById('resumoHojeSixWeek');
+  if (!resumoEl) return;
+
+  const hojeObj = new Date();
+  const hojeDDMM = `${String(hojeObj.getDate()).padStart(2, '0')}/${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+
+  const itensHoje = [];
+  (frentesSemanas || []).forEach(item => {
+    const frente = formatarTitulo(item.dados.Nome);
+    (item.tarefas || []).forEach(t => {
+      const diaEncontrado = (t.Diario || []).find(d => d.Data === hojeDDMM);
+      if (diaEncontrado) {
+        itensHoje.push({
+          frente,
+          nome: t.Nome + (t.Subgrupo ? ` (${t.Subgrupo})` : ''),
+          valor: formatarValorComUnidade(diaEncontrado.Valor, t.Unidade),
+        });
+      }
+    });
+  });
+
+  const montarLinhaHojeSixWeek = (i, comBorda) => `
+    <div style="padding:10px 0; ${comBorda ? 'border-top:1px solid var(--line);' : ''}">
+      <div style="font-size:10.5px; font-weight:600; color:var(--accent-bright, var(--accent)); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px;">${i.frente}</div>
+      <div style="font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--ink); line-height:1.45;">${i.nome}<span style="color:var(--text-soft); font-size:11.5px;"> — previsto ${i.valor}</span></div>
+    </div>
+  `;
+
+  resumoEl.innerHTML = itensHoje.length === 0 ? `
+    <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
+      <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">Previsto para hoje · ${hojeDDMM}</div>
+      <div style="font-size:12.5px; color:var(--text-soft);">Nada previsto para hoje na Six Week.</div>
+    </div>
+  ` : `
+    <div style="background:var(--paper-2); border-radius:10px; padding:16px 18px;">
+      <div style="font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Previsto para hoje · ${hojeDDMM}</div>
+      ${itensHoje.map((i, idx) => montarLinhaHojeSixWeek(i, idx > 0)).join('')}
+    </div>
+  `;
 }
 
 function normalizarTexto(t) {
