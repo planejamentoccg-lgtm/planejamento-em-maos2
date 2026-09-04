@@ -4103,24 +4103,50 @@ function abrirItemPendenteCronograma(area, numero) {
 // ✅ proteção contra duplicata — se por algum motivo a sincronização do
 // Apps Script criar mais de um documento pra mesma frente (nome
 // repetido) no Firestore, isso evita mostrar ela duas vezes na tela.
-// Mantém a versão mais recente (por ultimaAtualizacao) de cada nome.
+//
+// ⚠️ IMPORTANTE: não escolhe "a mais recente e descarta o resto" — isso
+// já causou perda de dado antes, porque "ultimaAtualizacao" só é tocado
+// quando o PROGRESSO muda (Percentual/Etapas), e não quando a foto ou o
+// gráfico de Desempenho são atualizados (isso acontece em outro
+// processo, separado). Ou seja, a cópia "mais recente" por esse critério
+// podia perfeitamente ser a que NÃO tem foto nem AvancoPorEtapa. Em vez
+// disso, MESCLA os campos de todas as cópias — pra cada campo, usa
+// qualquer versão que tiver ele preenchido, preferindo o valor mais
+// recente só quando head-a-head duas cópias tiverem o MESMO campo
+// preenchido com valores diferentes.
 function deduplicarFrentesPorNome(lista) {
   const porNome = {};
   lista.forEach(data => {
     const nome = data.Nome;
     if (!nome) return;
-    const existente = porNome[nome];
-    if (!existente) {
+    if (!porNome[nome]) {
       porNome[nome] = data;
       return;
     }
-    const dataExistente = existente.ultimaAtualizacao && existente.ultimaAtualizacao.toDate ? existente.ultimaAtualizacao.toDate() : null;
-    const dataNova = data.ultimaAtualizacao && data.ultimaAtualizacao.toDate ? data.ultimaAtualizacao.toDate() : null;
-    if (dataNova && (!dataExistente || dataNova > dataExistente)) {
-      porNome[nome] = data;
-    }
+    porNome[nome] = mesclarDocumentosFrente(porNome[nome], data);
   });
   return Object.values(porNome);
+}
+
+function mesclarDocumentosFrente(a, b) {
+  const dataA = a.ultimaAtualizacao && a.ultimaAtualizacao.toDate ? a.ultimaAtualizacao.toDate() : null;
+  const dataB = b.ultimaAtualizacao && b.ultimaAtualizacao.toDate ? b.ultimaAtualizacao.toDate() : null;
+  const bEhMaisRecente = dataB && (!dataA || dataB > dataA);
+
+  // ✅ começa com a "base" (a mais recente, por convenção) e completa
+  // com qualquer campo que só a outra cópia tenha preenchido
+  const base = bEhMaisRecente ? b : a;
+  const outra = bEhMaisRecente ? a : b;
+
+  const vazio = (v) => v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+
+  const resultado = Object.assign({}, base);
+  Object.keys(outra).forEach(campo => {
+    if (vazio(resultado[campo]) && !vazio(outra[campo])) {
+      resultado[campo] = outra[campo];
+    }
+  });
+  return resultado;
 }
 
 async function carregarFrentes() {
