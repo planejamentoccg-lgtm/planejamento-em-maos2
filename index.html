@@ -4100,6 +4100,29 @@ function abrirItemPendenteCronograma(area, numero) {
   abrirItemCronogramaDaBusca(area, item[0]);
 }
 
+// ✅ proteção contra duplicata — se por algum motivo a sincronização do
+// Apps Script criar mais de um documento pra mesma frente (nome
+// repetido) no Firestore, isso evita mostrar ela duas vezes na tela.
+// Mantém a versão mais recente (por ultimaAtualizacao) de cada nome.
+function deduplicarFrentesPorNome(lista) {
+  const porNome = {};
+  lista.forEach(data => {
+    const nome = data.Nome;
+    if (!nome) return;
+    const existente = porNome[nome];
+    if (!existente) {
+      porNome[nome] = data;
+      return;
+    }
+    const dataExistente = existente.ultimaAtualizacao && existente.ultimaAtualizacao.toDate ? existente.ultimaAtualizacao.toDate() : null;
+    const dataNova = data.ultimaAtualizacao && data.ultimaAtualizacao.toDate ? data.ultimaAtualizacao.toDate() : null;
+    if (dataNova && (!dataExistente || dataNova > dataExistente)) {
+      porNome[nome] = data;
+    }
+  });
+  return Object.values(porNome);
+}
+
 async function carregarFrentes() {
 
   const lista = document.getElementById("lista");
@@ -4194,8 +4217,9 @@ async function carregarFrentes() {
   carregarFrentesPendentes(); // ✅ card "previstas e ainda não iniciadas" — não trava o resto
 
   const snap = await db.collection("Frentes").get();
-  window.todasFrentesAtivas = [];
-  snap.forEach(doc => window.todasFrentesAtivas.push(doc.data()));
+  const todasFrentesBrutas = [];
+  snap.forEach(doc => todasFrentesBrutas.push(doc.data()));
+  window.todasFrentesAtivas = deduplicarFrentesPorNome(todasFrentesBrutas);
 
   // ✅ o filtro de Tipo (Todas/Escavação/Civil) é uma única variável
   // global compartilhada com a tela de Frentes concluídas — assim ele
@@ -4524,18 +4548,15 @@ async function carregarFrentesConcluidas() {
   atualizarIconeTema();
 
   const snap = await db.collection("Frentes").get();
-  window.todasFrentesConcluidas = [];
+  const todasBrutas = [];
+  snap.forEach(doc => todasBrutas.push(doc.data()));
 
-  snap.forEach(doc => {
-    const data = doc.data();
-
+  window.todasFrentesConcluidas = deduplicarFrentesPorNome(todasBrutas).filter(data => {
     // ✅ só é "concluída" se as 3 regras baterem — nenhuma etapa em
     // andamento/a iniciar, % realizada soma 100%, e todas as etapas com
     // Final Real preenchido (calculado no Apps Script, campo PodeConcluir).
     // Frentes por prazo usam uma regra equivalente sem o %, que elas não têm.
-    if (!frenteEstaConcluida(data)) return;
-
-    window.todasFrentesConcluidas.push(data);
+    return frenteEstaConcluida(data);
   });
 
   // ✅ mesma variável global do filtro da tela de Frentes — mantém o
@@ -8370,4 +8391,3 @@ async function carregarContadorNotif() {
 
 </body>
 </html>
-  
