@@ -4180,15 +4180,15 @@ async function carregarFrentes() {
 
       <div class="kpiGrid">
         <div class="kpiCard" style="grid-column: span 2;">
-          <div class="val" id="qtFrentes">0</div>
+          <div class="val" id="qtFrentes" style="opacity:.4;">–</div>
           <div class="lbl">Frentes ativas</div>
         </div>
         <div class="kpiCard">
-          <div class="val pos" id="noPrazo">0</div>
+          <div class="val pos" id="noPrazo" style="opacity:.4;">–</div>
           <div class="lbl">No prazo</div>
         </div>
         <div class="kpiCard">
-          <div class="val" id="atrasadas">0</div>
+          <div class="val" id="atrasadas" style="opacity:.4;">–</div>
           <div class="lbl">Atrasadas</div>
         </div>
       </div>
@@ -4253,8 +4253,15 @@ async function carregarFrentes() {
   window.filtroTipoGlobal = window.filtroTipoGlobal || 'Todas';
   renderizarFrentesFiltradas();
 
-  await verificarAtualizacoes();
-  await carregarContadorNotif();
+  // ✅ reaproveita os documentos já buscados acima (snap.docs) em vez de
+  // consultar "Frentes" de novo dentro de verificarAtualizacoes — e roda
+  // as duas checagens (notificações novas + contador do sino) em
+  // paralelo, não uma esperando a outra. Isso tira uma consulta inteira
+  // repetida e corta o tempo até o app "assentar" depois de abrir.
+  await Promise.all([
+    verificarAtualizacoes(snap.docs),
+    carregarContadorNotif(),
+  ]);
 }
 
 // ✅ desenha a lista de cards + as métricas do painel considerando só as
@@ -4490,9 +4497,15 @@ function renderizarFrentesFiltradas() {
   }
 
   // ✅ METRICAS
-  document.getElementById("qtFrentes").innerText = qtdFrentesAtivas;
-  document.getElementById("noPrazo").innerText = noPrazo;
-  document.getElementById("atrasadas").innerText = atrasadas;
+  const elQtFrentes = document.getElementById("qtFrentes");
+  const elNoPrazo = document.getElementById("noPrazo");
+  const elAtrasadas = document.getElementById("atrasadas");
+  elQtFrentes.innerText = qtdFrentesAtivas;
+  elNoPrazo.innerText = noPrazo;
+  elAtrasadas.innerText = atrasadas;
+  elQtFrentes.style.opacity = '';
+  elNoPrazo.style.opacity = '';
+  elAtrasadas.style.opacity = '';
 }
 
 // ✅ chamado pelos 3 botões (Geral/Escavação/Civil) — troca o filtro e
@@ -5368,31 +5381,35 @@ async function carregarNotificacoes() {
 
   const user = auth.currentUser.email;
 
-  // ✅ 1. BUSCA TUDO (sem orderBy)
-  const snap = await db.collection("Notificacoes").get();
+  const limiteData = new Date();
+  limiteData.setDate(limiteData.getDate() - 3); // 3 dias para tudo
 
-// ✅ 2. LIMPA AS ANTIGAS
-
-const limiteData = new Date();
-limiteData.setDate(limiteData.getDate() - 3); // 3 dias para tudo
-
-for (const doc of snap.docs) {
-
-  const d = doc.data();
-  const dataNotif = d.data?.toDate?.();
-
-  if (!dataNotif || dataNotif < limiteData) {
-    await db.collection("Notificacoes").doc(doc.id).delete();
-  }
-
-}
-
-  // ✅ 3. BUSCA DE NOVO (AGORA LIMPO e ORDENADO)
+  // ✅ busca só as recentes DIRETO no servidor (em vez de trazer TUDO —
+  // incluindo milhares de notificações antigas — só pra descartar a
+  // maioria no cliente, o que travava o app)
   const snapLimpo = await db.collection("Notificacoes")
+    .where("data", ">=", limiteData)
     .orderBy("data", "desc")
+    .limit(100)
     .get();
 
-  // ✅ 4. MONTA A TELA
+  // ✅ apaga as antigas EM LOTE (até 500 por vez), não uma de cada vez
+  // esperando a anterior terminar — com milhares de notificações
+  // acumuladas, apagar uma por uma podia levar minutos e travar a tela
+  const snapAntigas = await db.collection("Notificacoes")
+    .where("data", "<", limiteData)
+    .get();
+
+  if (!snapAntigas.empty) {
+    const docsAntigos = snapAntigas.docs;
+    for (let i = 0; i < docsAntigos.length; i += 500) {
+      const lote = db.batch();
+      docsAntigos.slice(i, i + 500).forEach(doc => lote.delete(doc.ref));
+      await lote.commit();
+    }
+  }
+
+  // ✅ MONTA A TELA
   for (const doc of snapLimpo.docs) {
 
     const d = doc.data();
@@ -8353,11 +8370,14 @@ async function abrirNotificacao(idNotif, nomeFrente) {
     abrir(data);
   }
 }
-async function verificarAtualizacoes() {
+// ✅ recebe os documentos já buscados em carregarFrentes (snap.docs) em
+// vez de consultar "Frentes" de novo — evita uma busca inteira repetida
+// toda vez que o app abre
+async function verificarAtualizacoes(docsFrentes) {
 
-  const snap = await db.collection("Frentes").get();
+  const hoje = new Date();
 
-  for (const doc of snap.docs) {
+  for (const doc of docsFrentes) {
 
     const data = doc.data();
 
@@ -8369,7 +8389,16 @@ async function verificarAtualizacoes() {
       ? data.ultimaNotificada.toDate()
       : new Date(0);
 
-    if (atualizacao > ultimaNotif) {
+    // ✅ no máximo 1 notificação por frente por DIA — antes, qualquer
+    // mudança (mesmo pequena) disparava uma notificação nova a cada
+    // sincronização de 10 em 10 minutos, enchendo o app de milhares de
+    // avisos repetidos. Agora, mesmo que a frente mude várias vezes no
+    // mesmo dia, só avisa uma vez.
+    const jaNotificouHoje = ultimaNotif.getFullYear() === hoje.getFullYear()
+      && ultimaNotif.getMonth() === hoje.getMonth()
+      && ultimaNotif.getDate() === hoje.getDate();
+
+    if (atualizacao > ultimaNotif && !jaNotificouHoje) {
 
       await db.collection("Notificacoes").add({
         mensagem: `A frente de serviço ${data.Nome} foi atualizada`,
