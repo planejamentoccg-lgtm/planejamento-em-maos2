@@ -5347,6 +5347,11 @@ function esconderTelasPrincipais() {
 }
 
  function abrirNotificacoes() {
+  // 🛑 DESLIGADO TEMPORARIAMENTE — junto com o resto do sistema de
+  // notificações. Pra reativar, apaga esse "return" (e os das outras
+  // duas funções, verificarAtualizacoes e carregarContadorNotif).
+  return;
+
   esconderTelasPrincipais();
   document.getElementById("detalhe").style.display = "none";
   document.getElementById("semanas").style.display = "none";
@@ -5748,7 +5753,7 @@ function toggleLinhaTempoEtapa(id) {
   }
 }
 
-function mostrarDesempenho() {
+async function mostrarDesempenho() {
 
   document.querySelectorAll(".menuBtn").forEach(el => el.classList.remove("ativo"));
   document.querySelector('.menuBtn[onclick*="mostrarDesempenho"]').classList.add("ativo");
@@ -5759,7 +5764,33 @@ function mostrarDesempenho() {
   document.getElementById("desempenho").style.display = "block";
   document.getElementById("cronogramaFrente").style.display = "none";
 
-  const etapas = d.AvancoPorEtapa || [];
+  // ✅ AvancoPorEtapa (o histórico dia a dia) agora vive numa coleção
+  // separada (FrentesDesempenho), buscada só quando essa aba é aberta
+  // de verdade — não vem mais junto com a lista de Frentes, que ficava
+  // cada vez mais lenta de carregar conforme esse histórico crescia.
+  // Guarda em cache no próprio "d" pra não buscar de novo se o usuário
+  // alternar entre as abas várias vezes na mesma visita.
+  if (!d.__avancoPorEtapaCache) {
+    document.getElementById("desempenho").innerHTML = `<div style="padding:60px 20px; text-align:center; color:var(--text-soft); font-size:12.5px;">Carregando desempenho…</div>`;
+
+    let etapasCarregadas = [];
+    try {
+      const snapDesempenho = await db.collection("FrentesDesempenho").where("Nome", "==", d.Nome).limit(1).get();
+      if (!snapDesempenho.empty) {
+        etapasCarregadas = snapDesempenho.docs[0].data().AvancoPorEtapa || [];
+      } else if (d.AvancoPorEtapa) {
+        // ✅ reserva pro período de transição — se essa frente ainda não
+        // foi sincronizada na coleção nova, usa o campo antigo (embutido
+        // no documento principal), se ele ainda estiver lá
+        etapasCarregadas = d.AvancoPorEtapa;
+      }
+    } catch (e) {
+      console.log("Não consegui carregar o Desempenho:", e);
+    }
+    d.__avancoPorEtapaCache = etapasCarregadas;
+  }
+
+  const etapas = d.__avancoPorEtapaCache || [];
 
   // ✅ resumo em texto corrido — uma frase por etapa, sem caixinha nem
   // grade de indicadores repetidos
@@ -8375,6 +8406,12 @@ async function abrirNotificacao(idNotif, nomeFrente) {
 // toda vez que o app abre
 async function verificarAtualizacoes(docsFrentes) {
 
+  // 🛑 DESLIGADO TEMPORARIAMENTE — o sistema de notificações estava
+  // gerando bugs e contribuindo pro consumo excessivo de leituras/
+  // escritas no Firestore (o que levou a cota do projeto a estourar).
+  // Pra reativar, é só apagar essa linha de "return" logo abaixo.
+  return;
+
   const hoje = new Date();
 
   for (const doc of docsFrentes) {
@@ -8417,6 +8454,16 @@ async function verificarAtualizacoes(docsFrentes) {
 } // ✅ FECHA A FUNÇÃO (isso estava faltando)
 
 async function carregarContadorNotif() {
+
+  // 🛑 DESLIGADO TEMPORARIAMENTE — junto com verificarAtualizacoes, pra
+  // reduzir leituras no Firestore e cortar essa fonte de bug. Esconde o
+  // número em vez de mostrar "0" (que pareceria "sem notificação nova",
+  // quando na real é "isso está desligado"). Pra reativar, apaga esse
+  // bloco e volta a versão de baixo.
+  document.querySelectorAll("#contadorNotif").forEach(el => {
+    el.style.display = "none";
+  });
+  return;
 
   const user = auth.currentUser.email;
 
