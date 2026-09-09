@@ -2009,9 +2009,13 @@ body.tema-escuro .iconeIndicador{
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDabKVmo13MIUbtVx2O0lSJMuUT7X1DE-k",
-  authDomain: "cortex-planejamento.firebaseapp.com",
-  projectId: "cortex-planejamento"
+  apiKey: "AIzaSyA1kevfkVoul1CVc0KaBnIvQX0EG7Izoyk",
+  authDomain: "cortex-planejamento-2.firebaseapp.com",
+  projectId: "cortex-planejamento-2",
+  storageBucket: "cortex-planejamento-2.firebasestorage.app",
+  messagingSenderId: "638881231016",
+  appId: "1:638881231016:web:36e701fd615afd3bcd529d",
+  measurementId: "G-KLZ3FBP8L5"
 };
 
 // ✅ registra o service worker — necessário pro navegador considerar o
@@ -2101,15 +2105,18 @@ firebase.initializeApp(firebaseConfig);
 // consegue falar com o Firestore, mesmo que alguém copie o
 // firebaseConfig (que é público por natureza) pra tentar montar uma
 // cópia em outro lugar. Site key pública, gerada no Firebase Console >
-// App Check > reCAPTCHA v3 — não é segredo, mas TROQUE pela chave real
-// antes de subir, senão o App Check não vai conseguir validar nada.
-// ✅ chave criada como reCAPTCHA ENTERPRISE (não o v3 clássico) — por
-// isso usa o provider Enterprise explicitamente, não só a string da
-// chave (que o SDK trataria como v3 clássico por padrão)
-firebase.appCheck().activate(
-  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LdfZYwtAAAAAEfJ483b0LQrBiCF2vcU3_1RlhUz'),
-  true // isTokenAutoRefreshEnabled
-);
+// 🛑 DESLIGADO TEMPORARIAMENTE — essa chave reCAPTCHA Enterprise está
+// registrada no projeto ANTIGO (cortex-planejamento), não no novo
+// (cortex-planejamento-2). Como o App Check nunca chegou a entrar em
+// modo "Enforce" (só monitoramento), isso não bloqueia nada mesmo
+// desligado — mas deixar ligado com a chave errada podia gerar erro no
+// console à toa. Pra reativar no projeto novo: cria um App Check novo
+// (Firebase Console > App Check > registra o app Web > reCAPTCHA
+// Enterprise), troca a chave abaixo, e descomenta.
+// firebase.appCheck().activate(
+//   new firebase.appCheck.ReCaptchaEnterpriseProvider('CHAVE_DO_PROJETO_NOVO_AQUI'),
+//   true // isTokenAutoRefreshEnabled
+// );
 
 const auth = firebase.auth();
 const db = firebase.firestore();
