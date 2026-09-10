@@ -1880,6 +1880,7 @@ body.tema-escuro .iconeIndicador{
   <div id="lista"></div>
   <div id="telaProximasSemanas" style="display:none;"></div>
   <div id="telaCronograma" style="display:none;"></div>
+  <div id="telaCineminha" style="display:none;"></div>
   <div id="telaFrentesConcluidas" style="display:none;"></div>
   <div id="subTelaCronograma" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:var(--paper); z-index:40; overflow-y:auto;"></div>
 
@@ -1910,6 +1911,13 @@ body.tema-escuro .iconeIndicador{
         <path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>
       </svg>
       <span>Cronograma</span>
+    </div>
+    <div class="navItem" id="navItemCineminha" onclick="mostrarTelaCineminha()">
+      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="2" y="7" width="20" height="14" rx="1.5"/>
+        <path d="M2 7l3-4h3l-3 4M9 7l3-4h3l-3 4M16 7l3-4h3l-3 4"/>
+      </svg>
+      <span>Cineminha</span>
     </div>
   </div>
 
@@ -2313,6 +2321,7 @@ async function mostrarTelaFrentes() {
   document.getElementById("lista").style.display = "block";
   document.getElementById("telaProximasSemanas").style.display = "none";
   document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("telaCineminha").style.display = "none";
   ativarNavItem("navItemFrentes");
   telaAtual = 'frentes';
 
@@ -2326,6 +2335,7 @@ async function mostrarTelaProximasSemanas() {
   document.getElementById("lista").style.display = "none";
   document.getElementById("telaProximasSemanas").style.display = "block";
   document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("telaCineminha").style.display = "none";
   ativarNavItem("navItemSemanas");
   telaAtual = 'semanas';
 
@@ -2340,6 +2350,7 @@ function mostrarTelaCronograma() {
   document.getElementById("lista").style.display = "none";
   document.getElementById("telaProximasSemanas").style.display = "none";
   document.getElementById("telaCronograma").style.display = "block";
+  document.getElementById("telaCineminha").style.display = "none";
   ativarNavItem("navItemCronograma");
   telaAtual = 'cronograma';
 
@@ -2349,6 +2360,52 @@ function mostrarTelaCronograma() {
     atualizarIconeTema();
   }
   carregarContadorNotif(); // ✅ sincroniza o sino toda vez que essa tela abre
+}
+
+// ✅ aba "Cineminha" — mostra um vídeo. O arquivo de vídeo (ex:
+// cineminha (Video_Cineminha_-_Slides_RV_04.mp4) precisa estar na MESMA pasta do index.html no
+// repositório, com esse nome exato (ou troque o "src" abaixo pelo nome
+// que você usar).
+function mostrarTelaCineminha() {
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("telaProximasSemanas").style.display = "none";
+  document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("telaCineminha").style.display = "block";
+  ativarNavItem("navItemCineminha");
+  telaAtual = 'cineminha';
+
+  const container = document.getElementById("telaCineminha");
+  if (!container.innerHTML) {
+    container.innerHTML = `
+      <div id="topo">
+        <img src="https://i.imgur.com/iZ8gr1i.png" style="height:38px;">
+        <div style="display:flex; align-items:center;">
+          <span class="toggleTema iconeTema" onclick="alternarTema()">🌙</span>
+          <div class="notif" onclick="abrirNotificacoes()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px; height:15px; color:var(--ink);">
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.7 21a2 2 0 01-3.4 0"/>
+            </svg>
+            <span id="contadorNotif">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="heroNovo">
+        <div class="eyebrow">Planejamento em mãos</div>
+        <h1>Cineminha</h1>
+      </div>
+
+      <div style="padding:20px;">
+        <video controls playsinline style="width:100%; border-radius:12px; background:#000; display:block;">
+          <source src="Video_Cineminha_-_Slides_RV_04.mp4" type="video/mp4">
+          Seu navegador não suporta vídeo.
+        </video>
+      </div>
+    `;
+    atualizarIconeTema();
+  }
+  carregarContadorNotif();
 }
 
 // ---------------------------------------------------------------------
@@ -5349,6 +5406,7 @@ function esconderTelasPrincipais() {
   document.getElementById("lista").style.display = "none";
   document.getElementById("telaProximasSemanas").style.display = "none";
   document.getElementById("telaCronograma").style.display = "none";
+  document.getElementById("telaCineminha").style.display = "none";
   document.getElementById("telaFrentesConcluidas").style.display = "none";
   document.getElementById("navInferior").style.display = "none";
 }
@@ -5698,6 +5756,7 @@ function voltarParaTelaAtual() {
   document.getElementById("lista").style.display = telaAtual === 'frentes' ? "block" : "none";
   document.getElementById("telaProximasSemanas").style.display = telaAtual === 'semanas' ? "block" : "none";
   document.getElementById("telaCronograma").style.display = telaAtual === 'cronograma' ? "block" : "none";
+  document.getElementById("telaCineminha").style.display = telaAtual === 'cineminha' ? "block" : "none";
   document.getElementById("telaFrentesConcluidas").style.display = "none";
 }
 
