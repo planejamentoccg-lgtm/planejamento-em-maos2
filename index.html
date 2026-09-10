@@ -6543,11 +6543,35 @@ function completarComAtividade(sufixo, el) {
   input.focus();
 }
 
+// ✅ carrega (uma vez por sessão) todo o conteúdo de FrentesDesempenho
+// num cache local — usado por qualquer pergunta que precise cruzar
+// dados de várias frentes ao mesmo tempo (tipo "quais frentes têm PK"
+// ou "o que aconteceu em tal dia"), evitando uma consulta ao Firestore
+// por frente. Chave = Nome da frente, valor = AvancoPorEtapa dela.
+async function carregarCacheDesempenho() {
+  if (window.__cacheDesempenho) return window.__cacheDesempenho;
+  const mapa = {};
+  try {
+    const snap = await db.collection('FrentesDesempenho').get();
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.Nome) mapa[d.Nome] = d.AvancoPorEtapa || [];
+    });
+  } catch (e) {
+    console.log('Não consegui carregar o cache de Desempenho:', e);
+  }
+  window.__cacheDesempenho = mapa;
+  return mapa;
+}
+
 // ✅ checa se uma frente tem PK cadastrado em algum dia de alguma etapa —
 // usado pra tirar da lista de sugestões as frentes sem PK quando a
-// pergunta selecionada é sobre PK
-function frenteTemPk(data) {
-  return (data.AvancoPorEtapa || []).some(et =>
+// pergunta selecionada é sobre PK. Recebe o cache já carregado (ver
+// carregarCacheDesempenho), já que esse histórico vive numa coleção
+// separada (FrentesDesempenho), não mais dentro da própria frente.
+function frenteTemPk(nomeFrente, cacheDesempenho) {
+  const etapas = (cacheDesempenho && cacheDesempenho[nomeFrente]) || [];
+  return etapas.some(et =>
     (et.Dias || []).some(d => d.PkFinal !== null && d.PkFinal !== undefined && String(d.PkFinal).trim() !== '')
   );
 }
@@ -6564,6 +6588,7 @@ async function mostrarListaFrentes(sufixo, textoTemplate) {
 
   const tipoAtivo = window.filtroTipoGlobal || 'Todas';
   const ehPerguntaPk = !!(textoTemplate && normalizarTexto(textoTemplate).includes(' pk '));
+  const cacheDesempenho = ehPerguntaPk ? await carregarCacheDesempenho() : null;
 
   let nomes = [];
   try {
@@ -6571,7 +6596,7 @@ async function mostrarListaFrentes(sufixo, textoTemplate) {
       // ✅ só as frentes concluídas — essas perguntas são exclusivas dessa aba
       (window.todasFrentesConcluidas || []).forEach(data => {
         if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
-        if (ehPerguntaPk && !frenteTemPk(data)) return;
+        if (ehPerguntaPk && !frenteTemPk(data.Nome, cacheDesempenho)) return;
         nomes.push(formatarTitulo(data.Nome));
       });
     } else {
@@ -6579,7 +6604,7 @@ async function mostrarListaFrentes(sufixo, textoTemplate) {
       snap.forEach(doc => {
         const data = doc.data();
         if (tipoAtivo !== 'Todas' && normalizarTexto(data.Tipo || '') !== normalizarTexto(tipoAtivo)) return;
-        if (ehPerguntaPk && !frenteTemPk(data)) return;
+        if (ehPerguntaPk && !frenteTemPk(data.Nome, cacheDesempenho)) return;
         nomes.push(formatarTitulo(data.Nome));
       });
     }
@@ -7228,15 +7253,14 @@ async function montarRespostaDetonacoes(data, rotulo) {
     }
   } catch (e) { /* sem detonações cadastradas ainda */ }
 
-  const snapFrentes = await db.collection('Frentes').get();
+  const cacheDesempenho = await carregarCacheDesempenho();
   const avancosDoDia = [];
-  snapFrentes.forEach(doc => {
-    const f = doc.data();
-    (f.AvancoPorEtapa || []).forEach(et => {
+  Object.keys(cacheDesempenho).forEach(nomeFrente => {
+    (cacheDesempenho[nomeFrente] || []).forEach(et => {
       (et.Dias || []).forEach(dia => {
         if (dia.Data === dataStr && dia.DiarioRealizado !== null && dia.DiarioRealizado !== undefined && dia.DiarioRealizado > 0) {
           avancosDoDia.push({
-            frente: formatarTitulo(f.Nome), etapa: et.Etapa,
+            frente: formatarTitulo(nomeFrente), etapa: et.Etapa,
             pkInicial: dia.PkInicial, pkFinal: dia.PkFinal,
             avanco: dia.DiarioRealizado, observacao: dia.Observacoes, unidade: et.Unidade || 'm',
           });
@@ -8064,7 +8088,8 @@ async function montarRespostaPk(termo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Não identifiquei de qual frente você está falando.</p>`;
   }
 
-  const etapas = frente.AvancoPorEtapa || [];
+  const cacheDesempenho = await carregarCacheDesempenho();
+  const etapas = cacheDesempenho[frente.Nome] || [];
   if (etapas.length === 0) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não tenho dados de PK detalhado pra ${formatarTitulo(frente.Nome)}.</p>`;
   }
