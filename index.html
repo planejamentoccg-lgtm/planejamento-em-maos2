@@ -4406,9 +4406,12 @@ function renderizarFrentesFiltradas() {
       let deveriaTerComecadoMasAtrasada;
       if (todasNaoQuantificaveis) {
         const hojeCorte = new Date(); hojeCorte.setHours(0, 0, 0, 0);
+        // ✅ usa o INÍCIO previsto, não o final — numa etapa longa, o
+        // final ainda pode estar bem no futuro mesmo com o início já
+        // bem atrasado, o que fazia essas frentes nunca aparecerem aqui
         deveriaTerComecadoMasAtrasada = etapasDaFrente.some(et => {
-          const fp = parseDataCompleta(et.FinalPrevisto);
-          return fp && fp < hojeCorte;
+          const ip = parseDataCompleta(et.InicioPrevisto);
+          return ip && ip < hojeCorte;
         });
       } else {
         deveriaTerComecadoMasAtrasada = (data.Percentualprevisto || 0) > 0;
@@ -4444,6 +4447,24 @@ function renderizarFrentesFiltradas() {
 
       if (estaParalisada) {
         status = "paralisada";
+      } else if (aindaNaoComecou) {
+        // ✅ frente que ainda não começou, mas já deveria ter começado
+        // (é por isso que ela chegou até aqui) — mostra há quantos dias
+        // o início está atrasado, em vez de usar a lógica de final
+        // previsto (que é pra frentes já em andamento/concluídas)
+        const hojeIni = new Date(); hojeIni.setHours(0, 0, 0, 0);
+        let menorIp = null;
+        etapasDaFrente.forEach(et => {
+          const ip = parseDataCompleta(et.InicioPrevisto);
+          if (ip && (!menorIp || ip < menorIp)) menorIp = ip;
+        });
+        const diasAtrasoInicio = menorIp ? Math.round((hojeIni - menorIp) / 86400000) : null;
+        status = "atrasada";
+        textoPrazo = diasAtrasoInicio
+          ? `Início atrasado há ${diasAtrasoInicio} dia${diasAtrasoInicio === 1 ? '' : 's'}`
+          : "Início atrasado";
+        corPrazo = "#e53935";
+        atrasadas++;
       } else {
         const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
         let maiorFp = null;
