@@ -1292,12 +1292,15 @@ body.tema-escuro .iconeIndicador{
   background:var(--painel-1);
   padding:16px 14px 14px;
   text-align:left;
+  transition:background .15s;
 }
+.kpiCard.filtroAtivo{ background:var(--painel-2, rgba(255,255,255,.06)); }
 .kpiCard::before, .kpiCard::after{
   content:''; position:absolute; width:9px; height:9px;
 }
 .kpiCard::before{ top:6px; left:6px; border-top:1.5px solid var(--accent); border-left:1.5px solid var(--accent); }
 .kpiCard::after{ bottom:6px; right:6px; border-bottom:1.5px solid var(--accent); border-right:1.5px solid var(--accent); }
+.kpiCard.filtroAtivo::before, .kpiCard.filtroAtivo::after{ border-color: var(--accent-bright); }
 .kpiCard .val{
   font-family:'IBM Plex Mono', monospace;
   font-weight:600;
@@ -4243,15 +4246,15 @@ async function carregarFrentes() {
       <h1>Painel de<br>Progresso</h1>
 
       <div class="kpiGrid">
-        <div class="kpiCard" style="grid-column: span 2;">
+        <div class="kpiCard" style="grid-column: span 2; cursor:pointer;" onclick="filtrarFrentesPorStatus('todas')">
           <div class="val" id="qtFrentes" style="opacity:.4;">–</div>
           <div class="lbl">Frentes ativas</div>
         </div>
-        <div class="kpiCard">
+        <div class="kpiCard" style="cursor:pointer;" onclick="filtrarFrentesPorStatus('noPrazo')">
           <div class="val pos" id="noPrazo" style="opacity:.4;">–</div>
           <div class="lbl">No prazo</div>
         </div>
-        <div class="kpiCard">
+        <div class="kpiCard" style="cursor:pointer;" onclick="filtrarFrentesPorStatus('atrasadas')">
           <div class="val" id="atrasadas" style="opacity:.4;">–</div>
           <div class="lbl">Atrasadas</div>
         </div>
@@ -4378,29 +4381,15 @@ function renderizarFrentesFiltradas() {
     // prazo usam uma regra equivalente sem o %, que elas não têm.
     if (frenteEstaConcluida(data)) return;
 
-    // ✅ se TODAS as etapas ainda estão "A iniciar" (nenhuma em andamento,
-    // concluída ou paralisada ainda), a frente não aparece nem na lista
-    // nem entra na contagem de "Frentes ativas" — ela só passa a existir
-    // aqui quando pelo menos 1 etapa realmente começar
+    // ✅ se TODAS as etapas ainda estão "A iniciar", normalmente a frente
+    // fica escondida daqui (não é "ativa" de verdade ainda). MAS se ela já
+    // deveria ter começado pelo cronograma — % previsto > 0 pra frentes
+    // por avanço, ou Final Previsto de alguma etapa já no passado pra
+    // frentes por prazo — ela passa a aparecer mesmo assim, sinalizada
+    // como atrasada (sem contar como "ativa", só como "atrasada").
     const etapasDaFrente = data.Etapas || [];
     const aindaNaoComecou = etapasDaFrente.length > 0 &&
       etapasDaFrente.every(et => normalizarTexto(et.Status) === 'a iniciar');
-    if (aindaNaoComecou) return;
-
-    // ✅ frentes paralisadas continuam aparecendo como card na lista,
-    // mas não entram na contagem do painel como "em andamento"
-    const estaParalisada = data.Paralisada === true || data.Paralisada === 'true';
-    if (!estaParalisada) qtdFrentesAtivas++;
-
-    // ✅ pega a situação mais recente entre as etapas, pra mostrar no rodapé
-    let situacaoRecente = "";
-    (data.Etapas || []).forEach(etapa => {
-      if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
-    });
-
-    const card = document.createElement("div");
-    card.className = "frenteNova";
-    card.onclick = () => abrir(data);
 
     // ✅ frentes onde NENHUMA etapa é quantificável (todas com Unidade
     // "-") não têm % real pra comparar — o script sempre grava
@@ -4412,6 +4401,37 @@ function renderizarFrentesFiltradas() {
     // têm barrinha de %.
     const todasNaoQuantificaveis = etapasDaFrente.length > 0 &&
       etapasDaFrente.every(et => et.Unidade === '-');
+
+    if (aindaNaoComecou) {
+      let deveriaTerComecadoMasAtrasada;
+      if (todasNaoQuantificaveis) {
+        const hojeCorte = new Date(); hojeCorte.setHours(0, 0, 0, 0);
+        deveriaTerComecadoMasAtrasada = etapasDaFrente.some(et => {
+          const fp = parseDataCompleta(et.FinalPrevisto);
+          return fp && fp < hojeCorte;
+        });
+      } else {
+        deveriaTerComecadoMasAtrasada = (data.Percentualprevisto || 0) > 0;
+      }
+      if (!deveriaTerComecadoMasAtrasada) return;
+    }
+
+    // ✅ frentes paralisadas continuam aparecendo como card na lista,
+    // mas não entram na contagem do painel como "em andamento" — o
+    // mesmo vale pra uma frente que ainda não começou de verdade (só
+    // está aparecendo aqui porque já está atrasada pro cronograma)
+    const estaParalisada = data.Paralisada === true || data.Paralisada === 'true';
+    if (!estaParalisada && !aindaNaoComecou) qtdFrentesAtivas++;
+
+    // ✅ pega a situação mais recente entre as etapas, pra mostrar no rodapé
+    let situacaoRecente = "";
+    (data.Etapas || []).forEach(etapa => {
+      if (etapa.Situacao && etapa.Situacao > situacaoRecente) situacaoRecente = etapa.Situacao;
+    });
+
+    const card = document.createElement("div");
+    card.className = "frenteNova";
+    card.onclick = () => abrir(data);
 
     if (estaParalisada) {
       // status "paralisada" é igual pros dois tipos de frente
@@ -4465,6 +4485,13 @@ function renderizarFrentesFiltradas() {
           </div>`
         : "";
 
+      // ✅ pula da exibição (mas os contadores acima já foram computados
+      // certinho) quando tem um filtro de status ativo e esse card não
+      // bate com ele
+      const filtroAtivo = window.filtroStatusGlobal || 'todas';
+      if (filtroAtivo === 'noPrazo' && status !== 'ok') return;
+      if (filtroAtivo === 'atrasadas' && status !== 'atrasada') return;
+
       card.innerHTML = `
         <div class="topo2">
           <span class="nome2">${data.Nome}</span>
@@ -4476,7 +4503,7 @@ function renderizarFrentesFiltradas() {
 
         <div class="baixo2" style="margin-top:10px;">
           <span style="color:${corPrazo}; font-weight:600; font-size:13px;">${textoPrazo}</span>
-          <span class="meta2">${situacaoRecente ? "situação em " + situacaoRecente : ""}</span>
+          <span class="meta2">${aindaNaoComecou ? "ainda não iniciada" : (situacaoRecente ? "situação em " + situacaoRecente : "")}</span>
         </div>
         ${notaParalisacaoHtml}
       `;
@@ -4510,6 +4537,12 @@ function renderizarFrentesFiltradas() {
         </div>`
       : "";
 
+    // ✅ pula da exibição (contadores já computados acima) quando tem
+    // filtro de status ativo e esse card não bate com ele
+    const filtroAtivoQ = window.filtroStatusGlobal || 'todas';
+    if (filtroAtivoQ === 'noPrazo' && status !== 'ok') return;
+    if (filtroAtivoQ === 'atrasadas' && status !== 'atrasada') return;
+
     card.innerHTML = `
       <div class="topo2">
         <span class="nome2">${data.Nome}</span>
@@ -4533,7 +4566,7 @@ function renderizarFrentesFiltradas() {
         <span>
           <span class="pct2">${progresso}%</span><span class="previstoInline">/previsto: ${previsto}%</span>
         </span>
-        <span class="meta2">${situacaoRecente ? "situação em " + situacaoRecente : ""}</span>
+        <span class="meta2">${aindaNaoComecou ? "ainda não iniciada" : (situacaoRecente ? "situação em " + situacaoRecente : "")}</span>
       </div>
       ${notaParalisacaoHtml}
     `;
@@ -4560,6 +4593,18 @@ function renderizarFrentesFiltradas() {
     cardsNaoQuantificaveis.forEach(c => botoes.appendChild(c));
   }
 
+  // ✅ se o filtro de status ativo não deixou nenhum card pra mostrar,
+  // avisa em vez de deixar a tela em branco sem explicação
+  if (cardsQuantificaveis.length === 0 && cardsNaoQuantificaveis.length === 0) {
+    const filtroAtivoMsg = window.filtroStatusGlobal || 'todas';
+    if (filtroAtivoMsg !== 'todas') {
+      const vazio = document.createElement("div");
+      vazio.style.cssText = "padding:40px 20px; text-align:center; color:var(--text-soft); font-size:12.5px;";
+      vazio.textContent = filtroAtivoMsg === 'noPrazo' ? "Nenhuma frente no prazo no momento." : "Nenhuma frente atrasada no momento.";
+      botoes.appendChild(vazio);
+    }
+  }
+
   // ✅ METRICAS
   const elQtFrentes = document.getElementById("qtFrentes");
   const elNoPrazo = document.getElementById("noPrazo");
@@ -4570,12 +4615,26 @@ function renderizarFrentesFiltradas() {
   elQtFrentes.style.opacity = '';
   elNoPrazo.style.opacity = '';
   elAtrasadas.style.opacity = '';
+
+  // ✅ realce visual de qual KPI está sendo usado como filtro agora
+  const filtroStatusAtivo = window.filtroStatusGlobal || 'todas';
+  elQtFrentes.closest(".kpiCard").classList.toggle("filtroAtivo", filtroStatusAtivo === 'todas');
+  elNoPrazo.closest(".kpiCard").classList.toggle("filtroAtivo", filtroStatusAtivo === 'noPrazo');
+  elAtrasadas.closest(".kpiCard").classList.toggle("filtroAtivo", filtroStatusAtivo === 'atrasadas');
 }
 
 // ✅ chamado pelos 3 botões (Geral/Escavação/Civil) — troca o filtro e
 // redesenha a lista + o painel de métricas na hora, sem nova consulta ao banco
 function filtrarFrentesPorTipo(tipo) {
   window.filtroTipoGlobal = tipo;
+  renderizarFrentesFiltradas();
+}
+
+// ✅ chamado ao clicar em "Frentes ativas" / "No prazo" / "Atrasadas" no
+// painel — filtra os cards já renderizados pelo status deles. Clicar de
+// novo no mesmo que já está ativo volta pra "todas" (some com o filtro).
+function filtrarFrentesPorStatus(status) {
+  window.filtroStatusGlobal = (window.filtroStatusGlobal === status) ? 'todas' : status;
   renderizarFrentesFiltradas();
 }
 
@@ -5683,9 +5742,9 @@ let menu = `
 
       html += `
       <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+        <div style="position:relative; padding-right:70px;">
           <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">${etapa.Etapa || 'Etapa'}</span>
-          ${tag ? `<span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo}; flex-shrink:0;">${tag}</span>` : ''}
+          ${tag ? `<span style="position:absolute; right:0; top:2px; font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corPrazo};">${tag}</span>` : ''}
         </div>
         <div style="font-size:13.5px; font-weight:600; color:${corPrazo}; margin-top:8px;">${textoPrazo}</div>
         <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Previsão de Término: ${etapa.FinalPrevisto || '-'} · Término Real: ${etapa.FinalReal || '-'}</div>
@@ -5710,9 +5769,9 @@ let menu = `
 
     html += `
     <div style="padding:18px 20px; ${ultima ? '' : 'border-bottom:1px solid var(--line);'}">
-      <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+      <div style="position:relative; padding-right:70px;">
         <span style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; color:var(--ink);">${etapa.Etapa || 'Etapa'}</span>
-        <span style="font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corDelta}; flex-shrink:0;">${rotuloTag}</span>
+        <span style="position:absolute; right:0; top:2px; font-size:10px; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; color:${corDelta};">${rotuloTag}</span>
       </div>
       <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <span style="font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-0.02em; color:var(--ink);">${formatarNumUnidade(etapa.RealizadoNum, etapa.Unidade)}</span>
@@ -5866,7 +5925,7 @@ async function mostrarDesempenho() {
 
     if (!et.InicioRealizado) {
       return `
-      <div style="padding:16px 0; ${semBorda}">
+      <div style="padding:16px 0; ${semBorda} text-align:center;">
         <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin-bottom:6px;">${et.Etapa}</div>
         <div style="font-size:12.5px; color:var(--text-soft);">Ainda não foi iniciada.</div>
       </div>
@@ -6006,10 +6065,10 @@ async function mostrarDesempenho() {
     const topicos = [topico1, topico2, topico3].filter(Boolean);
 
     return `
-    <div style="padding:18px 0; ${semBorda}">
+    <div style="padding:18px 0; ${semBorda} text-align:center;">
       <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin-bottom:10px;">${et.Etapa}</div>
       ${topicos.map(t => `
-        <div style="display:flex; gap:9px; margin-bottom:7px; font-size:12.5px; color:var(--text-soft); line-height:1.5;">
+        <div style="display:flex; justify-content:center; gap:9px; margin-bottom:7px; font-size:12.5px; color:var(--text-soft); line-height:1.5; text-align:left;">
           <span style="color:var(--accent-bright, var(--accent)); flex-shrink:0;">•</span>
           <span>${t}</span>
         </div>
@@ -6051,15 +6110,15 @@ async function mostrarDesempenho() {
     const idTimeline = `linhaTempo_${idxEt}`;
 
     return `
-    <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line);">
-      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:10px; text-align:left; color:var(--ink);">Linha do tempo — ${et.Etapa}</div>
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; margin-bottom:4px; cursor:pointer; background:var(--paper-2); border-radius:8px;" onclick="toggleLinhaTempoEtapa('${idTimeline}')">
-        <span style="font-size:12px; color:var(--text-soft); text-align:left;">${diasComConteudo.length} dia${diasComConteudo.length === 1 ? '' : 's'} registrado${diasComConteudo.length === 1 ? '' : 's'}, ${dias[0].Data} a ${dias[dias.length - 1].Data}</span>
-        <span id="${idTimeline}_seta" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:var(--paper); border:1.5px solid var(--accent-bright, var(--accent)); transition:transform .2s;">
+    <div style="margin-top:30px; padding:24px 20px 0; border-top:1px solid var(--line); text-align:center;">
+      <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:10px; text-align:center; color:var(--ink);">Linha do tempo — ${et.Etapa}</div>
+      <div style="position:relative; padding:10px 46px 10px 12px; margin-bottom:4px; cursor:pointer; background:var(--paper-2); border-radius:8px; text-align:center;" onclick="toggleLinhaTempoEtapa('${idTimeline}')">
+        <span style="font-size:12px; color:var(--text-soft);">${diasComConteudo.length} dia${diasComConteudo.length === 1 ? '' : 's'} registrado${diasComConteudo.length === 1 ? '' : 's'}, ${dias[0].Data} a ${dias[dias.length - 1].Data}</span>
+        <span id="${idTimeline}_seta" style="position:absolute; right:8px; top:50%; margin-top:-18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:var(--paper); border:1.5px solid var(--accent-bright, var(--accent)); transition:transform .2s;">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--accent-bright, var(--accent))" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
         </span>
       </div>
-      <div id="${idTimeline}" style="max-height:0; overflow:hidden; transition:max-height .3s ease;">
+      <div id="${idTimeline}" style="max-height:0; overflow:hidden; transition:max-height .3s ease; text-align:center;">
       ${diasComConteudo.map((dia, i) => {
         const dp = dia.DiarioPrevisto;
         const dr = dia.DiarioRealizado;
@@ -6100,11 +6159,11 @@ async function mostrarDesempenho() {
   function montarLegendaGrafico(etapasDoGrafico) {
     if (etapasDoGrafico.length === 0) return '';
     return `
-      <div style="display:flex; flex-direction:column; gap:8px; margin:10px 0 18px; font-family:'IBM Plex Sans',sans-serif; font-size:12px; color:var(--ink);">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:8px; margin:10px 0 18px; font-family:'IBM Plex Sans',sans-serif; font-size:12px; color:var(--ink);">
         ${etapasDoGrafico.map((et, i) => {
           const cor = PALETA_ETAPAS_JS[i % PALETA_ETAPAS_JS.length];
           return `
-          <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
             <span style="display:flex; align-items:center; gap:6px;">
               <span style="width:16px; height:2px; background:${cor}; display:inline-block;"></span>
               ${et.Etapa} - Previsto
@@ -6129,10 +6188,10 @@ async function mostrarDesempenho() {
 
     ${resumoHtml}
 
-    <div style="padding:20px 20px; border-top:1px solid var(--line);">
+    <div style="padding:20px 20px; border-top:1px solid var(--line); text-align:center;">
 
       ${d.Grafico1 ? `
-        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:left; color:var(--ink);">Avanço diário</div>
+        <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; margin-bottom:12px; text-align:center; color:var(--ink);">Avanço diário</div>
         <img src="${d.Grafico1}" loading="lazy" decoding="async"
              style="width:100%; border-radius:6px;">
         ${legenda1Html}
