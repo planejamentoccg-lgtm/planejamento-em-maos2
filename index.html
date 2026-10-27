@@ -5710,12 +5710,40 @@ function pmMapaNomesCronograma(numero) {
 }
 function pmMapaFaixaPK(data) {
   const re = /PK\s*([\d.,]+)\s*(?:ao|a|até|-|–)\s*(?:PK\s*)?([\d.,]+)/i;
-  const fontes = [data.Nome, ...pmMapaNomesCronograma(data.NumeroCronograma)];
-  for (const s of fontes) {
-    const m = String(s || '').match(re);
-    if (m) { const a = pmParsePK(m[1]), b = pmParsePK(m[2]); if (a && b && a > 5000 && b > 5000) return [a, b]; }
+  const faixaDe = s => { const m = String(s || '').match(re); if (!m) return null; const a = pmParsePK(m[1]), b = pmParsePK(m[2]); return a && b && a > 5000 && b > 5000 ? [a, b] : null; };
+  const direta = faixaDe(data.Nome);
+  if (direta) return direta;
+  let nums = {};
+  try { nums = calcularNumerosEstrutura(); } catch (e) { return null; }
+  const arvore = typeof CRONOGRAMA_ARVORE_COMPLETA !== 'undefined' ? CRONOGRAMA_ARVORE_COMPLETA : [];
+  const nome = normalizarTexto(data.Nome || '');
+  const via = /via 1\b/.test(nome) ? '1' : /via 2\b/.test(nome) ? '2' : '';
+  // raiz: o Nº da frente; se o Nº for genérico (ex.: 1.5.3), desce até o item "Via 1"/"Via 2"
+  let raiz = String(data.NumeroCronograma || '').trim();
+  if (via) {
+    const noVia = arvore.find(i => (nums[i[0]] || '').startsWith((raiz || '1.5.3') + '.') && normalizarTexto(i[1]).trim() === 'via ' + via)
+      || arvore.find(i => (nums[i[0]] || '').startsWith('1.5.3.') && normalizarTexto(i[1]).trim() === 'via ' + via);
+    if (noVia) { const nv = nums[noVia[0]]; if (!raiz.startsWith(nv + '.')) raiz = nv; }
   }
-  return null;
+  if (!raiz) return null;
+  // o próprio item e os "pais"
+  const partes = raiz.split('.');
+  for (let k = partes.length; k >= 2; k--) {
+    const n = partes.slice(0, k).join('.');
+    const it = arvore.find(i => nums[i[0]] === n);
+    const f = it && faixaDe(it[1]);
+    if (f) return f;
+  }
+  // os "filhos" com PK (trechos)
+  const trechos = arvore.filter(i => (nums[i[0]] || '').startsWith(raiz + '.')).map(i => ({ f: faixaDe(i[1]), pct: Number(i[8]) || 0 })).filter(t => t.f);
+  if (!trechos.length) return null;
+  const etapas = (data.Etapas || []).filter(e => /limpeza|prepara|poroso|aplica/.test(normalizarTexto(e.Etapa || '')));
+  const total = Math.max(0, ...etapas.map(e => Number(e.TotalNum) || 0));
+  const ini = Math.min(...trechos.map(t => Math.min(...t.f))), fim = Math.max(...trechos.map(t => Math.max(...t.f)));
+  const opcoes = [...trechos.map(t => t.f), [ini, fim]];
+  if (total > 0) return opcoes.sort((x, y) => Math.abs(Math.abs(x[1] - x[0]) - total) - Math.abs(Math.abs(y[1] - y[0]) - total))[0];
+  const andando = trechos.find(t => t.pct > 0 && t.pct < 100);
+  return andando ? andando.f : [ini, fim];
 }
 function pmMapaPKAtual(data, faixa) {
   if (!faixa) return null;
@@ -5865,7 +5893,7 @@ function pmMapaSVGLinha(itens, sel) {
     const { loc, f, i } = it;
     if (loc.zona === 'linha') {
       const [x, y] = loc.ssr ? [1250, 470] : pmMapaPontoPK(loc.pk);
-      pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${pmEsc(loc.ssr ? 'SSR 04' : pmMapaRotulo(f.data.Nome, '').join(' '))}</text>`;
+      pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${pmEsc(loc.ssr ? 'SSR 04' : String(f.data.Nome || '').replace(/Passagem de Emerg[eê]ncia/i, 'Passagem'))}</text>`;
     } else if (loc.zona === 'via' && loc.faixa) {
       const off = loc.via === 1 ? -9 : loc.via === 2 ? 9 : 0;
       const pk = pmMapaPKAtual(f.data, loc.faixa);
@@ -5930,11 +5958,18 @@ function pmMapaSheet(it) {
       <span>Frente hoje no <b>PK ${pmPKFmt(pk.atual)}</b> · ${pmNum(Math.round(pk.feito))} m de ${pmNum(Math.round(pk.total))} m · previsto no PK ${pmPKFmt(pk.previsto)}</span></div>`;
   } else {
     const etapas = f.data.Etapas || [];
-    const atual = etapas.find(e => normalizarTexto(e.Status) === 'em andamento') || etapas.find(e => normalizarTexto(e.Status) !== 'concluida' && normalizarTexto(e.Status) !== 'concluído' && normalizarTexto(e.Status) !== 'a iniciar') || etapas[0];
+    const stE = e => normalizarTexto(e.Status || '');
+    const pendente = e => !/^conclu/.test(stE(e)) && !(Number(e.TotalNum) > 0 && Number(e.RealizadoNum) >= Number(e.TotalNum));
+    const atual = etapas.find(e => stE(e) === 'em andamento' && pendente(e)) || etapas.find(e => pendente(e) && stE(e) !== 'a iniciar') || etapas.find(pendente) || etapas[etapas.length - 1];
     const t1 = atual ? `<span class="pm-mp-tile"><b>${pmEsc(atual.Etapa || 'Etapa')}</b>${atual.Unidade && atual.Unidade !== '-' ? `${pmNumUnid(atual.RealizadoNum, atual.Unidade)} de ${pmNumUnid(atual.TotalNum, atual.Unidade)}` : pmEsc(atual.Status || '')}</span>` : '';
-    const dif = f.porPrazo ? '' : Math.round((real - f.prev) * 10) / 10;
     const t2 = f.porPrazo ? `<span class="pm-mp-tile"><b>Prazo</b>${pmEsc(f.texto || '-')}</span>`
-      : `<span class="pm-mp-tile"><b>${dif > 0 ? '+' : ''}${pmNum(dif)} pontos</b>${f.situacao ? `situação em ${pmEsc(f.situacao)}` : 'em relação ao previsto'}</span>`;
+      : (() => {
+          const outra = etapas.find(e => e !== atual && stE(e) === 'em andamento' && pendente(e));
+          if (outra) return `<span class="pm-mp-tile"><b>${pmEsc(outra.Etapa || 'Etapa')}</b>${outra.Unidade && outra.Unidade !== '-' ? `${pmNumUnid(outra.RealizadoNum, outra.Unidade)} de ${pmNumUnid(outra.TotalNum, outra.Unidade)}` : pmEsc(outra.Status || '')}</span>`;
+          const prox = etapas.find(e => e !== atual && stE(e) === 'a iniciar');
+          if (prox) return `<span class="pm-mp-tile"><b>Próxima etapa</b>${pmEsc(prox.Etapa || '')}${prox.InicioPrevisto ? ` · ${pmEsc(String(prox.InicioPrevisto).slice(0, 5))}` : ''}</span>`;
+          return `<span class="pm-mp-tile"><b>Situação</b>${f.situacao ? `em ${pmEsc(f.situacao)}` : '-'}</span>`;
+        })()
     tiles = `<div class="pm-mp-tiles">${t1}${t2}</div>`;
   }
   return `<div class="pm-mp-sheet" role="dialog" aria-label="${pmEsc(f.data.Nome)}">
