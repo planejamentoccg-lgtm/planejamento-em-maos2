@@ -2428,6 +2428,34 @@ body.tema-escuro .pm-pg-strip button[aria-selected="true"] em.boom{ color:#B2443
   .pm-pg-tit, .pm-pg-foot{ padding-left:4px; padding-right:4px; }
   .pm-cols:has(> .pm-side) > .pm-pg-side .pm-mp{ margin:0; }
 }
+
+/* ✅ SIX WEEK — mapa da semana */
+.pm-pg-strip.semanas strong{ font-size:13px; letter-spacing:-.2px; }
+.pm-pg-strip.semanas{ gap:4px; }
+.pm-sw-pin .pm-mp-dot{ stroke-width:2.5; }
+.pm-sw-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.pm-sw-foot button{ border:none; background:none; padding:0; display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--olive-ink); min-height:36px; }
+.pm-sw-foot button svg{ width:16px; height:16px; }
+.pm-sw-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.pm-sw-head strong{ font-family:var(--f-display); font-size:19px; font-weight:800; line-height:1.15; }
+.pm-sw-head .boom{ display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:600; color:var(--mp-late); flex-shrink:0; }
+.pm-sw-bars{ display:flex; gap:6px; padding:10px; border-radius:16px; background:var(--soft); }
+.pm-sw-bar{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; border:none; background:none; padding:0; min-height:96px; }
+.pm-sw-bar b{ font-size:11px; font-weight:700; color:var(--ink); }
+.pm-sw-bar.vazio b{ color:var(--faint); }
+.pm-sw-bar i{ width:100%; border-radius:8px; background:var(--mp-ok); }
+.pm-sw-bar.boom i{ background:var(--mp-late); }
+.pm-sw-bar.vazio i{ background:var(--track); }
+.pm-sw-bar.on i{ box-shadow:0 0 0 2px var(--ink); }
+.pm-sw-bar small{ font-family:var(--f-mono); font-size:10px; color:var(--muted); }
+.pm-sw-bar.on small{ color:var(--ink); font-weight:600; }
+.pm-sw-legenda{ font-size:11.5px; color:var(--muted); margin-top:-4px; }
+.pm-sw-itens{ display:flex; flex-direction:column; max-height:32vh; overflow-y:auto; }
+.pm-sw-itens > div{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:8px 0; border-top:1px solid var(--line-soft); font-size:13.5px; }
+.pm-sw-itens > div:first-child{ border-top:none; }
+.pm-sw-itens span{ display:flex; flex-direction:column; gap:1px; }
+.pm-sw-itens small{ font-size:11.5px; color:var(--muted); }
+.pm-sw-itens b{ flex-shrink:0; font-weight:700; }
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -6701,6 +6729,140 @@ function pmProgMapaHTML(tarefasDia) {
 function pmProgSelecionar(k) { window.pmProgSel = window.pmProgSel === k ? null : k; renderizarProgramacao(); }
 function pmProgZoomar(z) { window.pmProgZoom = z; window.pmProgSel = null; renderizarProgramacao(); }
 
+// =====================================================================
+// ✅ SIX WEEK — mapa da semana. Soma, por lugar do mapa, o que está
+// programado em cada semana. Tocar no lugar abre as 6 semanas dele.
+// (Não usa "começa/termina": só diz em quais semanas desta Six Week
+// o lugar tem programação.)
+// =====================================================================
+function pmSwNumero(bruto) {
+  const s = String(bruto ?? '').trim();
+  if (!s || !/^[\d.,\s-]+$/.test(s)) return 0;
+  const v = parseFloat(s.replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
+  return isNaN(v) ? 0 : v;
+}
+// lugares × semanas
+function pmSwDados() {
+  const W = window.pmSixWeek || {};
+  const semanas = W.semanas || [];
+  const hoje = pmHoje();
+  const lugares = {}, sem = [];
+  (W.frentes || []).forEach(item => {
+    const nomeFrente = item.dados.Nome || '';
+    (item.tarefas || []).forEach(t => {
+      const texto = [nomeFrente, t.Nome, t.Topico, t.Subgrupo].filter(Boolean).join(' - ');
+      const l = pmProgLugar(texto);
+      const boom = normalizarTexto(texto).includes('detona');
+      const porSemana = semanas.map(() => ({ qtd: 0, dias: 0 }));
+      (t.Diario || []).forEach(d => {
+        const dd = parseDiaMesComAncora(d.Data, hoje);
+        if (!dd) return;
+        const k = semanas.findIndex(([a, b]) => dd >= a && dd <= b);
+        if (k < 0) return;
+        porSemana[k].dias++;
+        porSemana[k].qtd += pmSwNumero(d.Valor);
+      });
+      if (!porSemana.some(x => x.dias)) return;
+      const tarefa = { nome: formatarTitulo(t.Nome || ''), det: [t.Topico, t.Subgrupo].filter(Boolean).map(formatarTitulo).join(' · '), frente: formatarTitulo(nomeFrente), unidade: t.Unidade || '', boom, porSemana };
+      if (!l) { sem.push(tarefa); return; }
+      const L = lugares[l.chave] || (lugares[l.chave] = { ...l, tarefas: [] });
+      L.tarefas.push(tarefa);
+    });
+  });
+  return { semanas, lugares, sem };
+}
+function pmSwResumo(L, k) {
+  // quantidade da semana k, somada por unidade
+  const porU = {}; let boom = 0, n = 0;
+  L.tarefas.forEach(t => {
+    const s = t.porSemana[k]; if (!s || !s.dias) return;
+    n++; if (t.boom) boom++;
+    if (s.qtd) porU[t.unidade || ''] = (porU[t.unidade || ''] || 0) + s.qtd;
+  });
+  const us = Object.entries(porU).sort((a, b) => b[1] - a[1]);
+  const txt = us.length ? `${pmNum(Math.round(us[0][1] * 100) / 100)}${us[0][0] ? ' ' + us[0][0] : ''}${us.length > 1 ? ' +' : ''}` : `${n} ativ.`;
+  return { n, boom, txt, principal: us[0] || null };
+}
+function pmSwPino(x, y, L, k, sel, res, escala) {
+  const isB = res.boom > 0, w = Math.max(30, res.txt.length * 7 + 14);
+  const tr = escala ? `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${escala})` : `translate(${x} ${y})`;
+  return `<g class="pm-mp-pin pm-pg-pin pm-sw-pin ${isB ? 'boom' : ''}${sel === k ? ' sel' : ''}${sel && sel !== k ? ' dim' : ''}" transform="${tr}" role="button" tabindex="0"
+    aria-label="${pmEsc(L.area || L.nome || PM_PROG_LUGARES[k]?.area || '')}: ${pmEsc(res.txt)}" onclick="pmSwSelecionar('${k}')" onkeydown="if(event.key==='Enter')pmSwSelecionar('${k}')">
+    <rect x="${-w / 2 - 6}" y="-20" width="${w + 12}" height="40" rx="20" class="pm-mp-hit"/>${isB ? `<rect x="${-w / 2 - 6}" y="-17" width="${w + 12}" height="34" rx="17" class="pm-mp-halo"/>` : ''}
+    ${sel === k ? `<rect x="${-w / 2 - 5}" y="-16" width="${w + 10}" height="32" rx="16" class="pm-mp-selring"/>` : ''}
+    <rect x="${-w / 2}" y="-11" width="${w}" height="22" rx="11" class="pm-mp-dot"/><text y="4" text-anchor="middle" class="pm-pg-num">${pmEsc(res.txt)}</text></g>`;
+}
+function pmSwMapaHTML(dados, k) {
+  const zoom = window.pmSwZoom || 'estacao';
+  let sel = window.pmSwSel;
+  const ativos = Object.entries(dados.lugares).map(([c, L]) => [c, L, pmSwResumo(L, k)]).filter(([, , r]) => r.n);
+  if (sel && !ativos.some(([c]) => c === sel)) sel = window.pmSwSel = null;
+  const est = ativos.filter(([, L]) => !L.linha), lin = ativos.filter(([, L]) => L.linha);
+  let svg;
+  if (zoom === 'linha') {
+    let g = pmMapaBaseLinha(), pins = '';
+    const bEst = est.reduce((s, [, , r]) => s + r.boom, 0);
+    g += `<g class="pm-mp-estbtn" role="button" tabindex="0" onclick="pmSwZoomar('estacao')" onkeydown="if(event.key==='Enter')pmSwZoomar('estacao')">
+      <circle cx="1272" cy="250" r="72" class="pm-mp-estring ${bEst ? '' : 'ok'}"/><rect x="830" y="196" width="360" height="104" rx="30" class="pm-mp-card"/>
+      <text x="856" y="240" class="pm-mp-tit big">Estação Gávea</text>
+      <text x="856" y="278" class="pm-mp-lab big">${est.length ? `${est.length} ${est.length === 1 ? 'lugar' : 'lugares'} com programação` : 'sem programação'} ›</text></g>`;
+    lin.forEach(([c, L, r]) => {
+      const pk = L.pk || (L.via ? pmProgPkVia(L.via) : 8950);
+      const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
+      pins += pmSwPino(x, y, L, c, sel, r, 2.2) + `<text x="${(L.ssr ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== c ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
+    });
+    svg = `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Programação da semana na linha toda">${g}${pins}</svg>`;
+  } else {
+    let pins = '', labs = '';
+    est.forEach(([c, L, r]) => {
+      const P = PM_PROG_LUGARES[c]; if (!P) return;
+      const w = Math.max(30, r.txt.length * 7 + 14);
+      pins += pmSwPino(P.x, P.y, L, c, sel, r);
+      const dx = P.lado === 'r' ? w / 2 - 9 : P.lado === 'l' || P.lado === 'lf' ? -(w / 2 - 9) : 0;
+      labs += pmMapaTexto(P.x + dx, P.y, P.nome, P.lado, sel && sel !== c ? 'dim' : '');
+    });
+    svg = `<svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Programação da semana na Estação Gávea">${pmMapaBaseEstacao()}${pins}${labs}</svg>`;
+  }
+  const seg = (z, lab) => `<button aria-pressed="${zoom === z}" onclick="pmSwZoomar('${z}')">${lab}</button>`;
+  const selL = sel ? dados.lugares[sel] : null;
+  return `<div class="pm-mp pm-pg-mapa ${zoom === 'linha' ? 'linha' : ''}">${svg}
+    <div class="pm-mp-zoom">${seg('estacao', 'Estação')}${seg('linha', 'Linha toda')}</div>
+    <div class="pm-mp-chips">
+      ${zoom === 'estacao' && lin.length ? `<button class="pm-mp-chip" onclick="pmSwZoomar('linha')"><i class="st-${lin.some(([, , r]) => r.boom) ? 'late' : 'ok'}"></i>${lin.map(([, L, r]) => `${L.nome} · ${r.txt}`).join(' · ')} ↓</button>` : ''}
+      ${dados.sem.some(t => t.porSemana[k] && t.porSemana[k].dias) ? `<span class="pm-mp-chip" title="${pmEsc(dados.sem.filter(t => t.porSemana[k].dias).map(t => t.frente + ' - ' + t.nome).join(' | '))}"><i class="st-none"></i>${dados.sem.filter(t => t.porSemana[k].dias).length} sem lugar no mapa</span>` : ''}
+    </div>
+    ${!ativos.length ? '<div class="pm-mp-vazio">Nada programado nesta semana.</div>' : ''}
+    ${selL ? pmSwSheet(selL, sel, dados, k) : ''}
+  </div>`;
+}
+function pmSwSheet(L, c, dados, k) {
+  const sems = dados.semanas;
+  const res = sems.map((_, i) => pmSwResumo(L, i));
+  const u = (res[k].principal || res.find(r => r.principal)?.principal || [''])[0];
+  const val = i => L.tarefas.reduce((s, t) => s + (t.unidade === u && t.porSemana[i] ? t.porSemana[i].qtd : 0), 0);
+  const vals = sems.map((_, i) => val(i)), mx = Math.max(...vals, 0);
+  const comProg = sems.map((_, i) => res[i].n > 0);
+  const i0 = comProg.indexOf(true), i1 = comProg.lastIndexOf(true);
+  const barras = sems.map(([a], i) => {
+    const v = vals[i], tem = comProg[i];
+    const h = mx > 0 ? Math.max(tem ? 6 : 3, v / mx * 56) : (tem ? 28 : 3);
+    return `<button class="pm-sw-bar ${i === k ? 'on' : ''} ${tem ? '' : 'vazio'} ${res[i].boom ? 'boom' : ''}" onclick="pmSelecionarSemana(${i})" aria-label="Semana ${i + 1}">
+      <b>${tem ? (v ? `${pmNum(Math.round(v * 100) / 100)}` : `${res[i].n}×`) : '—'}</b><i style="height:${h.toFixed(0)}px"></i><small>S${i + 1}</small></button>`;
+  }).join('');
+  const daSemana = L.tarefas.filter(t => t.porSemana[k] && t.porSemana[k].dias);
+  const star = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M12 2l2 6.2L20 6l-2.6 5.6L23 13l-5.8 1.6L19 21l-5.6-3.4L12 23l-1.4-5.4L5 21l1.8-6.4L1 13l5.6-1.4L4 6l6 2.2z"/></svg>';
+  const area = L.area || PM_PROG_LUGARES[c]?.area || '';
+  return `<div class="pm-mp-sheet pm-sw-sheet" role="dialog" aria-label="${pmEsc(area)}">
+    <div class="pm-mp-sheet-top"><span></span><i></i><button onclick="pmSwSelecionar(null)" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="pm-sw-head"><strong>${pmEsc(area)}</strong>${res[k].boom ? `<span class="boom">${star}${res[k].boom} com detonação na S${k + 1}</span>` : ''}</div>
+    <div class="pm-sw-bars">${barras}</div>
+    <div class="pm-sw-legenda">${u ? `quantidade por semana em ${pmEsc(u)} · ` : ''}programado nesta Six Week ${i0 === i1 ? `só na S${i0 + 1}` : `de S${i0 + 1} a S${i1 + 1}`}</div>
+    <div class="pm-sw-itens">${daSemana.map(t => `<div><span>${pmEsc(t.nome)}${t.det ? `<small>${pmEsc(t.det)}</small>` : ''}</span><b>${t.porSemana[k].qtd ? `${pmNum(Math.round(t.porSemana[k].qtd * 100) / 100)} ${pmEsc(t.unidade)}` : `${t.porSemana[k].dias} dia${t.porSemana[k].dias > 1 ? 's' : ''}`}</b></div>`).join('')}</div>
+  </div>`;
+}
+function pmSwSelecionar(c) { window.pmSwSel = window.pmSwSel === c ? null : c; renderizarProgramacao(); }
+function pmSwZoomar(z) { window.pmSwZoom = z; window.pmSwSel = null; renderizarProgramacao(); }
+
 function renderizarProgramacao() {
   const hero = document.getElementById('progHero');
   const corpo = document.getElementById('progCorpo');
@@ -6804,16 +6966,27 @@ function renderizarProgramacao() {
   const n = grupos.reduce((s, g) => s + g.itens.length, 0);
   const rel = atual < 0 ? '' : (i < atual ? 'já passou' : i === atual ? 'semana atual' : 'próxima');
 
-  hero.className = 'pm-hero pm-side';
+  const swDados = pmSwDados();
+  const star = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M12 2l2 6.2L20 6l-2.6 5.6L23 13l-5.8 1.6L19 21l-5.6-3.4L12 23l-1.4-5.4L5 21l1.8-6.4L1 13l5.6-1.4L4 6l6 2.2z"/></svg>';
+  const boomSem = j => { let b = 0; Object.values(swDados.lugares).forEach(L => { b += pmSwResumo(L, j).boom; }); swDados.sem.forEach(t => { if (t.boom && t.porSemana[j] && t.porSemana[j].dias) b++; }); return b; };
+  const ativSem = j => { let n = 0; Object.values(swDados.lugares).forEach(L => { n += pmSwResumo(L, j).n; }); swDados.sem.forEach(t => { if (t.porSemana[j] && t.porSemana[j].dias) n++; }); return n; };
+  const fimSemana = intervalo ? new Date(intervalo[1].getTime() - 86400000) : null;
+  const bI = intervalo ? boomSem(i) : 0;
+  hero.className = 'pm-side pm-pg-side';
   hero.innerHTML = `
-    <div class="pm-hero-top"><span class="pm-eyebrow">Programação · Six Week</span>${semanas.length ? `<span class="pm-hero-meta">semana ${i + 1} de ${semanas.length}</span>` : ''}</div>
-    <h1 class="pm-hero-title">${!intervalo ? 'Sem Six Week carregada' : (i === atual ? `${n} ${n === 1 ? 'atividade programada' : 'atividades programadas'} nesta semana` : `Semana ${i + 1} · ${pmFmtDM(intervalo[0])} a ${pmFmtDM(intervalo[1])}`)}</h1>
-    ${seg}
-    ${semanas.length ? `<div class="pm-strip semanas" role="tablist" aria-label="Semanas" style="--n:${semanas.length}">${semanas.map(([a], k) =>
-      `<button role="tab" aria-selected="${k === i}" class="${atual >= 0 && k < atual ? 'is-past' : ''} ${k === atual ? 'is-now' : ''}" onclick="pmSelecionarSemana(${k})"><small>S${k + 1}</small><strong>${pmFmtDM(a)}</strong></button>`).join('')}</div>
-    <div class="pm-progress6">${semanas.map((_, k) => `<span class="${atual >= 0 && k < atual ? 'past' : k === atual ? 'now' : ''}"></span>`).join('')}</div>` : ''}
-    <div class="pm-hero-foot"><span>${W.atualizacao ? `Atualizado em <b>${W.atualizacao}</b> · quinzenal` : 'Atualizado quinzenalmente'}</span>
-      <button class="pm-hero-link" onclick="abrirGantt()">${PM_ICON.gantt}Gráfico de Gantt</button></div>`;
+    <div class="pm-pg-seg" role="tablist">
+      <button role="tab" aria-selected="false" onclick="mostrarAbaProgramacao('estaSemana')">Esta semana</button>
+      <button role="tab" aria-selected="true" onclick="mostrarAbaProgramacao('sixWeek')">Six Week</button>
+    </div>
+    ${semanas.length ? `<div class="pm-pg-strip semanas" role="tablist" aria-label="Semanas" style="--n:${Math.min(semanas.length, 7)}">${semanas.map(([a], j) => {
+      const nb = boomSem(j), na = ativSem(j);
+      return `<button role="tab" aria-selected="${j === i}" class="${atual >= 0 && j < atual ? 'is-past' : ''} ${j === atual ? 'is-now' : ''}" onclick="pmSelecionarSemana(${j})">
+        <small>S${j + 1}</small><strong>${pmFmtDM(a)}</strong><em class="${nb ? 'boom' : ''}">${nb ? `${star}${nb}` : na ? `${na} ativ.` : '—'}</em></button>`;
+    }).join('')}</div>` : ''}
+    ${intervalo ? `<div class="pm-pg-tit"><strong>S${i + 1} · ${pmFmtDM(intervalo[0])} a ${pmFmtDM(fimSemana)}</strong>${bI ? `<span class="boom" title="${bI} ${bI === 1 ? 'atividade' : 'atividades'} com detonação">${star}${bI} c/ detonação</span>` : `<span>${rel || `${n} ${n === 1 ? 'atividade' : 'atividades'}`}</span>`}</div>` : `<div class="pm-pg-tit"><strong>Sem Six Week carregada</strong></div>`}
+    ${intervalo ? pmSwMapaHTML(swDados, i) : ''}
+    <div class="pm-pg-foot pm-sw-foot"><span>${W.atualizacao ? `Atualizado em <b>${W.atualizacao}</b> · quinzenal` : 'Atualizado quinzenalmente'}</span>
+      <button onclick="abrirGantt()">${PM_ICON.gantt}Gráfico de Gantt</button></div>`;
 
   if (!intervalo) {
     corpo.innerHTML = `<div class="pm-empty" style="margin-top:18px">Ainda não tem dados sincronizados da Six Week.</div>`;
