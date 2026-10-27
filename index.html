@@ -2434,6 +2434,7 @@ body.tema-escuro .pm-cnt button{ box-shadow:none; }
 .pm-mp-via.meio{ stroke:var(--map-bg); stroke-width:3; }
 .pm-mp-via.serv{ stroke-width:16; stroke-linecap:round; }
 .pm-mp-via.ramal{ stroke-width:14; }
+.pm-mp-via.interlig{ stroke:var(--map-stb); stroke-width:7; }
 .pm-mp-tick{ fill:var(--map-lab); }
 .pm-mp-mono{ font-family:var(--f-mono); font-size:9px; letter-spacing:1.2px; fill:var(--map-lab); }
 .pm-mp-mono.big{ font-size:22px; letter-spacing:1px; }
@@ -5879,6 +5880,8 @@ function pmMapaSVGLinha(itens, sel) {
   });
   [[[1224,302],[1264,194],[1278,199],[1238,307]], [[1268,305],[1308,197],[1321,201],[1280,309]], [[1310,198],[1316,181],[1324,184],[1320,200]]]
     .forEach(p => { g += `<polygon points="${p.map(q => q.join(',')).join(' ')}" class="pm-mp-st thin"/>`; });
+  // túnel de interligação (poço sul ↔ poço oeste) por cima das estações
+  g += `<path d="M1256 251 L1290 251" class="pm-mp-via interlig"/><circle cx="1256" cy="251" r="9" class="pm-mp-st thin"/><circle cx="1290" cy="251" r="9" class="pm-mp-st thin"/>`;
   const est = itens.filter(it => it.loc.zona === 'est');
   const nl = est.filter(it => it.f.status === 'late').length, ns = est.filter(it => it.f.status === 'stop').length;
   const resumo = est.length ? [nl ? `${nl} atrasada${nl > 1 ? 's' : ''}` : '', ns ? `${ns} paralisada${ns > 1 ? 's' : ''}` : '', !nl && !ns ? `${est.length} em dia` : ''].filter(Boolean).join(' · ') : 'sem frentes ativas';
