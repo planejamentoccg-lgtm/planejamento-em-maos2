@@ -5901,7 +5901,7 @@ function pmMapaSVGLinha(itens, sel) {
       if (pk) {
         g += `<path d="${pmMapaCaminhoPK(loc.faixa[0], pk.atual, off)}" class="pm-mp-feito st-${f.status}"/>`;
         const [x, y] = pmMapaPontoPK(pk.atual, off);
-        pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${loc.via ? 'Via ' + loc.via + ' · ' : ''}PK ${pmPKFmt(pk.atual)}</text>`;
+        pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${pmEsc(String(f.data.Nome || '').replace(/^Via Permanente\s*[-–]\s*/i, ''))}</text>`;
       }
     }
   });
