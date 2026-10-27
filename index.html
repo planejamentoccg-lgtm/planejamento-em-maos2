@@ -2389,6 +2389,45 @@ body.tema-escuro{ --pact:#9DB7D6; --dv-late-bg:#3A2A24; --dv-late:#F3B3A3; --dv-
 @media print{
   .pm-top-data{ display:none !important; }
 }
+
+/* ✅ PROGRAMAÇÃO — mapa do dia */
+.pm-pg-side{ display:flex; flex-direction:column; gap:10px; }
+.pm-pg-seg{ display:flex; padding:3px; margin:0 12px; border-radius:20px; background:var(--surface); border:1px solid var(--line); }
+.pm-pg-seg button{ flex:1; height:36px; border-radius:17px; border:none; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; }
+.pm-pg-seg button[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
+.pm-pg-strip{ display:grid; grid-template-columns:repeat(var(--n, 6), minmax(0, 1fr)); gap:6px; margin:0 12px; }
+.pm-pg-strip button{ height:64px; border-radius:16px; border:none; background:var(--surface); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; padding:0; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.pm-pg-strip small{ font-family:var(--f-mono); font-size:10px; letter-spacing:1px; color:var(--muted); }
+.pm-pg-strip strong{ font-family:var(--f-display); font-size:19px; font-weight:800; line-height:1.1; }
+.pm-pg-strip em{ font-style:normal; font-size:10.5px; color:var(--muted); display:inline-flex; align-items:center; gap:3px; }
+.pm-pg-strip em.boom{ color:var(--mp-late); font-weight:600; }
+.pm-pg-strip button.is-past{ opacity:.55; }
+.pm-pg-strip button.is-now{ box-shadow:inset 0 0 0 2px var(--olive); }
+.pm-pg-strip button[aria-selected="true"]{ background:var(--ink); opacity:1; }
+.pm-pg-strip button[aria-selected="true"] strong{ color:var(--paper); }
+.pm-pg-strip button[aria-selected="true"] small, .pm-pg-strip button[aria-selected="true"] em{ color:var(--paper); opacity:.8; }
+.pm-pg-strip button[aria-selected="true"] em.boom{ color:#F08A72; opacity:1; }
+body.tema-escuro .pm-pg-strip button[aria-selected="true"] em.boom{ color:#B24435; }
+.pm-pg-tit{ display:flex; justify-content:space-between; align-items:baseline; padding:2px 16px 0; }
+.pm-pg-tit strong{ font-family:var(--f-display); font-size:20px; font-weight:800; }
+.pm-pg-tit strong::first-letter{ text-transform:uppercase; }
+.pm-pg-tit span{ font-size:13px; color:var(--muted); display:inline-flex; align-items:center; gap:5px; }
+.pm-pg-tit span.boom{ color:var(--mp-late); font-weight:600; }
+.pm-pg-tit svg{ width:13px; height:13px; }
+.pm-pg-mapa{ margin-bottom:0; }
+.pm-pg-foot{ padding:0 16px 6px; font-size:12px; color:var(--muted); }
+.pm-pg-pin .pm-mp-dot{ fill:var(--mp-ok); }
+.pm-pg-pin.boom .pm-mp-dot, .pm-pg-pin.boom .pm-mp-halo{ fill:var(--mp-late); }
+.pm-pg-star{ fill:#FFFFFF; }
+.pm-pg-num{ font-family:var(--f-display); font-size:12px; font-weight:800; fill:#FFFFFF; }
+.pm-mp-estring.ok{ stroke:var(--mp-ok); }
+.pm-pg-filtro{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:16px 12px 10px; padding:10px 14px; border-radius:14px; background:var(--olive-tint); font-size:13.5px; }
+.pm-pg-filtro button{ border:none; background:none; padding:0; font-weight:600; color:var(--olive-ink); min-height:32px; }
+@media (min-width:1024px){
+  .pm-pg-seg, .pm-pg-strip{ margin-left:0; margin-right:0; }
+  .pm-pg-tit, .pm-pg-foot{ padding-left:4px; padding-right:4px; }
+  .pm-cols:has(> .pm-side) > .pm-pg-side .pm-mp{ margin:0; }
+}
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -5818,8 +5857,8 @@ function pmMapaRotulo(nome, slot) {
 }
 
 function pmMapaTexto(x, y, linhas, lado, cls) {
-  const ax = lado === 'r' ? 'start' : lado === 'l' ? 'end' : 'middle';
-  let tx = lado === 'r' ? Math.max(x + 18, x < 280 ? 292 : x + 18) : lado === 'l' ? x - 18 : x;
+  const ax = lado === 'r' ? 'start' : (lado === 'l' || lado === 'lf') ? 'end' : 'middle';
+  let tx = lado === 'r' ? Math.max(x + 18, x < 280 ? 292 : x + 18) : lado === 'l' ? x - 18 : lado === 'lf' ? x - 40 : x;
   let y0 = y + 4 - (linhas.length - 1) * 6.5 + (lado === 'c' ? 30 : 0);
   return `<text class="pm-mp-lab ${cls || ''}" text-anchor="${ax}">${linhas.map((l, i) => `<tspan x="${tx}" y="${(y0 + i * 13).toFixed(1)}">${pmEsc(l)}</tspan>`).join('')}</text>`;
 }
@@ -5831,20 +5870,8 @@ function pmMapaPino(x, y, f, i, sel) {
     ${sel === i ? `<circle cx="${x}" cy="${y}" r="17" class="pm-mp-selring"/>` : ''}<circle cx="${x}" cy="${y}" r="9" class="pm-mp-dot"/>${pausa}</g>`;
 }
 
-function pmMapaSVGEstacao(itens, sel) {
-  const porSlot = {};
-  itens.forEach(it => { if (it.loc.zona === 'est') (porSlot[it.loc.slot] = porSlot[it.loc.slot] || []).push(it); });
-  let pins = '', labs = '';
-  Object.entries(porSlot).forEach(([slot, arr]) => {
-    const s = PM_MAPA_SLOTS[slot]; if (!s) return;
-    const n = arr.length, c0 = slot === 'interlig' ? -(n - 1) / 2 : 0;
-    arr.forEach((it, k) => {
-      const x = s.x + s.dx * (c0 + k), y = s.y + s.dy * (c0 + k);
-      pins += pmMapaPino(x, y, it.f, it.i, sel);
-      labs += pmMapaTexto(x, y, pmMapaRotulo(it.f.data.Nome, slot), s.lado, sel != null && sel !== it.i ? 'dim' : '');
-    });
-  });
-  return `<svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Mapa esquemático da Estação Gávea">
+function pmMapaBaseEstacao() {
+  return `
     <path d="M236 600 V690" class="pm-mp-via"/><path d="M264 600 V690" class="pm-mp-via"/>
     <rect x="80" y="150" width="60" height="440" rx="8" class="pm-mp-st"/>
     <rect x="220" y="130" width="60" height="470" rx="8" class="pm-mp-st"/>
@@ -5862,11 +5889,27 @@ function pmMapaSVGEstacao(itens, sel) {
     <text x="236" y="56" class="pm-mp-tit" text-anchor="middle">EST. OESTE</text>
     <text x="236" y="68" class="pm-mp-mono" text-anchor="middle">CARIOCA ↑</text>
     <text x="250" y="626" class="pm-mp-mono" text-anchor="middle">JD. OCEÂNICO ↓</text>
+`;
+}
+function pmMapaSVGEstacao(itens, sel) {
+  const porSlot = {};
+  itens.forEach(it => { if (it.loc.zona === 'est') (porSlot[it.loc.slot] = porSlot[it.loc.slot] || []).push(it); });
+  let pins = '', labs = '';
+  Object.entries(porSlot).forEach(([slot, arr]) => {
+    const s = PM_MAPA_SLOTS[slot]; if (!s) return;
+    const n = arr.length, c0 = slot === 'interlig' ? -(n - 1) / 2 : 0;
+    arr.forEach((it, k) => {
+      const x = s.x + s.dx * (c0 + k), y = s.y + s.dy * (c0 + k);
+      pins += pmMapaPino(x, y, it.f, it.i, sel);
+      labs += pmMapaTexto(x, y, pmMapaRotulo(it.f.data.Nome, slot), s.lado, sel != null && sel !== it.i ? 'dim' : '');
+    });
+  });
+  return `<svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Mapa esquemático da Estação Gávea">${pmMapaBaseEstacao()}
     ${pins}${labs}
   </svg>`;
 }
 
-function pmMapaSVGLinha(itens, sel) {
+function pmMapaBaseLinha() {
   const P = (x, y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
   const serv = [[1000,515],[1035,560],[1055,620],[1040,680],[1000,750],[975,800],[960,830],[985,860]];
   let g = `<path d="M${serv.map(p => P(...p)).join(' L')}" class="pm-mp-via serv"/>`;
@@ -5882,6 +5925,10 @@ function pmMapaSVGLinha(itens, sel) {
     .forEach(p => { g += `<polygon points="${p.map(q => q.join(',')).join(' ')}" class="pm-mp-st thin"/>`; });
   // túnel de interligação (poço sul ↔ poço oeste) por cima das estações
   g += `<path d="M1256 251 L1290 251" class="pm-mp-via interlig"/><circle cx="1256" cy="251" r="9" class="pm-mp-st thin"/><circle cx="1290" cy="251" r="9" class="pm-mp-st thin"/>`;
+  return g;
+}
+function pmMapaSVGLinha(itens, sel) {
+  let g = pmMapaBaseLinha();
   const est = itens.filter(it => it.loc.zona === 'est');
   const nl = est.filter(it => it.f.status === 'late').length, ns = est.filter(it => it.f.status === 'stop').length;
   const resumo = est.length ? [nl ? `${nl} atrasada${nl > 1 ? 's' : ''}` : '', ns ? `${ns} paralisada${ns > 1 ? 's' : ''}` : '', !nl && !ns ? `${est.length} em dia` : ''].filter(Boolean).join(' · ') : 'sem frentes ativas';
@@ -6542,6 +6589,118 @@ function pmRowHTML(it) {
   return `<div class="pm-row"><span class="pm-txt"><strong>${pmEsc(it.nome)}</strong>${it.det ? `<small>${pmEsc(it.det)}</small>` : ''}</span>${lado}</div>`;
 }
 
+// =====================================================================
+// ✅ PROGRAMAÇÃO — mapa do dia. Cada atividade da programação semanal
+// vai para um lugar do mapa pelo texto da descrição (dicionário de
+// apelidos abaixo). "Detonação" no texto = estrela vermelha.
+// =====================================================================
+const PM_PROG_LUGARES = {
+  oesteC:   { x: 250, y: 200, lado: 'r', nome: ['Sentido', 'Carioca'], area: 'Estação Oeste · Sentido Carioca' },
+  oesteJ:   { x: 250, y: 525, lado: 'r', nome: ['Sentido', 'São Conrado'], area: 'Estação Oeste · Sentido São Conrado' },
+  trapC:    { x: 250, y: 294, lado: 'r', nome: ['Trapézio', 'Carioca'], area: 'Trapézio Carioca' },
+  trapJ:    { x: 250, y: 446, lado: 'r', nome: ['Trapézio', 'Jd. Oceânico'], area: 'Trapézio Jardim Oceânico' },
+  apendice: { x: 304, y: 370, lado: 'r', nome: ['Apêndice'], area: 'Apêndice' },
+  rabicho:  { x: 264, y: 100, lado: 'r', nome: ['Rabicho'], area: 'Rabicho' },
+  pocoOeste:{ x: 250, y: 370, lado: 'r', nome: ['Poço', 'Oeste'], area: 'Poço Oeste' },
+  pocoSul:  { x: 110, y: 370, lado: 'lf', nome: ['Poço', 'Sul'], area: 'Poço Sul' },
+  interlig: { x: 180, y: 370, lado: 'c', nome: ['Interligação'], area: 'Túnel de Interligação' },
+  sulU:     { x: 110, y: 220, lado: 'l', nome: ['Sentido', 'Uruguai'], area: 'Estação Sul · Sentido Uruguai' },
+  sulG:     { x: 110, y: 520, lado: 'l', nome: ['Sentido', 'Gen. Osório'], area: 'Estação Sul · Sentido General Osório' },
+  sul:      { x: 110, y: 290, lado: 'l', nome: ['Estação', 'Sul'], area: 'Estação Sul' },
+  oeste:    { x: 250, y: 560, lado: 'r', nome: ['Estação', 'Oeste'], area: 'Estação Oeste' },
+};
+function pmProgLugar(descricao) {
+  const t = normalizarTexto(descricao);
+  const tem = r => r.test(t);
+  const c = tem(/carioca|\bcrc\b/), j = tem(/conrado|jardim oceanico|\bjoc?\b/);
+  const pe = t.match(/\bpe\s*-?\s*(\d{1,2})\b/) || t.match(/passagem de emergencia\s*(\d+)/);
+  if (pe && PM_MAPA_PASSAGENS[pe[1]]) return { linha: true, chave: 'pe' + pe[1], nome: 'PE ' + pe[1], pk: PM_MAPA_PASSAGENS[pe[1]], area: 'Passagem de Emergência ' + pe[1] };
+  if (tem(/ssr\s*0?4/)) return { linha: true, chave: 'ssr04', nome: 'SSR 04', ssr: true, area: 'SSR 04' };
+  if (tem(/via permanente|\bvia [12]\b/)) { const v = tem(/via 1\b/) ? 1 : 2; return { linha: true, chave: 'via' + v, nome: 'Via ' + v, via: v, area: 'Via permanente · Via ' + v }; }
+  if (tem(/poco sul/)) return { chave: 'pocoSul' };
+  if (tem(/poco oeste/)) return { chave: 'pocoOeste' };
+  if (tem(/interligacao/)) return { chave: 'interlig' };
+  if (tem(/rabicho/)) return { chave: 'rabicho' };
+  if (tem(/apendice/)) return { chave: 'apendice' };
+  if (tem(/trapezio|alargamento/)) return { chave: c ? 'trapC' : j ? 'trapJ' : 'trapC' };
+  if (tem(/estacao sul/)) return { chave: tem(/osorio/) ? 'sulG' : tem(/uruguai/) ? 'sulU' : 'sul' };
+  if (tem(/estacao oeste|rebaixo|sentido/)) return { chave: c ? 'oesteC' : j ? 'oesteJ' : 'oeste' };
+  return null;
+}
+function pmProgPkVia(v) {
+  const r = window.pmResumoFrentes;
+  const f = r && r.frentes.find(f => new RegExp('via\\s*' + v + '\\b').test(normalizarTexto(f.data.Nome || '')));
+  if (f) { const loc = pmMapaLocal(f.data); const pk = loc.faixa && pmMapaPKAtual(f.data, loc.faixa); if (pk) return pk.atual; if (loc.faixa) return loc.faixa[0]; }
+  return 7900;
+}
+// agrupa as atividades do dia por lugar
+function pmProgLugaresDoDia(tarefasDia) {
+  const lug = {};
+  const sem = [];
+  tarefasDia.forEach(t => {
+    const l = pmProgLugar(t.Descricao);
+    const boom = normalizarTexto(t.Descricao).includes('detona');
+    if (!l) { sem.push(t); return; }
+    const k = l.chave;
+    if (!lug[k]) lug[k] = { ...l, n: 0, boom: 0, tarefas: [] };
+    lug[k].n++; if (boom) lug[k].boom++; lug[k].tarefas.push(t);
+  });
+  return { lug, sem };
+}
+function pmProgPino(x, y, L, k, sel, escala) {
+  const isB = L.boom > 0;
+  const dim = sel && sel !== k;
+  const tr = escala ? `transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${escala})"` : `transform="translate(${x} ${y})"`;
+  return `<g class="pm-mp-pin pm-pg-pin ${isB ? 'boom' : ''}${sel === k ? ' sel' : ''}${dim ? ' dim' : ''}" ${tr} role="button" tabindex="0"
+    aria-label="${pmEsc(L.area || L.nome)}: ${L.n} ${L.n === 1 ? 'atividade' : 'atividades'}${isB ? `, ${L.boom} com detonação` : ''}"
+    onclick="pmProgSelecionar('${k}')" onkeydown="if(event.key==='Enter')pmProgSelecionar('${k}')">
+    <circle r="22" class="pm-mp-hit"/>${isB ? '<circle r="18" class="pm-mp-halo"/>' : ''}${sel === k ? '<circle r="18" class="pm-mp-selring"/>' : ''}
+    <circle r="11.5" class="pm-mp-dot"/>
+    ${isB ? `<path transform="translate(-7 -7) scale(.58)" class="pm-pg-star" d="M12 2l2 6.2L20 6l-2.6 5.6L23 13l-5.8 1.6L19 21l-5.6-3.4L12 23l-1.4-5.4L5 21l1.8-6.4L1 13l5.6-1.4L4 6l6 2.2z"/>` : `<text y="4" text-anchor="middle" class="pm-pg-num">${L.n}</text>`}
+  </g>`;
+}
+function pmProgMapaHTML(tarefasDia) {
+  const { lug, sem } = pmProgLugaresDoDia(tarefasDia);
+  const zoom = window.pmProgZoom || 'estacao';
+  let sel = window.pmProgSel; if (sel && !lug[sel]) sel = window.pmProgSel = null;
+  const est = Object.entries(lug).filter(([, L]) => !L.linha), lin = Object.entries(lug).filter(([, L]) => L.linha);
+  let svg;
+  if (zoom === 'linha') {
+    let g = pmMapaBaseLinha(), pins = '';
+    const nEst = est.reduce((s, [, L]) => s + L.n, 0), bEst = est.reduce((s, [, L]) => s + L.boom, 0);
+    g += `<g class="pm-mp-estbtn" role="button" tabindex="0" onclick="pmProgZoomar('estacao')" onkeydown="if(event.key==='Enter')pmProgZoomar('estacao')">
+      <circle cx="1272" cy="250" r="72" class="pm-mp-estring ${bEst ? '' : 'ok'}"/><rect x="830" y="196" width="360" height="104" rx="30" class="pm-mp-card"/>
+      <text x="856" y="240" class="pm-mp-tit big">Estação Gávea</text>
+      <text x="856" y="278" class="pm-mp-lab big ${bEst ? 'late' : ''}">${nEst ? `${nEst} ativ.${bEst ? ` · ${bEst} detonaç${bEst > 1 ? 'ões' : 'ão'}` : ''}` : 'sem atividade'} ›</text></g>`;
+    lin.forEach(([k, L]) => {
+      const pk = L.pk || (L.via ? pmProgPkVia(L.via) : 8950);
+      const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
+      pins += pmProgPino(x, y, L, k, sel, 2.2) + `<text x="${(L.ssr ? x - 36 : x + 36).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
+    });
+    svg = `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Atividades do dia na linha toda">${g}${pins}</svg>`;
+  } else {
+    let pins = '', labs = '';
+    est.forEach(([k, L]) => {
+      const P = PM_PROG_LUGARES[k];
+      pins += pmProgPino(P.x, P.y, L, k, sel);
+      labs += pmMapaTexto(P.x, P.y, P.nome, P.lado, sel && sel !== k ? 'dim' : '');
+    });
+    svg = `<svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Atividades do dia na Estação Gávea">${pmMapaBaseEstacao()}${pins}${labs}</svg>`;
+  }
+  const seg = (k, lab) => `<button aria-pressed="${zoom === k}" onclick="pmProgZoomar('${k}')">${lab}</button>`;
+  const nLin = lin.reduce((s, [, L]) => s + L.n, 0), bLin = lin.reduce((s, [, L]) => s + L.boom, 0);
+  return `<div class="pm-mp pm-pg-mapa ${zoom === 'linha' ? 'linha' : ''}">${svg}
+    <div class="pm-mp-zoom">${seg('estacao', 'Estação')}${seg('linha', 'Linha toda')}</div>
+    <div class="pm-mp-chips">
+      ${zoom === 'estacao' && nLin ? `<button class="pm-mp-chip" onclick="pmProgZoomar('linha')"><i class="st-${bLin ? 'late' : 'ok'}"></i>${lin.map(([, L]) => L.nome).join(' · ')} ↓</button>` : ''}
+      ${sem.length ? `<span class="pm-mp-chip" title="${pmEsc(sem.map(t => t.Descricao).join(' | '))}"><i class="st-none"></i>${sem.length} sem lugar no mapa</span>` : ''}
+    </div>
+    ${!tarefasDia.length ? '<div class="pm-mp-vazio">Nada programado para este dia.</div>' : ''}
+  </div>`;
+}
+function pmProgSelecionar(k) { window.pmProgSel = window.pmProgSel === k ? null : k; renderizarProgramacao(); }
+function pmProgZoomar(z) { window.pmProgZoom = z; window.pmProgSel = null; renderizarProgramacao(); }
+
 function renderizarProgramacao() {
   const hero = document.getElementById('progHero');
   const corpo = document.getElementById('progCorpo');
@@ -6558,6 +6717,7 @@ function renderizarProgramacao() {
   if (semana) {
     const S = window.pmEstaSemana || {};
     if (!S.carregado) {
+      hero.className = 'pm-hero pm-side';
       hero.innerHTML = `<div class="pm-hero-top"><span class="pm-eyebrow">Programação</span></div>
         <h1 class="pm-hero-title" style="opacity:.5;">Carregando…</h1>${seg}`;
       corpo.innerHTML = '';
@@ -6576,6 +6736,7 @@ function renderizarProgramacao() {
     let detonacoes = 0;
     tarefasDia.forEach(t => {
       const p = pmSepararDescricao(t.Descricao);
+      p.desc = t.Descricao;
       p.detonacao = normalizarTexto(t.Descricao).includes('detona');
       if (p.detonacao) detonacoes++;
       if (!porFrente[p.frente]) { porFrente[p.frente] = []; ordem.push(p.frente); }
@@ -6588,23 +6749,36 @@ function renderizarProgramacao() {
     if (!dias.length) titulo = S.erro ? 'Não consegui carregar a programação' : 'Sem programação carregada';
     else titulo = `${n} ${n === 1 ? 'atividade prevista' : 'atividades previstas'} ${ehHoje ? 'para hoje' : 'neste dia'}`;
 
+    hero.className = 'pm-side pm-pg-side';
+    const contaDia = d => { const ts = (S.tarefas || []).filter(t => (t.DiasPrevistos || []).includes(d.str)); return [ts.length, ts.filter(t => normalizarTexto(t.Descricao).includes('detona')).length]; };
+    const star = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M12 2l2 6.2L20 6l-2.6 5.6L23 13l-5.8 1.6L19 21l-5.6-3.4L12 23l-1.4-5.4L5 21l1.8-6.4L1 13l5.6-1.4L4 6l6 2.2z"/></svg>';
     hero.innerHTML = `
-      <div class="pm-hero-top"><span class="pm-eyebrow">Programação</span>${dia ? `<span class="pm-hero-meta">${PM_DIA_SEM[dia.data.getDay()].toLowerCase()} · ${pmFmtDM(dia.data)}</span>` : ''}</div>
-      <h1 class="pm-hero-title">${titulo}</h1>
-      ${detonacoes ? `<span class="pm-boom-pill">${PM_ICON.boom}${detonacoes} ${detonacoes === 1 ? 'detonação' : 'detonações'} ${ehHoje ? 'hoje' : 'no dia'}</span>` : ''}
-      ${seg}
-      ${dias.length ? `<div class="pm-strip" role="tablist" aria-label="Dias da semana" style="--n:${Math.min(dias.length, 7)}">${dias.map((d, i) =>
-        `<button role="tab" aria-selected="${i === st.dia}" class="${d.data < hoje ? 'is-past' : ''} ${+d.data === +hoje ? 'is-now' : ''}" onclick="pmSelecionarDia(${i})"><small>${PM_DIA_SEM[d.data.getDay()]}</small><strong>${pmDD(d.data)}</strong></button>`).join('')}</div>` : ''}
-      <div class="pm-hero-foot"><span>${S.atualizacao ? `Atualizado em <b>${S.atualizacao}</b> · semanal` : 'Atualizado semanalmente'}</span></div>`;
+      <div class="pm-pg-seg" role="tablist">
+        <button role="tab" aria-selected="true" onclick="mostrarAbaProgramacao('estaSemana')">Esta semana</button>
+        <button role="tab" aria-selected="false" onclick="mostrarAbaProgramacao('sixWeek')">Six Week</button>
+      </div>
+      ${dias.length ? `<div class="pm-pg-strip" role="tablist" aria-label="Dias da semana" style="--n:${Math.min(dias.length, 7)}">${dias.map((d, i) => {
+        const [na, nb] = contaDia(d);
+        return `<button role="tab" aria-selected="${i === st.dia}" class="${d.data < hoje ? 'is-past' : ''} ${+d.data === +hoje ? 'is-now' : ''}" onclick="pmProgSel=null;pmSelecionarDia(${i})">
+          <small>${PM_DIA_SEM[d.data.getDay()]}</small><strong>${pmDD(d.data)}</strong><em class="${nb ? 'boom' : ''}">${nb ? `${star}${nb}` : `${na} ativ.`}</em></button>`;
+      }).join('')}</div>` : ''}
+      ${dia ? `<div class="pm-pg-tit"><strong>${ehHoje ? 'Hoje, ' : ''}${PM_DIA_NOME[dia.data.getDay()].toLowerCase()}${ehHoje ? '' : `, ${pmFmtDM(dia.data)}`}</strong>${detonacoes ? `<span class="boom">${star}${detonacoes} ${detonacoes === 1 ? 'detonação' : 'detonações'}</span>` : `<span>${n} ${n === 1 ? 'atividade' : 'atividades'}</span>`}</div>` : `<div class="pm-pg-tit"><strong>${titulo}</strong></div>`}
+      ${dia ? pmProgMapaHTML(tarefasDia) : ''}
+      <div class="pm-pg-foot">${S.atualizacao ? `Atualizado em <b>${S.atualizacao}</b> · semanal` : 'Atualizado semanalmente'}</div>`;
 
     if (!dia) {
       corpo.innerHTML = `<div class="pm-empty" style="margin-top:18px">Ainda não tem dados sincronizados da programação desta semana.</div>`;
     } else {
-      corpo.innerHTML = pmSec(`${ehHoje ? 'Hoje · ' : ''}${PM_DIA_NOME[dia.data.getDay()]}, ${pmFmtDM(dia.data)}`, `${n} ${n === 1 ? 'atividade' : 'atividades'}`) +
-        (n ? `<div class="pm-stack">${ordem.map(f => `
+      const selL = window.pmProgSel;
+      const lugarSel = selL ? (pmProgLugaresDoDia(tarefasDia).lug[selL] || null) : null;
+      const descrSel = lugarSel ? new Set(lugarSel.tarefas.map(t => t.Descricao)) : null;
+      const ordemVis = ordem.map(f => [f, porFrente[f].filter(p => !descrSel || descrSel.has(p.desc))]).filter(([, it]) => it.length);
+      corpo.innerHTML = (lugarSel ? `<div class="pm-pg-filtro"><span>Mostrando <b>${pmEsc(lugarSel.area || PM_PROG_LUGARES[selL]?.area || '')}</b></span><button onclick="pmProgSelecionar('${selL}')">Ver tudo</button></div>`
+          : pmSec(`${ehHoje ? 'Hoje · ' : ''}${PM_DIA_NOME[dia.data.getDay()]}, ${pmFmtDM(dia.data)}`, `${n} ${n === 1 ? 'atividade' : 'atividades'}`)) +
+        (n ? `<div class="pm-stack">${ordemVis.map(([f, itens]) => `
           <div class="pm-group">
-            <div class="pm-group-head"><span class="pm-name">${pmEsc(f)}</span><span class="pm-count">${porFrente[f].length}</span></div>
-            ${porFrente[f].map(pmRowHTML).join('')}
+            <div class="pm-group-head"><span class="pm-name">${pmEsc(f)}</span><span class="pm-count">${itens.length}</span></div>
+            ${itens.map(pmRowHTML).join('')}
           </div>`).join('')}</div>`
           : `<div class="pm-empty">Nada previsto para este dia.</div>`) +
         `<button class="pm-cta-soft" onclick="mostrarAbaProgramacao('sixWeek')"><span>Quer ver as próximas semanas?<small>Abrir a Six Week</small></span>${PM_ICON.chev}</button>`;
@@ -6615,6 +6789,7 @@ function renderizarProgramacao() {
   // ---------------- SIX WEEK ----------------
   const W = window.pmSixWeek || {};
   if (!W.carregado) {
+    hero.className = 'pm-hero pm-side';
     hero.innerHTML = `<div class="pm-hero-top"><span class="pm-eyebrow">Programação · Six Week</span></div>
       <h1 class="pm-hero-title" style="opacity:.5;">Carregando…</h1>${seg}`;
     corpo.innerHTML = '';
@@ -6629,6 +6804,7 @@ function renderizarProgramacao() {
   const n = grupos.reduce((s, g) => s + g.itens.length, 0);
   const rel = atual < 0 ? '' : (i < atual ? 'já passou' : i === atual ? 'semana atual' : 'próxima');
 
+  hero.className = 'pm-hero pm-side';
   hero.innerHTML = `
     <div class="pm-hero-top"><span class="pm-eyebrow">Programação · Six Week</span>${semanas.length ? `<span class="pm-hero-meta">semana ${i + 1} de ${semanas.length}</span>` : ''}</div>
     <h1 class="pm-hero-title">${!intervalo ? 'Sem Six Week carregada' : (i === atual ? `${n} ${n === 1 ? 'atividade programada' : 'atividades programadas'} nesta semana` : `Semana ${i + 1} · ${pmFmtDM(intervalo[0])} a ${pmFmtDM(intervalo[1])}`)}</h1>
