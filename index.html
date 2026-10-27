@@ -1809,7 +1809,7 @@ body.tema-escuro .iconeIndicador{
   --ok:#758E4A;  --ok-ink:#5C7338;  --ok-hero:#99B36A;
   --late:#B24435; --late-ink:#B24435; --late-hero:#E27B64;
   --wait:#D0A652; --wait-ink:#9A6A12; --wait-hero:#DCB866;
-  --stop:#BC8038; --stop-ink:#9A6526;
+  --stop:#4F7BB5; --stop-ink:#3D6599;
   --past:#56625D;
   --today:#B24435;
   --pending-bg:#FAF6ED; --pending-line:#EFE4C9; --pending-num:#9A6A12;
@@ -1838,7 +1838,7 @@ body.tema-escuro{
   --ok:#99B36A;  --ok-ink:#B5CC88;
   --late:#E27B64; --late-ink:#EC8F79;
   --wait:#D0A652; --wait-ink:#DCB866;
-  --stop:#D9A05A; --stop-ink:#E0AC6C;
+  --stop:#8FB0DC; --stop-ink:#A6C2E6;
   --past:#6B7771;
   --today:#E27B64;
   --pending-bg:#2A2618; --pending-line:#5C4F2A; --pending-num:#DCB866;
@@ -2204,7 +2204,7 @@ body.tema-escuro .pm-login-logo{ background:#FFFFFF; border-radius:10px; padding
     --hero-bg:#FFFFFF; --hero-border:#D6D7D1; --hero-ink:#161F1E; --hero-muted:#5D6660; --hero-label:#5D6660;
     --hero-sep:#D6D7D1; --hero-inset:#F2F2F0; --hero-accent:#5C7338;
     --ok:#758E4A; --ok-ink:#5C7338; --ok-hero:#5C7338; --late:#B24435; --late-ink:#B24435; --late-hero:#B24435;
-    --wait:#D0A652; --wait-ink:#9A6A12; --wait-hero:#9A6A12; --stop:#BC8038; --stop-ink:#9A6526;
+    --wait:#D0A652; --wait-ink:#9A6A12; --wait-hero:#9A6A12; --stop:#4F7BB5; --stop-ink:#3D6599;
     --past:#56625D; --today:#B24435; --pending-bg:#FAF6ED; --pending-line:#EFE4C9; --pending-num:#9A6A12;
     --boom-bg:#FBE9E4; --boom-ink:#9C3A2D;
     background:#FFFFFF !important; color:#161F1E !important;
@@ -2389,6 +2389,132 @@ body.tema-escuro{ --pact:#9DB7D6; --dv-late-bg:#3A2A24; --dv-late:#F3B3A3; --dv-
 @media print{
   .pm-top-data{ display:none !important; }
 }
+/* ✅ MAPA DAS FRENTES */
+:root{
+  --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
+  --map-via:#C9D2B8; --map-halo:#EEF2E4; --map-card:#FFFFFF; --map-ink:#161F1E;
+  --mp-late:#D2634F; --mp-ok:#758E4A; --mp-stop:#4F7BB5; --mp-halo-op:.22;
+}
+body.tema-escuro{
+  --map-bg:#121A17; --map-grid:#1A2420; --map-st:#1B2521; --map-stb:#3A4943; --map-zone:#22302B; --map-lab:#7D877F;
+  --map-via:#2E3B36; --map-halo:#121A17; --map-card:#22302B; --map-ink:#FFFFFF;
+  --mp-late:#F08A72; --mp-ok:#A9C27A; --mp-stop:#8FB0DC; --mp-halo-op:.35;
+}
+.pm-fr-bar{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:0 12px 12px; }
+.pm-fr-bar .pm-chips{ padding:0; overflow-x:auto; }
+.pm-fr-bar .pm-chips button{ height:38px; padding:0 14px; }
+.pm-fr-vtog{ display:inline-flex; padding:3px; border-radius:20px; background:var(--surface); border:1px solid var(--line); flex-shrink:0; }
+.pm-fr-vtog button{ width:42px; height:32px; border-radius:16px; border:none; background:transparent; color:var(--muted); display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.pm-fr-vtog button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+.pm-fr-vtog svg{ width:18px; height:18px; }
+.pm-fr-meta{ display:flex; justify-content:space-between; align-items:center; padding:0 16px 8px; font-family:var(--f-mono); font-size:11px; color:var(--muted); }
+.pm-fr-meta button{ border:none; background:none; padding:0; font-family:var(--f-body); font-size:13px; font-weight:600; color:var(--olive-ink); display:inline-flex; align-items:center; min-height:32px; }
+.pm-fr-meta button svg{ width:16px; height:16px; }
+.pm-cnt{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; padding:0 12px 12px; }
+.pm-cnt button{ text-align:left; padding:12px 14px; border-radius:18px; border:1.5px solid transparent; background:var(--map-card); display:flex; flex-direction:column; gap:2px; box-shadow:0 4px 16px rgba(0,0,0,.07); }
+.pm-cnt b{ font-family:var(--f-display); font-size:30px; font-weight:800; line-height:1; }
+.pm-cnt span{ font-size:12.5px; color:var(--muted); }
+.pm-cnt .late b{ color:var(--mp-late); } .pm-cnt .ok b{ color:var(--mp-ok); } .pm-cnt .stop b{ color:var(--mp-stop); }
+.pm-cnt button[aria-pressed="true"].late{ border-color:var(--mp-late); } .pm-cnt button[aria-pressed="true"].ok{ border-color:var(--mp-ok); } .pm-cnt button[aria-pressed="true"].stop{ border-color:var(--mp-stop); }
+.pm-cnt.filtrando button[aria-pressed="false"]{ opacity:.55; }
+body.tema-escuro .pm-cnt button{ box-shadow:none; }
+
+.pm-fr[data-vista="mapa"] #frentesListaWrap{ display:none; }
+.pm-fr[data-vista="lista"] #frentesMapa{ display:none; }
+
+.pm-mp{ position:relative; margin:0 12px 14px; border-radius:24px; overflow:hidden; background-color:var(--map-bg);
+  background-image:linear-gradient(var(--map-grid) 1px, transparent 1px), linear-gradient(90deg, var(--map-grid) 1px, transparent 1px);
+  background-size:24px 24px; padding:52px 0 60px; }
+.pm-mp-svg{ display:block; width:100%; height:auto; max-height:max(420px, calc(100vh - 330px)); max-height:max(420px, calc(100dvh - 330px)); }
+.pm-mp-st{ fill:var(--map-st); stroke:var(--map-stb); stroke-width:2.5; }
+.pm-mp-st.thin{ stroke-width:2; }
+.pm-mp-zone{ fill:var(--map-zone); }
+.pm-mp-via{ fill:none; stroke:var(--map-via); stroke-width:10; }
+.pm-mp-via.linha{ stroke-width:34; stroke-linecap:round; }
+.pm-mp-via.meio{ stroke:var(--map-bg); stroke-width:3; }
+.pm-mp-via.serv{ stroke-width:16; stroke-linecap:round; }
+.pm-mp-via.ramal{ stroke-width:14; }
+.pm-mp-tick{ fill:var(--map-lab); }
+.pm-mp-mono{ font-family:var(--f-mono); font-size:9px; letter-spacing:1.2px; fill:var(--map-lab); }
+.pm-mp-mono.big{ font-size:22px; letter-spacing:1px; }
+.pm-mp-tit{ font-family:var(--f-display); font-size:12px; font-weight:800; fill:var(--map-ink); }
+.pm-mp-tit.big{ font-size:30px; }
+.pm-mp-lab{ font-family:var(--f-body); font-size:11.5px; font-weight:700; fill:var(--map-ink); stroke:var(--map-halo); stroke-width:4px; paint-order:stroke; stroke-linejoin:round; }
+.pm-mp-lab.big{ font-size:27px; stroke-width:8px; }
+.pm-mp-lab.late{ fill:var(--mp-late); }
+.pm-mp-lab.dim, .pm-mp-pin.dim{ opacity:.35; }
+.pm-mp-mono.halo{ stroke:var(--map-halo); stroke-width:6px; paint-order:stroke; }
+.pm-mp-card{ fill:var(--map-card); }
+.pm-mp-estring{ fill:none; stroke:var(--mp-late); stroke-width:4; stroke-dasharray:10 10; }
+.pm-mp-estbtn, .pm-mp-pin{ cursor:pointer; outline:none; }
+.pm-mp-hit{ fill:transparent; }
+.pm-mp-dot{ stroke:var(--map-bg); stroke-width:3; }
+.pm-mp-pin.st-late .pm-mp-dot, .pm-mp-pin.st-late .pm-mp-halo{ fill:var(--mp-late); }
+.pm-mp-pin.st-ok .pm-mp-dot{ fill:var(--mp-ok); }
+.pm-mp-pin.st-stop .pm-mp-dot, .pm-mp-pin.st-stop .pm-mp-halo{ fill:var(--mp-stop); }
+.pm-mp-halo{ opacity:var(--mp-halo-op); }
+.pm-mp-pause{ fill:#FFFFFF; }
+.pm-mp-selring{ fill:none; stroke:var(--map-ink); stroke-width:2.5; }
+.pm-mp-pin:focus-visible .pm-mp-selring, .pm-mp-pin:focus-visible .pm-mp-dot{ stroke:var(--map-ink); }
+.pm-mp-trecho{ fill:none; stroke-width:6; stroke-dasharray:12 10; opacity:.8; }
+.pm-mp-feito{ fill:none; stroke-width:30; stroke-linecap:round; }
+.pm-mp-trecho.st-ok, .pm-mp-feito.st-ok{ stroke:var(--mp-ok); }
+.pm-mp-trecho.st-late, .pm-mp-feito.st-late{ stroke:var(--mp-late); }
+.pm-mp-trecho.st-stop, .pm-mp-feito.st-stop{ stroke:var(--mp-stop); }
+
+.pm-mp-zoom{ position:absolute; top:10px; left:10px; display:inline-flex; padding:3px; border-radius:19px; background:var(--map-card); box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.pm-mp-zoom button{ height:32px; padding:0 12px; border-radius:16px; border:none; background:transparent; color:var(--muted); font-size:12.5px; font-weight:600; }
+.pm-mp-zoom button[aria-pressed="true"]{ background:var(--map-ink); color:var(--map-bg); }
+.pm-mp-chips{ position:absolute; left:10px; right:10px; bottom:12px; display:flex; flex-wrap:wrap; gap:8px; }
+.pm-mp-chip{ display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 14px; border-radius:19px; border:none; background:var(--map-card); color:var(--map-ink); font-size:13px; font-weight:600; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.pm-mp-chip i, .pm-mp-chip i{ width:10px; height:10px; border-radius:5px; background:var(--faint); }
+.pm-mp-chip i.st-late{ background:var(--mp-late); } .pm-mp-chip i.st-ok{ background:var(--mp-ok); } .pm-mp-chip i.st-stop{ background:var(--mp-stop); }
+.pm-mp-vazio{ position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); width:80%; text-align:center; padding:14px; border-radius:16px; background:var(--map-card); color:var(--muted); font-size:13.5px; }
+
+.pm-mp-sheet{ position:fixed; left:0; right:0; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); z-index:40; background:var(--surface);
+  border-radius:26px 26px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,.18); padding:8px 16px 14px; display:flex; flex-direction:column; gap:12px;
+  max-width:640px; margin:0 auto; animation:pmSheetIn .2s ease-out; }
+@keyframes pmSheetIn{ from{ transform:translateY(30px); opacity:0; } to{ transform:none; opacity:1; } }
+.pm-mp-sheet-top{ display:flex; justify-content:space-between; align-items:center; }
+.pm-mp-sheet-top span{ width:40px; } .pm-mp-sheet-top i{ width:40px; height:5px; border-radius:3px; background:var(--line); }
+.pm-mp-sheet-top button{ width:40px; height:36px; border:none; background:none; color:var(--muted); display:inline-flex; align-items:center; justify-content:flex-end; padding:0; }
+.pm-mp-card-f{ display:flex; align-items:center; gap:14px; padding:14px; border-radius:22px; border:none; text-align:left; color:#FFFFFF; width:100%; }
+.pm-mp-card-f.st-late{ background:#D2634F; } .pm-mp-card-f.st-ok{ background:#758E4A; } .pm-mp-card-f.st-stop{ background:#4F7BB5; }
+body.tema-escuro .pm-mp-card-f.st-late{ background:#3A2620; } body.tema-escuro .pm-mp-card-f.st-ok{ background:#26331F; } body.tema-escuro .pm-mp-card-f.st-stop{ background:#1F2C3D; }
+.pm-mp-card-f .pm-chev{ color:#FFFFFF; flex-shrink:0; }
+.pm-mp-ring{ width:62px; height:62px; border-radius:31px; flex-shrink:0; display:grid; place-items:center; background:conic-gradient(#FFFFFF var(--deg), rgba(255,255,255,.25) 0); }
+body.tema-escuro .st-late .pm-mp-ring{ background:conic-gradient(var(--mp-late) var(--deg), rgba(255,255,255,.12) 0); }
+body.tema-escuro .st-ok .pm-mp-ring{ background:conic-gradient(var(--mp-ok) var(--deg), rgba(255,255,255,.12) 0); }
+body.tema-escuro .st-stop .pm-mp-ring{ background:conic-gradient(var(--mp-stop) var(--deg), rgba(255,255,255,.12) 0); }
+.pm-mp-ring > span{ width:50px; height:50px; border-radius:25px; display:grid; place-items:center; background:inherit; font-family:var(--f-display); font-weight:800; font-size:15px; }
+.st-late .pm-mp-ring > span{ background:#D2634F; } .st-ok .pm-mp-ring > span{ background:#758E4A; } .st-stop .pm-mp-ring > span{ background:#4F7BB5; }
+body.tema-escuro .st-late .pm-mp-ring > span{ background:#3A2620; } body.tema-escuro .st-ok .pm-mp-ring > span{ background:#26331F; } body.tema-escuro .st-stop .pm-mp-ring > span{ background:#1F2C3D; }
+.pm-mp-ring svg{ width:22px; height:22px; }
+.pm-mp-card-txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.pm-mp-card-txt small{ font-size:12px; opacity:.85; }
+.pm-mp-card-txt strong{ font-family:var(--f-display); font-size:19px; font-weight:800; line-height:1.15; }
+.pm-mp-card-txt em{ font-style:normal; font-size:13px; }
+.pm-mp-tiles{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+.pm-mp-tile{ padding:10px 12px; border-radius:16px; background:var(--soft); font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:1px; }
+.pm-mp-tile b{ font-size:14px; color:var(--ink); }
+.pm-mp-pk{ padding:12px 14px; border-radius:16px; background:var(--soft); display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--ink); }
+.pm-mp-pk-ends{ display:flex; justify-content:space-between; font-family:var(--f-mono); font-size:11.5px; color:var(--muted); }
+.pm-mp-pk-bar{ position:relative; height:12px; border-radius:6px; background:var(--track); }
+.pm-mp-pk-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:6px; }
+.pm-mp-pk-bar i.st-ok{ background:var(--mp-ok); } .pm-mp-pk-bar i.st-late{ background:var(--mp-late); } .pm-mp-pk-bar i.st-stop{ background:var(--mp-stop); }
+.pm-mp-pk-bar b{ position:absolute; top:-4px; width:2px; height:20px; background:var(--ink); }
+
+@media (min-width:1024px){
+  .pm-fr .pm-fr-vtog{ display:none; }
+  .pm-fr[data-vista] #frentesMapa, .pm-fr[data-vista] #frentesListaWrap{ display:block; }
+  .pm-fr .pm-side .pm-cnt, .pm-fr .pm-side .pm-fr-meta{ padding-left:0; padding-right:0; }
+  .pm-fr .pm-side .pm-mp{ margin:0; }
+  .pm-fr .pm-fr-bar{ padding:0 0 12px; }
+  .pm-mp-sheet{ position:absolute; bottom:0; left:0; right:0; z-index:5; animation:none; }
+  .pm-mp-svg{ max-height:calc(100vh - 260px); }
+}
+@media print{ .pm-mp-sheet, .pm-mp-zoom, .pm-mp-chips, .pm-fr-vtog{ display:none !important; } .pm-mp{ break-inside:avoid; } }
+
 </style>
 </head>
 
@@ -5282,22 +5408,31 @@ async function carregarFrentes() {
 
   const lista = document.getElementById("lista");
 
+  let vista = 'mapa';
+  try { vista = localStorage.getItem('pmVistaFrentes') || 'mapa'; } catch (e) {}
+  window.pmVistaFrentesAtual = vista;
   lista.innerHTML = `
-    <div class="pm pm-cols">
+    <div class="pm pm-cols pm-fr" data-vista="${vista}">
       ${htmlTopoNovo()}
       ${htmlBuscaNova('F', 'Pergunte: quais detonações tivemos ontem?', "buscarInteligente('F')")}
-      <div class="pm-side">
-        <div class="pm-hero" id="frentesHero">
-          <div class="pm-hero-top"><span class="pm-eyebrow">Painel de progresso</span><span class="pm-hero-meta"></span></div>
-          <h1 class="pm-hero-title" style="opacity:.5;">Carregando frentes…</h1>
+      <div class="pm-fr-bar">
+        <div class="pm-chips" id="filtrosTipo"></div>
+        <div class="pm-fr-vtog" role="group" aria-label="Ver frentes como">
+          <button data-v="mapa" aria-pressed="${vista === 'mapa'}" aria-label="Ver no mapa" onclick="pmVistaFrentes('mapa')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></button>
+          <button data-v="lista" aria-pressed="${vista === 'lista'}" aria-label="Ver em lista" onclick="pmVistaFrentes('lista')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg></button>
         </div>
-        <div id="cardFrentesPendentes"></div>
       </div>
-      <div class="pm-chips" id="filtrosTipo"></div>
-      <div id="botoes"></div>
-      <button class="pm-cta-soft" onclick="mostrarTelaFrentesConcluidas()">
-        <span>Frentes concluídas<small>Ver o histórico do que já terminou</small></span>${PM_ICON.chev}
-      </button>
+      <div class="pm-side">
+        <div id="frentesHero"><div class="pm-fr-meta"><span>Carregando frentes…</span></div></div>
+        <div id="frentesMapa"></div>
+      </div>
+      <div id="cardFrentesPendentes"></div>
+      <div id="frentesListaWrap">
+        <div id="botoes"></div>
+        <button class="pm-cta-soft" onclick="mostrarTelaFrentesConcluidas()">
+          <span>Frentes concluídas<small>Ver o histórico do que já terminou</small></span>${PM_ICON.chev}
+        </button>
+      </div>
     </div>
   `;
 
@@ -5444,22 +5579,14 @@ function renderizarFrentesFiltradas() {
   const stat = (chave, classe, valor, rotulo) =>
     `<button class="pm-stat ${classe}" aria-pressed="${filtro === chave}" onclick="filtrarFrentesPorStatus('${chave}')"><b>${valor}</b><span>${rotulo}</span></button>`;
 
+  const cnt = (chave, classe, valor, rotulo) =>
+    `<button class="${classe}" aria-pressed="${filtro === chave}" onclick="filtrarFrentesPorStatus('${chave}')"><b>${valor}</b><span>${rotulo}</span></button>`;
   hero.innerHTML = `
-    <div class="pm-hero-top"><span class="pm-eyebrow">Painel de progresso</span>${situacaoGeral ? `<span class="pm-hero-meta">situação em ${pmEsc(situacaoGeral)}</span>` : ''}</div>
-    <button class="pm-hero-title" onclick="filtrarFrentesPorStatus('todas')">${total} ${total === 1 ? 'frente programada' : 'frentes programadas'} até hoje</button>
-    ${total ? `<div class="pm-split" aria-hidden="true">
-      ${n.ok ? `<span class="ok" style="width:${w('ok')}%"></span>` : ''}
-      ${n.late ? `<span class="late" style="width:${w('late')}%"></span>` : ''}
-      ${n.wait ? `<span class="wait" style="width:${w('wait')}%"></span>` : ''}
-    </div>` : ''}
-    <div class="pm-stats ${filtro !== 'todas' ? 'filtrando' : ''}">
-      ${stat('noPrazo', 'ok', n.ok, 'no prazo')}
-      ${stat('atrasadas', 'late', n.late, 'em andamento com atraso')}
-      ${stat('aguardando', 'wait', n.wait, 'aguardando início')}
-    </div>
-    <div class="pm-hero-foot">
-      <span>${n.ok + n.late} em andamento · ${n.wait} aguardando${n.stop ? ` · ${n.stop} paralisada${n.stop === 1 ? '' : 's'}` : ''}</span>
-      <button class="pm-hero-link" onclick="abrirAnaliseFrentes()">Análise ${PM_ICON.chev}</button>
+    <div class="pm-fr-meta"><span>${situacaoGeral ? `situação em ${pmEsc(situacaoGeral)}` : ''}${n.wait ? `${situacaoGeral ? ' · ' : ''}${n.wait} aguardando início` : ''}</span><button onclick="abrirAnaliseFrentes()">Análise ${PM_ICON.chev}</button></div>
+    <div class="pm-cnt ${filtro !== 'todas' ? 'filtrando' : ''}">
+      ${cnt('atrasadas', 'late', n.late, n.late === 1 ? 'atrasada' : 'atrasadas')}
+      ${cnt('noPrazo', 'ok', n.ok, 'em dia')}
+      ${cnt('paralisadas', 'stop', n.stop, n.stop === 1 ? 'paralisada' : 'paralisadas')}
     </div>`;
 
   document.getElementById('filtrosTipo').innerHTML = ['Todas', 'Escavação', 'Civil'].map(t =>
@@ -5470,7 +5597,8 @@ function renderizarFrentesFiltradas() {
     filtro === 'todas' ||
     (filtro === 'noPrazo' && f.status === 'ok') ||
     (filtro === 'atrasadas' && f.status === 'late') ||
-    (filtro === 'aguardando' && f.status === 'wait');
+    (filtro === 'aguardando' && f.status === 'wait') ||
+    (filtro === 'paralisadas' && f.status === 'stop');
 
   const visiveis = frentes.filter(passaFiltro);
   const porAvanco = visiveis.filter(f => f.status !== 'wait' && !f.porPrazo);
@@ -5514,13 +5642,323 @@ function renderizarFrentesFiltradas() {
     `<div class="pm-stack tight">${aguardando.map(cardAguardando).join('')}</div>`;
 
   if (!visiveis.length) {
-    const msg = { noPrazo: 'Nenhuma frente no prazo no momento.', atrasadas: 'Nenhuma frente em andamento com atraso.', aguardando: 'Nenhuma frente aguardando início.' }[filtro]
+    const msg = { noPrazo: 'Nenhuma frente no prazo no momento.', atrasadas: 'Nenhuma frente em andamento com atraso.', aguardando: 'Nenhuma frente aguardando início.', paralisadas: 'Nenhuma frente paralisada.' }[filtro]
       || 'Nenhuma frente ativa para esse filtro.';
     html = `<div class="pm-empty" style="margin-top:14px">${msg}</div>`;
   }
 
   botoes.innerHTML = html;
   window.pmFrentesIndice = indice;
+  pmMapaRender();
+}
+
+// =====================================================================
+// ✅ MAPA DAS FRENTES (tela inicial) — Estação Gávea + linha toda (PK)
+// Posição de cada frente: Nº no cronograma diz a área; palavras no nome
+// ("Carioca", "Jardim Oceânico", "Uruguai", "Osório") dizem o lado.
+// Via permanente: PK atual = PK inicial do trecho + média do realizado
+// das etapas "Limpeza e Preparação" e "Aplicação do Poroso".
+// =====================================================================
+const PM_MAPA_PK = [[7660,510,1190],[7760,600,1182],[7900,720,1140],[8000,790,1095],[8089,840,1060],[8200,890,990],[8300,945,925],[8378,985,875],[8460,1015,830],[8500,1050,795],[8600,1105,725],[8700,1145,655],[8800,1170,585],[8900,1195,510],[8950,1210,470],[9000,1225,425],[9100,1262,335],[9133,1270,305]];
+const PM_MAPA_PASSAGENS = { 13: 7760, 14: 7857, 15: 8240, 16: 8080 };
+
+function pmParsePK(s) {
+  let t = String(s || '').replace(/\s/g, '');
+  if (/^\d{1,2}\.\d{3}(,\d+)?$/.test(t)) t = t.replace('.', '');
+  const v = parseFloat(t.replace(',', '.'));
+  return isFinite(v) ? v : null;
+}
+function pmPKFmt(pk) { const v = Math.round(pk); return `${Math.floor(v / 1000)}.${String(v % 1000).padStart(3, '0')}`; }
+
+// ponto (em coordenadas da planta) de um PK ao longo da linha; off = deslocamento lateral
+function pmMapaPontoPK(pk, off) {
+  const T = PM_MAPA_PK;
+  pk = Math.max(T[0][0], Math.min(T[T.length - 1][0], pk));
+  for (let i = 0; i < T.length - 1; i++) {
+    const [a, x1, y1] = T[i], [b, x2, y2] = T[i + 1];
+    if (pk >= a && pk <= b) {
+      const f = (pk - a) / ((b - a) || 1);
+      let x = x1 + (x2 - x1) * f, y = y1 + (y2 - y1) * f;
+      if (off) { const L = Math.hypot(x2 - x1, y2 - y1) || 1; x += -(y2 - y1) / L * off; y += (x2 - x1) / L * off; }
+      return [x, y];
+    }
+  }
+  return [T[0][1], T[0][2]];
+}
+function pmMapaCaminhoPK(p1, p2, off) {
+  const n = Math.max(2, Math.ceil(Math.abs(p2 - p1) / 15));
+  let d = '';
+  for (let i = 0; i <= n; i++) { const [x, y] = pmMapaPontoPK(p1 + (p2 - p1) * i / n, off); d += (i ? ' L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }
+  return d;
+}
+
+// nomes do cronograma (o item e os "pais") da frente — usado pra achar "PK x ao PK y"
+function pmMapaNomesCronograma(numero) {
+  if (!numero || typeof acharItensCronogramaPorNumero !== 'function') return [];
+  try {
+    const nums = calcularNumerosEstrutura();
+    const alvo = String(numero).trim();
+    const partes = alvo.split('.');
+    const out = [];
+    for (let k = partes.length; k >= 2; k--) {
+      const n = partes.slice(0, k).join('.');
+      const it = CRONOGRAMA_ARVORE_COMPLETA.find(i => nums[i[0]] === n);
+      if (it) out.push(it[1]);
+    }
+    return out;
+  } catch (e) { return []; }
+}
+function pmMapaFaixaPK(data) {
+  const re = /PK\s*([\d.,]+)\s*(?:ao|a|até|-|–)\s*(?:PK\s*)?([\d.,]+)/i;
+  const fontes = [data.Nome, ...pmMapaNomesCronograma(data.NumeroCronograma)];
+  for (const s of fontes) {
+    const m = String(s || '').match(re);
+    if (m) { const a = pmParsePK(m[1]), b = pmParsePK(m[2]); if (a && b && a > 5000 && b > 5000) return [a, b]; }
+  }
+  return null;
+}
+function pmMapaPKAtual(data, faixa) {
+  if (!faixa) return null;
+  const etapas = data.Etapas || [];
+  const n = e => normalizarTexto(e.Etapa || '');
+  let usar = etapas.filter(e => /limpeza|prepara/.test(n(e)) || /poroso|aplica/.test(n(e)));
+  if (!usar.length) usar = etapas.filter(e => e.Unidade === 'm');
+  if (!usar.length) return null;
+  const media = k => usar.reduce((s, e) => s + (Number(e[k]) || 0), 0) / usar.length;
+  const [ini, fim] = faixa, dir = fim >= ini ? 1 : -1, tam = Math.abs(fim - ini);
+  const real = Math.min(tam, media('RealizadoNum')), prev = Math.min(tam, media('PrevistoNum'));
+  return { atual: ini + dir * real, previsto: ini + dir * prev, feito: real, total: tam };
+}
+
+// onde a frente fica no mapa
+function pmMapaLocal(data) {
+  const num = String(data.NumeroCronograma || '').trim();
+  const nome = normalizarTexto([data.Nome, data.PalavraChave, data['Palavra-chave']].filter(Boolean).join(' '));
+  const tem = r => r.test(nome);
+  const ini = p => num === p || num.startsWith(p + '.');
+  const lado = tem(/carioca|\bcrc\b/) ? 'c' : tem(/jardim oceanico|\bjoc?\b|\bjo\b/) ? 'j' : '';
+
+  // via e linha
+  const pas = nome.match(/passagem de emergencia\s*(\d+)/);
+  if (pas && PM_MAPA_PASSAGENS[pas[1]]) return { zona: 'linha', pk: PM_MAPA_PASSAGENS[pas[1]], area: 'Túnel de Via Oeste' };
+  if (ini('1.5.8') || tem(/ssr\s*0?4/)) return { zona: 'linha', pk: 8950, ssr: true, area: 'Túnel de Via Oeste' };
+  const faixa = pmMapaFaixaPK(data);
+  if (faixa || tem(/via permanente|\bvia [12]\b|poroso/)) {
+    const via = tem(/via 1\b/) ? 1 : tem(/via 2\b/) ? 2 : 0;
+    return { zona: 'via', faixa, via, area: 'Via permanente' };
+  }
+  // estação
+  if (ini('1.6.4') || tem(/interligacao/)) return { zona: 'est', slot: 'interlig', area: 'Túnel de Interligação' };
+  if (ini('1.6.3.1.6') || tem(/rabicho/)) return { zona: 'est', slot: 'rabicho', area: 'Estação Oeste · Rabicho' };
+  if (ini('1.6.3.1.4.5') || tem(/trapezio/)) return { zona: 'est', slot: lado === 'c' ? 'trapC' : 'trapJ', area: 'Estação Oeste · Trapézio' };
+  if (ini('1.6.3.1.4') || tem(/apendice/)) return { zona: 'est', slot: 'apendice', area: 'Estação Oeste · Apêndice' };
+  if (ini('1.6.2') || tem(/estacao sul/)) return { zona: 'est', slot: tem(/osorio/) ? 'sulB' : 'sul', area: 'Estação Sul' };
+  if (ini('1.6.3') || tem(/estacao oeste|rebaixo/)) return { zona: 'est', slot: lado === 'j' ? 'oesteJ' : 'oesteC', area: 'Estação Oeste' + (lado === 'j' ? ' · Jd. Oceânico' : lado === 'c' ? ' · Carioca' : '') };
+  return { zona: 'sem', area: '' };
+}
+
+// âncora e direção de empilhamento de cada lugar da estação (coordenadas do desenho)
+const PM_MAPA_SLOTS = {
+  rabicho: { x: 264, y: 92, dx: 0, dy: 28, lado: 'r' },
+  oesteC:  { x: 250, y: 168, dx: 0, dy: 44, lado: 'r' },
+  trapC:   { x: 250, y: 294, dx: 0, dy: 30, lado: 'r' },
+  apendice:{ x: 300, y: 354, dx: 0, dy: 34, lado: 'r' },
+  trapJ:   { x: 250, y: 446, dx: 0, dy: 30, lado: 'r' },
+  oesteJ:  { x: 250, y: 506, dx: 0, dy: 44, lado: 'r' },
+  interlig:{ x: 180, y: 370, dx: 28, dy: 0, lado: 'c' },
+  sul:     { x: 110, y: 230, dx: 0, dy: 50, lado: 'l' },
+  sulB:    { x: 110, y: 500, dx: 0, dy: 44, lado: 'l' },
+};
+
+function pmMapaRotulo(nome, slot) {
+  let s = String(nome || '');
+  s = s.replace(/\s*Completo\b/i, '').replace(/Jardim Oce[aâ]nico/i, 'Jd. Oceânico');
+  if (slot === 'rabicho') s = s.replace(/^Rabicho\s*[-–]\s*/i, '');
+  if (slot === 'apendice') s = s.replace(/^Ap[eê]ndice\s*[-–]\s*/i, '').replace(/\s*[-–]\s*Ap[eê]ndice$/i, '');
+  if (slot === 'sul' || slot === 'sulB') s = s.replace(/^Esta[cç][aã]o Sul\s*[-–]\s*/i, '');
+  const palavras = s.replace(/\s*[-–]\s*/g, ' · ').split(' ').filter(Boolean);
+  const linhas = [''];
+  palavras.forEach(p => {
+    if (p === '·') { if (linhas[linhas.length - 1]) linhas.push(''); return; }
+    const l = linhas[linhas.length - 1];
+    if (l && (l + ' ' + p).length > 13) linhas.push(p); else linhas[linhas.length - 1] = l ? l + ' ' + p : p;
+  });
+  const out = linhas.filter(Boolean);
+  if (out.length > 2) { out.length = 2; out[1] = out[1].replace(/.{0,1}$/, '…'); }
+  return out;
+}
+
+function pmMapaTexto(x, y, linhas, lado, cls) {
+  const ax = lado === 'r' ? 'start' : lado === 'l' ? 'end' : 'middle';
+  let tx = lado === 'r' ? Math.max(x + 18, x < 280 ? 292 : x + 18) : lado === 'l' ? x - 18 : x;
+  let y0 = y + 4 - (linhas.length - 1) * 6.5 + (lado === 'c' ? 30 : 0);
+  return `<text class="pm-mp-lab ${cls || ''}" text-anchor="${ax}">${linhas.map((l, i) => `<tspan x="${tx}" y="${(y0 + i * 13).toFixed(1)}">${pmEsc(l)}</tspan>`).join('')}</text>`;
+}
+function pmMapaPino(x, y, f, i, sel) {
+  const st = f.status;
+  const pausa = st === 'stop' ? `<rect x="${x - 3.5}" y="${y - 4}" width="2.4" height="8" class="pm-mp-pause"/><rect x="${x + 1.1}" y="${y - 4}" width="2.4" height="8" class="pm-mp-pause"/>` : '';
+  return `<g class="pm-mp-pin st-${st}${sel === i ? ' sel' : ''}${sel != null && sel !== i ? ' dim' : ''}" role="button" tabindex="0" aria-label="${pmEsc(f.data.Nome)}" onclick="pmMapaSelecionar(${i})" onkeydown="if(event.key==='Enter')pmMapaSelecionar(${i})">
+    <circle cx="${x}" cy="${y}" r="22" class="pm-mp-hit"/>${st !== 'ok' ? `<circle cx="${x}" cy="${y}" r="17" class="pm-mp-halo"/>` : ''}
+    ${sel === i ? `<circle cx="${x}" cy="${y}" r="17" class="pm-mp-selring"/>` : ''}<circle cx="${x}" cy="${y}" r="9" class="pm-mp-dot"/>${pausa}</g>`;
+}
+
+function pmMapaSVGEstacao(itens, sel) {
+  const porSlot = {};
+  itens.forEach(it => { if (it.loc.zona === 'est') (porSlot[it.loc.slot] = porSlot[it.loc.slot] || []).push(it); });
+  let pins = '', labs = '';
+  Object.entries(porSlot).forEach(([slot, arr]) => {
+    const s = PM_MAPA_SLOTS[slot]; if (!s) return;
+    const n = arr.length, c0 = slot === 'interlig' ? -(n - 1) / 2 : 0;
+    arr.forEach((it, k) => {
+      const x = s.x + s.dx * (c0 + k), y = s.y + s.dy * (c0 + k);
+      pins += pmMapaPino(x, y, it.f, it.i, sel);
+      labs += pmMapaTexto(x, y, pmMapaRotulo(it.f.data.Nome, slot), s.lado, sel != null && sel !== it.i ? 'dim' : '');
+    });
+  });
+  return `<svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Mapa esquemático da Estação Gávea">
+    <path d="M236 600 V690" class="pm-mp-via"/><path d="M264 600 V690" class="pm-mp-via"/>
+    <rect x="80" y="150" width="60" height="440" rx="8" class="pm-mp-st"/>
+    <rect x="220" y="130" width="60" height="470" rx="8" class="pm-mp-st"/>
+    <rect x="252" y="76" width="24" height="56" rx="4" class="pm-mp-st"/>
+    <rect x="204" y="138" width="18" height="14" class="pm-mp-st thin"/>
+    <rect x="204" y="574" width="18" height="14" class="pm-mp-st thin"/>
+    <rect x="223" y="258" width="54" height="72" class="pm-mp-zone"/><rect x="223" y="410" width="54" height="72" class="pm-mp-zone"/>
+    <path d="M280 338 A32 32 0 0 1 280 402" class="pm-mp-st"/>
+    <rect x="140" y="361" width="80" height="18" class="pm-mp-st thin"/>
+    <circle cx="110" cy="370" r="32" class="pm-mp-st"/><circle cx="250" cy="370" r="34" class="pm-mp-st"/>
+    <text x="110" y="373" class="pm-mp-mono" text-anchor="middle">POÇO</text><text x="250" y="373" class="pm-mp-mono" text-anchor="middle">POÇO</text>
+    <text x="110" y="126" class="pm-mp-tit" text-anchor="middle">EST. SUL</text>
+    <text x="110" y="140" class="pm-mp-mono" text-anchor="middle">URUGUAI</text>
+    <text x="110" y="606" class="pm-mp-mono" text-anchor="middle">GEN. OSÓRIO</text>
+    <text x="236" y="56" class="pm-mp-tit" text-anchor="middle">EST. OESTE</text>
+    <text x="236" y="68" class="pm-mp-mono" text-anchor="middle">CARIOCA ↑</text>
+    <text x="250" y="626" class="pm-mp-mono" text-anchor="middle">JD. OCEÂNICO ↓</text>
+    ${pins}${labs}
+  </svg>`;
+}
+
+function pmMapaSVGLinha(itens, sel) {
+  const P = (x, y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+  const serv = [[1000,515],[1035,560],[1055,620],[1040,680],[1000,750],[975,800],[960,830],[985,860]];
+  let g = `<path d="M${serv.map(p => P(...p)).join(' L')}" class="pm-mp-via serv"/>`;
+  g += `<text x="985" y="505" text-anchor="end" class="pm-mp-mono big">TÚNEL DE SERVIÇO</text>`;
+  const full = pmMapaCaminhoPK(7660, 9133);
+  g += `<path d="${full}" class="pm-mp-via linha"/><path d="${full}" class="pm-mp-via meio"/>`;
+  const s1 = pmMapaPontoPK(8950); g += `<path d="M${P(...s1)} L1240 466" class="pm-mp-via ramal"/>`;
+  [7800, 8000, 8200, 8400, 8600, 8800, 9000].forEach(pk => {
+    const [x, y] = pmMapaPontoPK(pk);
+    g += `<circle cx="${x}" cy="${y}" r="5" class="pm-mp-tick"/><text x="${x - 26}" y="${y + 8}" text-anchor="end" class="pm-mp-mono big halo">PK ${pmPKFmt(pk)}</text>`;
+  });
+  [[[1224,302],[1264,194],[1278,199],[1238,307]], [[1268,305],[1308,197],[1321,201],[1280,309]], [[1310,198],[1316,181],[1324,184],[1320,200]]]
+    .forEach(p => { g += `<polygon points="${p.map(q => q.join(',')).join(' ')}" class="pm-mp-st thin"/>`; });
+  const est = itens.filter(it => it.loc.zona === 'est');
+  const nl = est.filter(it => it.f.status === 'late').length, ns = est.filter(it => it.f.status === 'stop').length;
+  const resumo = est.length ? [nl ? `${nl} atrasada${nl > 1 ? 's' : ''}` : '', ns ? `${ns} paralisada${ns > 1 ? 's' : ''}` : '', !nl && !ns ? `${est.length} em dia` : ''].filter(Boolean).join(' · ') : 'sem frentes ativas';
+  g += `<g class="pm-mp-estbtn" role="button" tabindex="0" onclick="pmMapaZoom('estacao')" onkeydown="if(event.key==='Enter')pmMapaZoom('estacao')">
+    <circle cx="1272" cy="250" r="72" class="pm-mp-estring"/>
+    <rect x="830" y="196" width="360" height="104" rx="30" class="pm-mp-card"/>
+    <text x="856" y="240" class="pm-mp-tit big">Estação Gávea</text>
+    <text x="856" y="278" class="pm-mp-lab big ${nl ? 'late' : ''}">${pmEsc(resumo)} ›</text></g>`;
+  g += `<text x="520" y="1250" class="pm-mp-mono big">← JD. OCEÂNICO</text>`;
+  let pins = '';
+  itens.forEach(it => {
+    const { loc, f, i } = it;
+    if (loc.zona === 'linha') {
+      const [x, y] = loc.ssr ? [1250, 470] : pmMapaPontoPK(loc.pk);
+      pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${pmEsc(loc.ssr ? 'SSR 04' : pmMapaRotulo(f.data.Nome, '').join(' '))}</text>`;
+    } else if (loc.zona === 'via' && loc.faixa) {
+      const off = loc.via === 1 ? -9 : loc.via === 2 ? 9 : 0;
+      const pk = pmMapaPKAtual(f.data, loc.faixa);
+      g += `<path d="${pmMapaCaminhoPK(loc.faixa[0], loc.faixa[1], off)}" class="pm-mp-trecho st-${f.status}"/>`;
+      if (pk) {
+        g += `<path d="${pmMapaCaminhoPK(loc.faixa[0], pk.atual, off)}" class="pm-mp-feito st-${f.status}"/>`;
+        const [x, y] = pmMapaPontoPK(pk.atual, off);
+        pins += pmMapaPinoGrande(x, y, f, i, sel) + `<text x="${x + 34}" y="${y + 10}" class="pm-mp-lab big halo${sel != null && sel !== i ? ' dim' : ''}">${loc.via ? 'Via ' + loc.via + ' · ' : ''}PK ${pmPKFmt(pk.atual)}</text>`;
+      }
+    }
+  });
+  return `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Mapa da linha toda">${g}${pins}</svg>`;
+}
+function pmMapaPinoGrande(x, y, f, i, sel) {
+  return pmMapaPino(0, 0, f, i, sel).replace('<g class="', `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(2.2)" class="`);
+}
+
+// ---------- estado + desenho
+function pmMapaItens(frentes) {
+  return frentes.map((f, i) => ({ f, i, loc: pmMapaLocal(f.data) }))
+    .filter(it => it.f.status === 'ok' || it.f.status === 'late' || it.f.status === 'stop');
+}
+function pmMapaRender() {
+  const box = document.getElementById('frentesMapa');
+  const r = window.pmResumoFrentes;
+  if (!box || !r) return;
+  const filtro = window.filtroStatusGlobal || 'todas';
+  const passa = f => filtro === 'todas' || (filtro === 'noPrazo' && f.status === 'ok') || (filtro === 'atrasadas' && f.status === 'late') || (filtro === 'paralisadas' && f.status === 'stop');
+  const itens = pmMapaItens(r.frentes).filter(it => passa(it.f));
+  window.pmMapaItensAtuais = itens;
+  const zoom = window.pmZoomMapa || 'estacao';
+  let sel = window.pmMapaSel;
+  if (sel != null && !itens.some(it => it.i === sel)) sel = window.pmMapaSel = null;
+  const naLinha = itens.filter(it => it.loc.zona === 'linha' || it.loc.zona === 'via');
+  const semLugar = itens.filter(it => it.loc.zona === 'sem' || (it.loc.zona === 'via' && !it.loc.faixa));
+  const seg = (k, lab) => `<button aria-pressed="${zoom === k}" onclick="pmMapaZoom('${k}')">${lab}</button>`;
+  box.innerHTML = `
+    <div class="pm-mp ${zoom === 'linha' ? 'linha' : ''}">
+      ${zoom === 'linha' ? pmMapaSVGLinha(itens, sel) : pmMapaSVGEstacao(itens, sel)}
+      <div class="pm-mp-zoom">${seg('estacao', 'Estação')}${seg('linha', 'Linha toda')}</div>
+      <div class="pm-mp-chips">
+        ${zoom === 'estacao' && naLinha.length ? `<button class="pm-mp-chip" onclick="pmMapaZoom('linha')"><i class="st-${naLinha.some(it => it.f.status === 'late') ? 'late' : naLinha.some(it => it.f.status === 'stop') ? 'stop' : 'ok'}"></i>${naLinha.length} ${naLinha.length === 1 ? 'frente' : 'frentes'} na via ↓</button>` : ''}
+        ${semLugar.length ? `<button class="pm-mp-chip" onclick="pmVistaFrentes('lista')" title="${pmEsc(semLugar.map(it => it.f.data.Nome).join(', '))}"><i class="st-none"></i>${semLugar.length} sem lugar no mapa</button>` : ''}
+      </div>
+      ${!itens.length ? `<div class="pm-mp-vazio">Nenhuma frente em andamento ou paralisada${filtro !== 'todas' ? ' nesse filtro' : ''}.</div>` : ''}
+      ${sel != null ? pmMapaSheet(itens.find(it => it.i === sel)) : ''}
+    </div>`;
+}
+function pmMapaSheet(it) {
+  if (!it) return '';
+  const { f, loc } = it;
+  const s = f.status, real = f.real;
+  const centro = f.porPrazo ? PM_ICON.clock : `${Math.round(real)}%`;
+  const deg = f.porPrazo ? 0 : Math.max(0, Math.min(100, real)) * 3.6;
+  const linha2 = f.porPrazo ? pmEsc(f.texto || '') : s === 'stop' ? `paralisada${f.data.NotaParalisacao ? ' · ' + pmEsc(f.data.NotaParalisacao) : ''}` : `deveria estar em ${pmNum(f.prev)}%`;
+  let tiles = '';
+  const pk = loc.zona === 'via' ? pmMapaPKAtual(f.data, loc.faixa) : null;
+  if (pk) {
+    const [a, b] = loc.faixa;
+    tiles = `<div class="pm-mp-pk"><div class="pm-mp-pk-ends"><span>PK ${pmPKFmt(a)}</span><span>PK ${pmPKFmt(b)}</span></div>
+      <div class="pm-mp-pk-bar"><i class="st-${s}" style="width:${(pk.feito / (pk.total || 1) * 100).toFixed(1)}%"></i><b style="left:${(Math.abs(pk.previsto - a) / (pk.total || 1) * 100).toFixed(1)}%"></b></div>
+      <span>Frente hoje no <b>PK ${pmPKFmt(pk.atual)}</b> · ${pmNum(Math.round(pk.feito))} m de ${pmNum(Math.round(pk.total))} m · previsto no PK ${pmPKFmt(pk.previsto)}</span></div>`;
+  } else {
+    const etapas = f.data.Etapas || [];
+    const atual = etapas.find(e => normalizarTexto(e.Status) === 'em andamento') || etapas.find(e => normalizarTexto(e.Status) !== 'concluida' && normalizarTexto(e.Status) !== 'concluído' && normalizarTexto(e.Status) !== 'a iniciar') || etapas[0];
+    const t1 = atual ? `<span class="pm-mp-tile"><b>${pmEsc(atual.Etapa || 'Etapa')}</b>${atual.Unidade && atual.Unidade !== '-' ? `${pmNumUnid(atual.RealizadoNum, atual.Unidade)} de ${pmNumUnid(atual.TotalNum, atual.Unidade)}` : pmEsc(atual.Status || '')}</span>` : '';
+    const dif = f.porPrazo ? '' : Math.round((real - f.prev) * 10) / 10;
+    const t2 = f.porPrazo ? `<span class="pm-mp-tile"><b>Prazo</b>${pmEsc(f.texto || '-')}</span>`
+      : `<span class="pm-mp-tile"><b>${dif > 0 ? '+' : ''}${pmNum(dif)} pontos</b>${f.situacao ? `situação em ${pmEsc(f.situacao)}` : 'em relação ao previsto'}</span>`;
+    tiles = `<div class="pm-mp-tiles">${t1}${t2}</div>`;
+  }
+  return `<div class="pm-mp-sheet" role="dialog" aria-label="${pmEsc(f.data.Nome)}">
+    <div class="pm-mp-sheet-top"><span></span><i></i><button onclick="pmMapaSelecionar(null)" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <button class="pm-mp-card-f st-${s}" onclick="pmMapaAbrir(${it.i})">
+      <span class="pm-mp-ring" style="--deg:${deg}deg"><span>${centro}</span></span>
+      <span class="pm-mp-card-txt"><small>${pmEsc(loc.area || f.data.Tipo || '')}</small><strong>${pmEsc(f.data.Nome)}</strong><em>${linha2}</em></span>${PM_ICON.chev}
+    </button>${tiles}</div>`;
+}
+function pmMapaSelecionar(i) { window.pmMapaSel = i; pmMapaRender(); }
+function pmMapaZoom(z) { window.pmZoomMapa = z; window.pmMapaSel = null; pmMapaRender(); }
+function pmVistaFrentes(v) {
+  window.pmVistaFrentesAtual = v;
+  try { localStorage.setItem('pmVistaFrentes', v); } catch (e) {}
+  const root = document.querySelector('.pm-fr');
+  if (root) root.setAttribute('data-vista', v);
+  document.querySelectorAll('.pm-fr-vtog button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  if (v === 'lista') window.pmMapaSel = null;
+  pmMapaRender();
+}
+function pmMapaAbrir(i) {
+  const r = window.pmResumoFrentes; const f = r && r.frentes[i];
+  window.pmVoltarPara = null;
+  if (f) abrir(f.data);
 }
 
 function pmAbrirFrente(i) {
