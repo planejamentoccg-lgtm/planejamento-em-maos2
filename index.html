@@ -2158,6 +2158,20 @@ body.tema-escuro .pm-dchart{ background:var(--track); }
 .pm-dcol > span{ font-family:var(--f-mono); font-size:9px; color:var(--muted); white-space:nowrap; }
 .pm-dcol > div{ height:70px; width:100%; display:flex; align-items:flex-end; }
 .pm-hatch{ display:block; width:100%; height:12px; border-radius:3px; background:repeating-linear-gradient(135deg, var(--line) 0 3px, transparent 3px 6px); }
+/* Six Week — calendário do dia previsto (✓ = sem quantidade, número = quantidade) */
+.pm-swcal{ display:flex; flex-wrap:wrap; gap:8px 12px; padding:10px; border-radius:12px; background:var(--soft); }
+.pm-swcal-sem{ flex:1 1 190px; display:grid; grid-template-columns:repeat(var(--nd, 6), minmax(0, 1fr)); gap:4px; }
+.pm-swcal-d{ display:flex; flex-direction:column; align-items:stretch; gap:3px; min-width:0; }
+.pm-swcal-d > small{ font-family:var(--f-mono); font-size:9px; color:var(--muted); text-align:center; }
+.pm-swcal-d > i{ height:34px; border-radius:7px; display:grid; place-items:center; font-style:normal; font-family:var(--f-mono); font-size:11px; font-weight:600; border:1px dashed var(--line); color:var(--ink); }
+.pm-swcal-d > i.fora{ border-color:transparent; }
+.pm-swcal-d > i.s{ border:none; background:var(--olive); color:var(--on-olive, #fff); }
+.pm-swcal-d > i.n{ border:none; background:color-mix(in srgb, var(--olive) var(--a, 60%), var(--surface)); }
+.pm-swcal-d > i.n.forte{ color:var(--on-olive, #fff); }
+.pm-swcal-d > i.t{ border:1.5px solid var(--olive); border-style:solid; color:var(--olive-ink, var(--olive)); }
+.pm-swcal-d > i.hoje{ box-shadow:0 0 0 2px var(--late); }
+.pm-swcal-d > i svg{ width:14px; height:14px; }
+body.tema-escuro .pm-swcal-d > i.s, body.tema-escuro .pm-swcal-d > i.n.forte{ color:#17221E; }
 .pm-gantt-row small{ align-self:flex-start; }
 #detalhe, #semanas, #telaGantt, #telaFrentesConcluidas{ background:var(--paper); min-height:100vh; }
 
@@ -4146,6 +4160,42 @@ function pmAbrirConcluida(k) {
 // =======================================================================
 // SIX WEEK — detalhe de uma frente e gráfico de Gantt
 // =======================================================================
+// Six Week: calendário de seg a sáb com o que está previsto em cada dia
+function pmSwCalendario(diario, hoje) {
+  const DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const chave = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+  const porDia = {}; let ini = null, fim = null;
+  (diario || []).forEach(x => {
+    const d = parseDiaMesComAncora(x.Data, hoje); if (!d) return;
+    d.setHours(0, 0, 0, 0); porDia[chave(d)] = x.Valor;
+    if (!ini || d < ini) ini = new Date(d); if (!fim || d > fim) fim = new Date(d);
+  });
+  if (!ini) return { html: '', temS: false, temTexto: false, temNum: false };
+  const nums = Object.values(porDia).map(v => parseFloat(String(v ?? '').replace(',', '.'))).filter(v => !isNaN(v));
+  const mx = Math.max(...nums, 0) || 1;
+  const comDomingo = Object.keys(porDia).some(k => { const [a, m, d] = k.split('-').map(Number); return new Date(a, m, d).getDay() === 0; });
+  const seg = new Date(ini); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+  const h0 = new Date(hoje); h0.setHours(0, 0, 0, 0);
+  let temS = false, temTexto = false, temNum = false, sems = '';
+  for (let w = new Date(seg); w <= fim; w.setDate(w.getDate() + 7)) {
+    let cel = '';
+    for (let k = 0; k < (comDomingo ? 7 : 6); k++) {
+      const d = new Date(w); d.setDate(d.getDate() + k);
+      const bruto = porDia[chave(d)], v = parseFloat(String(bruto ?? '').replace(',', '.'));
+      const tem = bruto !== undefined && bruto !== null && String(bruto).trim() !== '';
+      const ehNum = tem && !isNaN(v), ehS = tem && !ehNum && String(bruto).trim().toUpperCase() === 'S', ehTxt = tem && !ehNum && !ehS;
+      const hj = d.getTime() === h0.getTime() ? ' hoje' : '';
+      let i;
+      if (ehNum) { temNum = true; const a = Math.round(30 + 70 * Math.min(1, v / mx)); i = `<i class="n${a >= 62 ? ' forte' : ''}${hj}" style="--a:${a}%">${pmNum(v)}</i>`; }
+      else if (ehS) { temS = true; i = `<i class="s${hj}" aria-label="previsto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></i>`; }
+      else if (ehTxt) { temTexto = true; i = `<i class="t${hj}" title="${pmEsc(String(bruto))}">·</i>`; }
+      else i = `<i class="${d < ini || d > fim ? 'fora' : ''}${hj}"></i>`;
+      cel += `<div class="pm-swcal-d"><small>${DIAS[d.getDay()]}</small>${i}<small>${String(d.getDate()).padStart(2, '0')}${k === 0 ? '/' + String(d.getMonth() + 1).padStart(2, '0') : ''}</small></div>`;
+    }
+    sems += `<div class="pm-swcal-sem" style="--nd:${comDomingo ? 7 : 6}">${cel}</div>`;
+  }
+  return { html: `<div class="pm-swcal">${sems}</div>`, temS, temTexto, temNum };
+}
 function abrirDetalheSemana(data) {
   esconderTelasPrincipais();
   document.getElementById("semanas").style.display = "block";
@@ -4162,33 +4212,20 @@ function abrirDetalheSemana(data) {
 
   const cards = tarefas.map(t => {
     const diario = t.Diario || [];
-    const nums = diario.map(x => parseFloat(String(x.Valor ?? '').replace(',', '.'))).filter(v => !isNaN(v));
-    const mx = Math.max(1, ...nums);
-    let temS = false, temTexto = false;
-    const colunas = diario.map(x => {
-      const bruto = x.Valor, v = parseFloat(String(bruto ?? '').replace(',', '.'));
-      const ehNum = bruto !== null && bruto !== undefined && bruto !== '' && !isNaN(v);
-      const ehS = !ehNum && String(bruto || '').trim().toUpperCase() === 'S';
-      const ehTxt = !ehNum && !ehS && String(bruto || '').trim() !== '';
-      let barra, rot;
-      if (ehNum) { barra = `<span style="display:block;width:100%;height:${Math.max(3, Math.round(v / mx * 70))}px;border-radius:3px 3px 1px 1px;background:var(--olive)"></span>`; rot = pmNum(v); }
-      else if (ehS) { temS = true; barra = `<span class="pm-hatch"></span>`; rot = 'S'; }
-      else if (ehTxt) { temTexto = true; barra = `<span style="display:block;width:100%;height:12px;border-radius:3px;background:var(--olive-tint);border:1px solid var(--olive)"></span>`; rot = '·'; }
-      else { barra = ''; rot = ''; }
-      return `<div class="pm-dcol" ${ehTxt ? `title="${pmEsc(bruto)}"` : ''}><span>${rot}</span><div>${barra}</div><span>${pmEsc(String(x.Data).slice(0, 5))}</span></div>`;
-    }).join('');
+    const { html: calendario, temS, temTexto, temNum } = pmSwCalendario(diario, hoje);
     const terminoT = parseDiaMesComAncora(t.TerminoPrevisto, hoje) || parseDiaMes(t.TerminoPrevisto);
     const ultimo = diario.length ? parseDiaMesComAncora(diario[diario.length - 1].Data, hoje) : null;
     const notas = [];
     if (terminoT && ultimo && terminoT > ultimo) notas.push('Continua na próxima Six Week.');
-    if (temS) notas.push('Dias hachurados: trabalho previsto, sem quantidade diária.');
-    if (temTexto) notas.push('Dias contornados: atividade registrada sem número.');
+    if (temS) notas.push('✓ = dia de trabalho previsto, sem quantidade.');
+    if (temNum) notas.push('Número = quantidade prevista no dia (cor mais forte = mais quantidade).');
+    if (temTexto) notas.push('Dias contornados: atividade registrada sem número (toque para ver).');
     const sub = [t.Topico, t.Subgrupo].filter(Boolean).join(' · ');
     const zeroTotal = (typeof t.TotalPrevisto === 'number' && t.TotalPrevisto === 0) || String(t.TotalPrevisto ?? '').trim() === '0' || String(t.TotalPrevisto ?? '').trim() === '';
     return `<div class="pm-card" style="gap:10px">
       <div style="display:flex;flex-direction:column;gap:3px"><strong style="font-size:15px;font-weight:600;line-height:1.3">${pmEsc(t.Nome)}</strong>${sub ? `<small class="pm-mono-sm">${pmEsc(sub)}</small>` : ''}</div>
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">${zeroTotal ? '<span></span>' : `<span class="pm-qty">total prev. ${pmEsc(formatarValorComUnidade(t.TotalPrevisto, t.Unidade || ''))}</span>`}<span class="pm-mono-sm">${t.InicioPrevisto ? `${pmEsc(t.InicioPrevisto)} → ${pmEsc(t.TerminoPrevisto || '-')}` : (t.TerminoPrevisto ? `término ${pmEsc(t.TerminoPrevisto)}` : '')}</span></div>
-      ${diario.length ? `<div class="pm-dchart">${colunas}</div>` : `<span style="font-size:12px;color:var(--muted)">Sem previsão diária cadastrada.</span>`}
+      ${diario.length ? calendario : `<span style="font-size:12px;color:var(--muted)">Sem previsão diária cadastrada.</span>`}
       ${notas.length ? `<span style="font-size:12px;color:var(--muted);line-height:1.45">${notas.join(' ')}</span>` : ''}
     </div>`;
   }).join('');
