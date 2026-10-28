@@ -3769,8 +3769,25 @@ function pmDesTodos() { window.pmFrente.des.todos = true; renderizarDesempenho()
 
 // ✅ prepara a série de uma etapa: dias com data, diário e acumulado,
 // e o corte na "Situação em" (depois dela o realizado ainda não existe)
+// acha a etapa da planilha "Planejamento em Mãos" que corresponde à etapa do gráfico,
+// mesmo com nome escrito diferente (ex.: "SSR 04 Estrutura (Nível Porão)" ↔ "Nível Porão",
+// "Aplicação Poroso" ↔ "Aplicação do Poroso")
+function pmEtapaIrma(d, nomeGrafico) {
+  const PARADAS = new Set(['de', 'do', 'da', 'dos', 'das', 'e', 'a', 'o', 'em', 'no', 'na']);
+  const toks = t => normalizarTexto(t || '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(w => w && !PARADAS.has(w));
+  const g = toks(nomeGrafico), gs = new Set(g);
+  let melhor = null, nota = 0;
+  (d.Etapas || []).forEach(e => {
+    const m = toks(e.Etapa); if (!m.length || !g.length) return;
+    if (m.join(' ') === g.join(' ')) { if (nota < 1000) { melhor = e; nota = 1000; } return; }
+    const ms = new Set(m);
+    const [peq, gr] = m.length <= g.length ? [m, gs] : [g, ms];
+    if (peq.every(w => gr.has(w)) && peq.length > nota) { melhor = e; nota = peq.length; }
+  });
+  return melhor;
+}
 function pmSerieEtapa(et, d) {
-  const etapaIrma = (d.Etapas || []).find(e => normalizarTexto(e.Etapa || '') === normalizarTexto(et.Etapa || ''));
+  const etapaIrma = pmEtapaIrma(d, et.Etapa);
   const situacao = (etapaIrma && pmParseSituacao(etapaIrma.Situacao)) || pmHoje();
   const todos = et.Dias || [];
   const i0 = todos.findIndex(x => (Number(x.Previsto) > 0) || (Number(x.Realizado) > 0) || (Number(x.DiarioPrevisto) > 0) || (Number(x.DiarioRealizado) > 0));
@@ -3786,7 +3803,9 @@ function pmSerieEtapa(et, d) {
   });
   let iCorte = -1;
   dias.forEach((x, i) => { if (x.passou) iCorte = i; });
-  return { dias, situacao, iCorte, unidade: et.Unidade || 'm', etapaIrma };
+  // a unidade certa é a da planilha principal (o gráfico às vezes vem com "m" por padrão)
+  const unidade = etapaIrma && etapaIrma.Unidade && etapaIrma.Unidade !== '-' ? etapaIrma.Unidade : (et.Unidade || 'm');
+  return { dias, situacao, iCorte, unidade, etapaIrma };
 }
 
 function pmEscalaMax(v) {
@@ -8853,7 +8872,7 @@ async function montarRespostaDetonacoes(data, rotulo) {
           avancosDoDia.push({
             frente: formatarTitulo(nomeFrente), etapa: et.Etapa,
             pkInicial: dia.PkInicial, pkFinal: dia.PkFinal,
-            avanco: dia.DiarioRealizado, observacao: dia.Observacoes, unidade: et.Unidade || 'm',
+            avanco: dia.DiarioRealizado, observacao: dia.Observacoes, unidade: (() => { const fr = (window.todasFrentesAtivas || []).find(f => f.Nome === nomeFrente); const ir = fr ? pmEtapaIrma(fr, et.Etapa) : null; return ir && ir.Unidade && ir.Unidade !== '-' ? ir.Unidade : (et.Unidade || 'm'); })(),
           });
         }
       });
