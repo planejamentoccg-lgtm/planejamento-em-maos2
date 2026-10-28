@@ -2568,6 +2568,12 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 .pm-mp.pm-fit{ display:flex; flex-direction:column; box-sizing:border-box; }
 @media (max-width:1023.98px){ .pm-mp.pm-fit{ padding-top:46px; padding-bottom:50px; } }
 .pm-mp.pm-fit > .pm-mp-svg{ flex:1 1 0; min-height:0; height:auto !important; max-height:none !important; width:100%; }
+@media (min-width:1024px){
+  /* computador: a tela inteira cabe na janela; só a coluna da direita rola, e só se tiver mais coisa */
+  #lista, #telaProximasSemanas, #telaCronograma{ padding-bottom:0 !important; min-height:0 !important; }
+  .pm-cols.pm-fr, #telaProximasSemanas .pm-cols, .pm-cols.pm-cr-mapa, .pm-cols.pm-cr-critico, .pm-cols.pm-cr-geral{ padding-bottom:16px !important; }
+  .pm-cols > .pm-topbar{ position:sticky; top:0; z-index:30; background:var(--paper); }
+}
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -4592,12 +4598,24 @@ function pmAjustarMapas() {
     let depois = 0, irmao = mp.nextElementSibling;
     if (desk) for (; irmao; irmao = irmao.nextElementSibling) { const cs = getComputedStyle(irmao); if (cs.position !== 'absolute' && cs.position !== 'fixed' && cs.display !== 'none') depois += irmao.offsetHeight + (parseFloat(cs.marginTop) || 0); }
     if (st) st.style.position = velho;
-    const tela = H - navH - 12;
+    const tela = desk ? H - 28 : H - navH - 12;
     let h = tela - topo - depois;
     if (h < 380) h = Math.min(tela - 24, Math.max(380, tela - depois - 24));
     h = Math.round(Math.max(320, h));
     mp.classList.add('pm-fit');
     if (mp.style.height !== h + 'px') mp.style.height = h + 'px';
+  });
+  // computador: a coluna da esquerda (mapa e o que está acima dele) fica congelada exatamente onde nasce; só a lateral rola
+  document.querySelectorAll('.pm-cols').forEach(g => {
+    if (!g.offsetParent) return;
+    [...g.children].forEach(k => {
+      if (!desk) { if (k.dataset.pmTopo) { k.style.top = ''; delete k.dataset.pmTopo; } return; }
+      if (getComputedStyle(k).position !== 'sticky' || k.classList.contains('pm-topbar')) return;
+      const v = k.style.position; k.style.position = 'static';
+      const t = Math.round(k.getBoundingClientRect().top + window.scrollY);
+      k.style.position = v;
+      if (k.style.top !== t + 'px') { k.style.top = t + 'px'; k.dataset.pmTopo = '1'; }
+    });
   });
 }
 (function () {
