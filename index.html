@@ -6029,6 +6029,7 @@ function pmMapaLocal(data) {
   const pas = nome.match(/passagem de emergencia\s*(\d+)/);
   if (pas && PM_MAPA_PASSAGENS[pas[1]]) return { zona: 'linha', pk: PM_MAPA_PASSAGENS[pas[1]], area: 'Túnel de Via Oeste' };
   if (ini('1.5.8') || tem(/ssr\s*0?4/)) return { zona: 'linha', pk: 8950, ssr: true, area: 'Túnel de Via Oeste' };
+  if (ini('1.5.1') || ini('1.5.2') || tem(/rolha|tunel do operador/)) return { zona: 'est', slot: 'tunelVia', area: 'Túnel de via · Rolha' };
   const faixa = pmMapaFaixaPK(data);
   if (faixa || tem(/via permanente|\bvia [12]\b|poroso/)) {
     const via = tem(/via 1\b/) ? 1 : tem(/via 2\b/) ? 2 : 0;
@@ -6055,6 +6056,7 @@ const PM_MAPA_SLOTS = {
   interlig:{ x: 180, y: 370, dx: 28, dy: 0, lado: 'c' },
   sul:     { x: 110, y: 230, dx: 0, dy: 50, lado: 'l' },
   sulB:    { x: 110, y: 500, dx: 0, dy: 44, lado: 'l' },
+  tunelVia:{ x: 250, y: 652, dx: 0, dy: 26, lado: 'r' },
 };
 
 function pmMapaRotulo(nome, slot) {
@@ -6826,7 +6828,8 @@ const PM_PROG_LUGARES = {
   sulU:     { x: 110, y: 220, lado: 'l', nome: ['Sentido', 'Uruguai'], area: 'Estação Sul · Sentido Uruguai' },
   sulG:     { x: 110, y: 520, lado: 'l', nome: ['Sentido', 'Gen. Osório'], area: 'Estação Sul · Sentido General Osório' },
   sul:      { x: 110, y: 290, lado: 'l', nome: ['Estação', 'Sul'], area: 'Estação Sul' },
-  oeste:    { x: 180, y: 470, lado: 'c', nome: ['Est. Oeste', '(sem lado)'], area: 'Estação Oeste' },
+  tunelVia: { x: 250, y: 652, lado: 'r', nome: ['Túnel de via', '(Rolha)'], area: 'Túnel de via · Rolha (junto à Estação Oeste)' },
+  oeste:    { x: 180, y: 470, lado: 'c', nome: ['Est. Oeste', '(toda)'], area: 'Estação Oeste (toda)' },
 };
 function pmProgLugar(descricao, numero) {
   // com o Nº da estrutura, junta os nomes do item e dos "pais" no cronograma (ex.: "Vigas e Laje" → "Passagem de Emergência ... (15)")
@@ -6837,11 +6840,19 @@ function pmProgLugar(descricao, numero) {
   // lado pelas seções do rebaixo: Seção A com CA13…CA41 = Carioca; Seção A com A12…A1 e Seção B = São Conrado
   if (!c && !j && tem(/secao/)) {
     const cas = [...t.matchAll(/\bca\s?(\d{1,2})\b/g)].map(m => +m[1]);
-    if (cas.some(n => n >= 13)) c = true;
-    else if (tem(/secao b\b/) || (tem(/secao a\b/) && !cas.length && /\ba\s?(\d{1,2})\b/.test(t))) j = true;
+    const linhas = [...t.matchAll(/\bca'\s?(\d{1,2})\b/g)].map(m => +m[1]);
+    // Seção C = São Conrado · Seção D = Carioca · CA'1–4 = São Conrado, CA'5–8 = Carioca (CA'4 a 8 pega os dois lados)
+    if (tem(/secao c\b/) && !cas.some(n => n >= 13)) j = true;
+    else if (tem(/secao d\b/)) c = true;
+    else if (linhas.length && !cas.length) { if (linhas.every(n => n <= 4)) j = true; else if (linhas.every(n => n >= 5)) c = true; }
+    else if (cas.some(n => n >= 13)) c = true;
+    else if (tem(/secao b\b/) || (!cas.length && /\(a\s?\d{1,2}\b/.test(t))) j = true;
   }
   const num = String(numero || '').trim();
   const ini = p => num === p || num.startsWith(p + '.');
+  // marcos, ordem de início, mobilização/projeto e superfície não vão para o mapa
+  if (num && /^1\.(1|2|3|4)(\.|$)/.test(num)) return null;
+  const naEstacao = !num || /^1\.6(\.|$)/.test(num);
   // passagens de emergência: "PE 15", "Passagem de Emergência 15", "... PK 8.240 (15)", "em frente SSR 05"
   const pe = t.match(/\bpe\s*-?\s*(\d{1,2})\b/) || (/passagem de emergencia/.test(t) && t.match(/\((\d{1,2})\)/)) || t.match(/passagem de emergencia\s*(\d{1,2})\b/);
   if (pe && PM_MAPA_PASSAGENS[pe[1]]) return { linha: true, chave: 'pe' + pe[1], nome: 'PE ' + pe[1], pk: PM_MAPA_PASSAGENS[pe[1]], area: 'Passagem de Emergência ' + pe[1] };
@@ -6851,10 +6862,13 @@ function pmProgLugar(descricao, numero) {
     if (pk && pk > 7600 && pk < 9200) return { linha: true, chave: 'pe' + Math.round(pk), nome: 'PE · PK ' + pmPKFmt(pk), pk, area: 'Passagem de Emergência PK ' + pmPKFmt(pk) };
   }
   if (ini('1.5.8') || tem(/ssr\s*0?4\b/)) return { linha: true, chave: 'ssr04', nome: 'SSR 04', ssr: true, area: 'SSR 04' };
-  if (ini('1.5.3') || tem(/via permanente|\bvias?\s*[12]\b|concreto poroso|\bporoso\b/)) {
+  if (!ini('1.5.1') && !ini('1.5.2') && (ini('1.5.3') || tem(/via permanente|\bvias?\s*[12]\b|concreto poroso|\bporoso\b/))) {
     const v = ini('1.5.3.1.3') || tem(/\bvia 1\b/) ? 1 : ini('1.5.3.1.2') || tem(/\bvia 2\b/) ? 2 : 0;
     return { linha: true, chave: 'via' + v, nome: v ? 'Via ' + v : 'Vias 1 e 2', via: v, area: 'Via permanente' + (v ? ' · Via ' + v : '') };
   }
+  // túnel de via colado na Estação Oeste (Rolha, túnel do operador, túnel de via 1.5.2, reservatório 4)
+  if (ini('1.5.1') || ini('1.5.2') || ini('1.5.7') || tem(/rolha|tunel do operador|tunel piloto|reservatorio/)) return { chave: 'tunelVia' };
+  if (!naEstacao) return null;
   if (tem(/poco sul/)) return { chave: 'pocoSul' };
   if (tem(/poco oeste/)) return { chave: 'pocoOeste' };
   if (ini('1.6.4') || tem(/interligacao/)) return { chave: 'interlig' };
