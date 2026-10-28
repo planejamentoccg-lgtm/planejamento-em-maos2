@@ -3790,12 +3790,37 @@ function pmEtapaIrma(d, nomeGrafico) {
   });
   return melhor;
 }
+// as datas do histórico vêm só com dia/mês ("02/05") e a série pode passar de um ano;
+// aqui o ano é dado em sequência (a lista está em ordem) e ancorado no último dia com
+// realizado, que é o dia da "Situação em"
+function pmDatasSequenciais(lista, situacao) {
+  const dm = lista.map(x => { const p = String(x.Data || '').trim().split('/'); const d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1; return isNaN(d) || isNaN(m) ? null : [d, m]; });
+  const off = []; let o = 0, ant = null;
+  dm.forEach(v => { if (v && ant && (v[1] * 40 + v[0]) < (ant[1] * 40 + ant[0])) o++; if (v) ant = v; off.push(o); });
+  const mk = (base, k) => dm[k] ? new Date(base + off[k], dm[k][1], dm[k][0]) : null;
+  let iRef = -1;
+  lista.forEach((x, k) => { if (dm[k] && (pmTemValor(x.Realizado) || pmTemValor(x.DiarioRealizado))) iRef = k; });
+  let base;
+  if (iRef >= 0) base = parseDiaMesComAncora(lista[iRef].Data, situacao).getFullYear() - off[iRef];
+  else {
+    const sy = situacao.getFullYear(); let melhor = Infinity;
+    const ks = dm.map((v, k) => v ? k : -1).filter(k => k >= 0);
+    if (!ks.length) return lista.map(() => null);
+    for (let b = sy - 2; b <= sy + 1; b++) {
+      const a = mk(b, ks[0]), z = mk(b, ks[ks.length - 1]);
+      const dist = situacao < a ? a - situacao : situacao > z ? situacao - z : 0;
+      if (dist < melhor) { melhor = dist; base = b; }
+    }
+  }
+  return dm.map((v, k) => mk(base, k));
+}
 function pmSerieEtapa(et, d) {
   const etapaIrma = pmEtapaIrma(d, et.Etapa);
   const situacao = (etapaIrma && pmParseSituacao(etapaIrma.Situacao)) || pmHoje();
   const todos = et.Dias || [];
   const i0 = todos.findIndex(x => (Number(x.Previsto) > 0) || (Number(x.Realizado) > 0) || (Number(x.DiarioPrevisto) > 0) || (Number(x.DiarioRealizado) > 0) || String(x.Observacoes || '').trim() || String(x.ObservacoesPrevisto || '').trim());
-  const dias = (i0 >= 0 ? todos.slice(i0) : todos).map(x => ({ ...x, data: parseDiaMesComAncora(x.Data, situacao) || parseDiaMes(x.Data) }));
+  const datas = pmDatasSequenciais(todos, situacao);
+  const dias = (i0 >= 0 ? todos.slice(i0) : todos).map((x, k) => ({ ...x, data: datas[(i0 >= 0 ? i0 : 0) + k] }));
   const unidadesFrente = (d.Etapas || []).map(e => e.Unidade).filter(u => u && u !== '-');
   const comum = unidadesFrente.length && unidadesFrente.every(u => u === unidadesFrente[0]) ? unidadesFrente[0] : null;
   const unidade = etapaIrma && etapaIrma.Unidade && etapaIrma.Unidade !== '-' ? etapaIrma.Unidade : (comum || et.Unidade || 'm');
@@ -3928,7 +3953,15 @@ function renderizarDesempenho() {
   // números do rodapé do gráfico
   let numeros;
   const ate = iCorte >= 0 ? dias[iCorte] : null;
-  if (acum) {
+  const antesDeComecar = !ate && dias.length && dias[0].data && dias[0].data > serie.situacao;
+  const comecaEm = antesDeComecar ? (dias.find(x => x.dp > 0) || dias[0]) : null;
+  if (acum && antesDeComecar) {
+    numeros = [
+      [u(0), `realizado até ${pmFmtDM(serie.situacao)}`, ''],
+      [u(0), `previsto até ${pmFmtDM(serie.situacao)}`, ''],
+      [pmFmtDM(comecaEm.data), 'previsto para começar', ''],
+    ];
+  } else if (acum) {
     const dif = ate ? ate.ar - ate.ap : 0;
     numeros = [
       [ate ? u(ate.ar) : '-', `realizado até ${pmFmtDM(serie.situacao)}`, ''],
