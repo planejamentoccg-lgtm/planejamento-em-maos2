@@ -2574,6 +2574,18 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-cols.pm-fr, #telaProximasSemanas .pm-cols, .pm-cols.pm-cr-mapa, .pm-cols.pm-cr-critico, .pm-cols.pm-cr-geral{ padding-bottom:16px !important; }
   .pm-cols > .pm-topbar{ position:sticky; top:0; z-index:30; background:var(--paper); }
 }
+.pm-print-mapas{ display:none; }
+@media print{
+  html body.tema-escuro, html body{ --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
+    --map-via:#C9D2B8; --map-halo:#EEF2E4; --map-card:#FFFFFF; --map-ink:#161F1E; --mp-late:#D2634F; --mp-ok:#758E4A; --mp-stop:#4F7BB5; --mp-halo-op:.22; }
+  .pm-print-mapas{ display:grid !important; grid-template-columns:1fr 1fr; gap:4mm; margin:0 0 5mm; break-inside:avoid; }
+  .pm-mp.pm-print-oculto{ display:none !important; }
+  .pm-print-mapas figure{ margin:0; display:flex; flex-direction:column; gap:2mm; }
+  .pm-print-mapas figcaption{ font-family:var(--f-display); font-size:11pt; font-weight:800; color:#161F1E; }
+  .pm-print-fig{ border-radius:4mm; background:#EEF2E4; padding:3mm 0; }
+  .pm-print-mapas .pm-mp-svg{ height:auto !important; max-height:180mm !important; width:100%; }
+  #cronoVisual, .pm-side, #progHero{ position:static !important; }
+}
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -2943,7 +2955,35 @@ window.addEventListener('beforeprint', () => {
     if (el && el.style.display === 'block') { el.classList.add('pm-sub-ativa'); document.body.classList.add('pm-imprimindo-sub'); }
   });
 });
+// na impressão, o mapa sai com Estação e Linha toda lado a lado (para não faltar informação)
+function pmPrepararMapasImpressao() {
+  if (document.querySelector('.pm-print-mapas')) return;
+  const visivel = () => [...document.querySelectorAll('.pm-mp')].find(m => m.offsetParent && m.querySelector('.pm-mp-zoom button'));
+  let mp = visivel(); if (!mp) return;
+  const botoes = [...mp.querySelectorAll('.pm-mp-zoom button')];
+  const atual = botoes.find(b => b.getAttribute('aria-pressed') === 'true'), outro = botoes.find(b => b !== atual);
+  if (!atual || !outro) return;
+  const svgs = {}; const nome = b => b.textContent.trim();
+  const pega = () => { const m = visivel(); const sv = m && m.querySelector('svg.pm-mp-svg'); return sv ? sv.outerHTML : ''; };
+  svgs[nome(atual)] = pega();
+  const txtAtual = nome(atual), txtOutro = nome(outro);
+  outro.click();
+  svgs[txtOutro] = pega();
+  const volta = [...(visivel() || document).querySelectorAll('.pm-mp-zoom button')].find(b => nome(b) === txtAtual); if (volta) volta.click();
+  mp = visivel(); if (!mp) return;
+  const ordem = ['Estação', 'Linha toda'].filter(n => svgs[n]);
+  const div = document.createElement('div'); div.className = 'pm-print-mapas';
+  div.innerHTML = ordem.map(n => `<figure><figcaption>${n === 'Estação' ? 'Estação Gávea' : 'Linha toda'}</figcaption><div class="pm-print-fig">${svgs[n]}</div></figure>`).join('');
+  mp.insertAdjacentElement('afterend', div); mp.classList.add('pm-print-oculto');
+}
+// impressão / compartilhar sempre no modo claro (volta ao escuro depois, se estava)
+function pmImpressaoClara() { if (document.body.classList.contains('tema-escuro')) { document.body.classList.remove('tema-escuro'); document.body.dataset.pmVoltaEscuro = '1'; } }
+window.addEventListener('beforeprint', () => { pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (e) {} });
+if (window.matchMedia) { try { window.matchMedia('print').addEventListener('change', e => { if (e.matches) { pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (x) {} } else if (document.body.dataset.pmVoltaEscuro) { document.body.classList.add('tema-escuro'); delete document.body.dataset.pmVoltaEscuro; } }); } catch (e) {} }
 window.addEventListener('afterprint', () => {
+  document.querySelectorAll('.pm-print-mapas').forEach(el => el.remove());
+  if (document.body.dataset.pmVoltaEscuro) { document.body.classList.add('tema-escuro'); delete document.body.dataset.pmVoltaEscuro; }
+  document.querySelectorAll('.pm-print-oculto').forEach(el => el.classList.remove('pm-print-oculto'));
   document.body.classList.remove('pm-imprimindo-sub');
   document.querySelectorAll('.pm-sub-ativa').forEach(el => el.classList.remove('pm-sub-ativa'));
 });
@@ -4631,17 +4671,21 @@ if (window.matchMedia) {
   });
 }
 // parte de cima: meses + título (+ no computador, o painel com os lugares do mês ou o detalhe do lugar)
+// lista dos lugares do mês (no computador fica no painel da direita; no celular, embaixo do mapa)
+function pmCmListaHTML(est, lin, fora) {
+  let painel = '';
+  const linhas = [...est, ...lin].sort((a, b) => b[1].itens.filter(f => f.crit).length - a[1].itens.filter(f => f.crit).length || b[1].itens.length - a[1].itens.length)
+        .map(([k, Lg]) => { const c = Lg.itens.filter(f => f.crit).length, n = Lg.itens.length;
+          return `<button class="pm-cm-lugar" onclick="pmCmSelecionar('${k}')"><b class="${c ? 'crit' : ''}">${n}</b><span><strong>${pmEsc(Lg.area || PM_PROG_LUGARES[k]?.area || Lg.nome || k)}</strong><small>${n} ${n === 1 ? 'atividade' : 'atividades'}${c ? ` · ${c} no caminho crítico` : ''}</small></span>${PM_ICON.chev}</button>`; }).join('');
+      painel = `<div class="pm-cm-lugares"><small class="pm-cm-dica">Toque num lugar do mapa ou da lista para ver as atividades</small>${linhas || '<div class="pm-empty">Nada previsto neste mês.</div>'}${fora.length ? `<button class="pm-cm-lugar" onclick="mostrarAbaCronograma('geral')"><b>+${fora.length}</b><span><strong>Fora do mapa</strong><small>ver no Cronograma</small></span>${PM_ICON.chev}</button>` : ''}</div>`;
+  return painel;
+}
 function htmlCronoMapa() {
   const { meses, st, m0, lista, L, nCrit, sel, contaMes, est, lin, fora } = pmCmDados();
   let painel = '';
   if (pmDesk()) {
     if (sel) painel = pmCmSheet(L[sel], sel, m0).replace('class="pm-mp-sheet pm-sw-sheet"', 'class="pm-cm-painel-det"');
-    else {
-      const linhas = [...est, ...lin].sort((a, b) => b[1].itens.filter(f => f.crit).length - a[1].itens.filter(f => f.crit).length || b[1].itens.length - a[1].itens.length)
-        .map(([k, Lg]) => { const c = Lg.itens.filter(f => f.crit).length, n = Lg.itens.length;
-          return `<button class="pm-cm-lugar" onclick="pmCmSelecionar('${k}')"><b class="${c ? 'crit' : ''}">${n}</b><span><strong>${pmEsc(Lg.area || PM_PROG_LUGARES[k]?.area || Lg.nome || k)}</strong><small>${n} ${n === 1 ? 'atividade' : 'atividades'}${c ? ` · ${c} no caminho crítico` : ''}</small></span>${PM_ICON.chev}</button>`; }).join('');
-      painel = `<div class="pm-cm-lugares"><small class="pm-cm-dica">Toque num lugar do mapa ou da lista para ver as atividades</small>${linhas || '<div class="pm-empty">Nada previsto neste mês.</div>'}${fora.length ? `<button class="pm-cm-lugar" onclick="mostrarAbaCronograma('geral')"><b>+${fora.length}</b><span><strong>Fora do mapa</strong><small>ver no Cronograma</small></span>${PM_ICON.chev}</button>` : ''}</div>`;
-    }
+    else painel = pmCmListaHTML(est, lin, fora);
   }
   return `
     <div class="pm-pg-strip pm-cm-strip" role="tablist" aria-label="Meses" style="--n:${meses.length}">${meses.map((d, i) => {
@@ -4653,7 +4697,7 @@ function htmlCronoMapa() {
 }
 // o mapa em si (no celular o detalhe abre por cima do mapa)
 function htmlCronoMapaVisual() {
-  const { m0, lista, L, fora, zoom, sel, svg, seg, nLin, cLin, lin } = pmCmDados();
+  const { m0, lista, L, fora, zoom, sel, svg, seg, nLin, cLin, lin, est } = pmCmDados();
   return `<div class="pm-mp pm-pg-mapa pm-cm-mapa ${zoom === 'linha' ? 'linha' : ''}">${svg}
       <div class="pm-mp-zoom">${seg('estacao', 'Estação')}${seg('linha', 'Linha toda')}</div>
       <div class="pm-mp-chips">
@@ -4663,7 +4707,8 @@ function htmlCronoMapaVisual() {
       ${!lista.length ? '<div class="pm-mp-vazio">Nada previsto neste mês.</div>' : ''}
       ${sel && !pmDesk() ? pmCmSheet(L[sel], sel, m0) : ''}
     </div>
-    <div class="pm-pg-foot">Cronograma de ${pmEsc(CRONOGRAMA_GERAL_INFO.corte || '')} · número = atividades previstas no mês · vermelho = tem atividade do caminho crítico</div>`;
+    <div class="pm-pg-foot">Cronograma de ${pmEsc(CRONOGRAMA_GERAL_INFO.corte || '')} · número = atividades previstas no mês · vermelho = tem atividade do caminho crítico</div>
+    ${pmDesk() ? '' : pmCmListaHTML(est, lin, fora)}`;
 }
 function pmCmSheet(Lg, k, m0) {
   const A = m0, B = new Date(m0.getFullYear(), m0.getMonth() + 5, 1);
@@ -4789,7 +4834,10 @@ function pmCmRedesenhar() {
   el.innerHTML = htmlCronoMapa();
   const st = el.querySelector('.pm-cm-strip'); if (st) { st.scrollLeft = sl; const b = st.querySelector('[aria-selected="true"]'); if (b) { const x = b.getBoundingClientRect().left - st.getBoundingClientRect().left; if (x < 0 || x + b.offsetWidth > st.clientWidth) st.scrollLeft += x - 12; } }
 }
-function pmCmSelecionar(k) { window.pmCmSel = window.pmCmSel === k ? null : k; pmCmRedesenhar(); }
+function pmCmSelecionar(k) {
+  window.pmCmSel = window.pmCmSel === k ? null : k; pmCmRedesenhar();
+  if (window.pmCmSel && !pmDesk()) { const m = document.querySelector('#cronoVisual .pm-cm-mapa'); if (m) m.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
 function pmCmZoomar(z) { window.pmCmZoom = z; window.pmCmSel = null; pmCmRedesenhar(); }
 function pmCmMes(i) { window.pmCrono.mesMapa = i; pmCmRedesenhar(); }
 
