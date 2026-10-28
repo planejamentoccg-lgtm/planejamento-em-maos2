@@ -2618,6 +2618,22 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 .pm-dia-tag{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.6px; text-transform:uppercase; padding:2px 6px; border-radius:5px; white-space:nowrap; justify-self:start; }
 .pm-dia-tag.prev{ border:1px solid var(--line); color:var(--muted); }
 .pm-dia-tag.real{ background:var(--olive-tint); color:var(--olive-ink); border:1px solid transparent; }
+/* ✅ indicador online/offline */
+.pm-net{ display:inline-flex; align-items:center; gap:5px; margin-right:6px; padding:3px 8px; border-radius:999px; font-family:var(--f-mono); font-size:10px; letter-spacing:.5px; color:var(--muted); background:transparent; white-space:nowrap; }
+.pm-net i{ width:6px; height:6px; border-radius:50%; background:var(--mp-ok, #758E4A); box-shadow:0 0 0 2px color-mix(in srgb, var(--mp-ok, #758E4A) 25%, transparent); }
+.pm-net b{ font-weight:500; }
+.pm-net .off{ display:none; }
+html.pm-offline .pm-net{ color:#9A6A12; background:color-mix(in srgb, #D0A652 16%, transparent); }
+body.tema-escuro .pm-net{ color:var(--muted); }
+html.pm-offline body.tema-escuro .pm-net{ color:#E4C37A; }
+html.pm-offline .pm-net i{ background:#D0A652; box-shadow:0 0 0 2px color-mix(in srgb, #D0A652 30%, transparent); }
+html.pm-offline .pm-net .on{ display:none; }
+html.pm-offline .pm-net .off{ display:inline; }
+.pm-topbar .pm-net{ display:none; }
+#navInferior .pm-side-foot .pm-net-side{ margin:6px 0 0; padding:0; letter-spacing:.5px; text-transform:none; color:var(--hero-muted, #AEB6B0); background:none; }
+html.pm-offline #navInferior .pm-side-foot .pm-net-side{ color:#E4C37A; background:none; }
+@media not screen and (min-width:1024px){ .pm-topbar .pm-net{ display:inline-flex; } }
+@media print{ .pm-net{ display:none !important; } }
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -2943,12 +2959,28 @@ function pmDataExtenso() {
   return `${dia}, ${d.getDate()} de ${mes} de ${d.getFullYear()}`;
 }
 
+// ✅ indicador discreto de conexão (online / offline)
+const PM_NET_HTML = '<i aria-hidden="true"></i><b class="on">online</b><b class="off">offline</b>';
+function pmAtualizarConexao() {
+  const off = !navigator.onLine;
+  document.documentElement.classList.toggle('pm-offline', off);
+  document.querySelectorAll('.pm-net').forEach(el => {
+    el.title = off ? 'Sem internet — mostrando os últimos dados salvos neste aparelho. Atualiza sozinho quando a conexão voltar.' : 'Conectado — dados atualizados';
+    el.setAttribute('aria-label', off ? 'Offline' : 'Online');
+  });
+}
+window.addEventListener('online', pmAtualizarConexao);
+window.addEventListener('offline', pmAtualizarConexao);
+document.addEventListener('DOMContentLoaded', pmAtualizarConexao);
+new MutationObserver(() => { if (document.querySelector('.pm-net:not([aria-label])')) pmAtualizarConexao(); }).observe(document.documentElement, { childList: true, subtree: true });
+
 function htmlTopoNovo() {
   return `
     <header class="pm-topbar">
       <span class="pm-logo-wrap"><img class="pm-logo" src="${PM_LOGO_CCG}" alt="Consórcio Construtor Gávea"></span>
       <span class="pm-top-data">${pmDataExtenso()}</span>
-      <span style="display:inline-flex;">
+      <span style="display:inline-flex;align-items:center;">
+        <span class="pm-net" title="">${PM_NET_HTML}</span>
         <button class="pm-icon-btn iconeTema" data-svg="1" onclick="alternarTema()" aria-label="Alternar modo claro/escuro"></button>
         <button class="pm-icon-btn" onclick="abrirNotificacoes()" aria-label="Notificações">${PM_ICON.bell}<span id="contadorNotif">0</span></button>
       </span>
@@ -3134,6 +3166,9 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+// ✅ OFFLINE — guarda no aparelho tudo o que já foi lido do Firestore. Sem internet,
+// as telas abrem com os últimos dados salvos; quando a conexão volta, atualiza sozinho.
+try { db.enablePersistence({ synchronizeTabs: true }).catch(e => console.log('Offline do Firestore indisponível neste navegador:', e && e.code)); } catch (e) { console.log('Offline do Firestore indisponível:', e); }
 
 // ✅ ícones minimalistas de olho aberto/fechado (sem cor própria — herdam
 // a cor do texto ao redor, igual ao resto dos ícones do app)
@@ -10198,7 +10233,7 @@ async function carregarContadorNotif() {
   const nav = document.getElementById('navInferior');
   if (!nav || nav.querySelector('.pm-side-logo')) return;
   nav.insertAdjacentHTML('afterbegin', `<div class="pm-side-logo"><img src="${PM_LOGO_CCG}" alt="Consórcio Construtor Gávea"></div><span class="pm-side-label">Menu</span>`);
-  nav.insertAdjacentHTML('beforeend', `<div class="pm-side-foot"><b>Planejamento em Mãos</b><span>Linha 4 · Extensão Gávea</span></div>`);
+  nav.insertAdjacentHTML('beforeend', `<div class="pm-side-foot"><b>Planejamento em Mãos</b><span>Linha 4 · Extensão Gávea</span><span class="pm-net pm-net-side">${PM_NET_HTML}</span></div>`);
 })();
 </script>
 
