@@ -2302,7 +2302,7 @@ body.tema-escuro{ --pact:#9DB7D6; --dv-late-bg:#3A2A24; --dv-late:#F3B3A3; --dv-
   .pm-stack.tight{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }
 
-@media (min-width: 1024px){
+@media screen and (min-width:1024px){
   :root{ --side:248px; }
   html, body{ background:var(--paper); }
 
@@ -2398,7 +2398,7 @@ body.tema-escuro{ --pact:#9DB7D6; --dv-late-bg:#3A2A24; --dv-late:#F3B3A3; --dv-
   .pm-cine video{ max-height:calc(100vh - 260px); object-fit:contain; }
 }
 
-@media (min-width: 1400px){
+@media screen and (min-width: 1400px){
   .pm-cols:has(> .pm-side){ grid-template-columns:420px minmax(0, 1fr); column-gap:40px; }
 }
 @media print{
@@ -2438,7 +2438,7 @@ body.tema-escuro .pm-pg-strip button[aria-selected="true"] em.boom{ color:#B2443
 .pm-mp-estring.ok{ stroke:var(--mp-ok); }
 .pm-pg-filtro{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:16px 12px 10px; padding:10px 14px; border-radius:14px; background:var(--olive-tint); font-size:13.5px; }
 .pm-pg-filtro button{ border:none; background:none; padding:0; font-weight:600; color:var(--olive-ink); min-height:32px; }
-@media (min-width:1024px){
+@media screen and (min-width:1024px){
   .pm-pg-seg, .pm-pg-strip{ margin-left:0; margin-right:0; }
   .pm-pg-tit, .pm-pg-foot{ padding-left:4px; padding-right:4px; }
   .pm-cols:has(> .pm-side) > .pm-pg-side .pm-mp{ margin:0; }
@@ -2514,7 +2514,7 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 .pm-cm-passos > span{ flex-shrink:0; display:flex; flex-direction:column; gap:1px; max-width:220px; padding:10px 12px 10px 38px; position:relative; border-radius:14px; background:var(--surface); border:1px solid var(--line); font-size:12.5px; font-weight:600; }
 .pm-cm-passos > span b{ position:absolute; left:10px; top:10px; width:20px; height:20px; border-radius:10px; background:var(--mp-late); color:#FFFFFF; display:grid; place-items:center; font-size:11px; }
 .pm-cm-passos small{ font-weight:400; color:var(--muted); font-size:11.5px; }
-@media (min-width:1024px){
+@media screen and (min-width:1024px){
   .pm-cm-painel .pm-pg-strip, .pm-cm-painel .pm-pg-tit, .pm-cm-crit .pm-pg-tit{ margin-left:0; margin-right:0; padding-left:4px; padding-right:4px; }
   .pm-cm-painel .pm-mp, .pm-cm-crit .pm-mp{ margin-left:0; margin-right:0; max-width:620px; }
   .pm-cm-prox{ margin-left:0; margin-right:0; max-width:620px; }
@@ -2540,7 +2540,7 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 .pm-cm-lugar strong{ font-size:14px; font-weight:600; }
 .pm-cm-lugar small{ font-size:12px; color:var(--muted); }
 .pm-cm-lugar:hover{ border-color:var(--olive); }
-@media (min-width:1024px){
+@media screen and (min-width:1024px){
   /* Cronograma (Mês a mês e Caminho crítico): coluna do mapa + painel */
   .pm-cols.pm-cr-mapa, .pm-cols.pm-cr-critico{ grid-template-columns:minmax(0, 1fr) minmax(380px, 440px) !important; column-gap:28px; max-width:1500px; }
   .pm-cr-mapa > *, .pm-cr-critico > *{ grid-column:2 !important; }
@@ -2572,7 +2572,7 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   #telaProximasSemanas .pm-pg-side .pm-pg-seg, #telaProximasSemanas .pm-pg-side .pm-pg-strip{ max-width:none; }
   #telaProximasSemanas .pm-cols > :not(.pm-side) .pm-stack, .pm-fr #botoes .pm-stack.tight{ grid-template-columns:1fr !important; }
 }
-@media (max-width:1023.98px){
+@media print, (max-width:1023.98px){
   /* celular: nas abas com mapa o quadro escuro fica compacto, para o mapa aparecer mais cedo */
   .pm-cr-mapa #heroCrono .pm-hero-title, .pm-cr-critico #heroCrono .pm-hero-title,
   .pm-cr-mapa #heroCrono > .pm-hero-meta, .pm-cr-critico #heroCrono > .pm-hero-meta{ display:none; }
@@ -2580,9 +2580,9 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 }
 /* ✅ MAPA DO TAMANHO DA TELA (altura calculada em pmAjustarMapas) */
 .pm-mp.pm-fit{ display:flex; flex-direction:column; box-sizing:border-box; }
-@media (max-width:1023.98px){ .pm-mp.pm-fit{ padding-top:46px; padding-bottom:50px; } }
+@media print, (max-width:1023.98px){ .pm-mp.pm-fit{ padding-top:46px; padding-bottom:50px; } }
 .pm-mp.pm-fit > .pm-mp-svg{ flex:1 1 0; min-height:0; height:auto !important; max-height:none !important; width:100%; }
-@media (min-width:1024px){
+@media screen and (min-width:1024px){
   /* computador: a tela inteira cabe na janela; só a coluna da direita rola, e só se tiver mais coisa */
   #lista, #telaProximasSemanas, #telaCronograma{ padding-bottom:0 !important; min-height:100vh !important; }
   /* Cronograma: o quadro escuro fica SEMPRE no mesmo lugar (topo da coluna da direita), em todas as abas */
@@ -2599,6 +2599,7 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-cols > .pm-topbar{ position:sticky; top:0; z-index:30; background:var(--paper); }
 }
 .pm-print-mapas{ display:none; }
+@media print and (orientation: landscape){ .pm-print-fig{ height:100mm !important; } .pm-mp.pm-fit > .pm-mp-svg{ max-height:100mm !important; } }
 @media print{
   html body.tema-escuro, html body{ --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
     --map-via:#C9D2B8; --map-halo:#EEF2E4; --map-card:#FFFFFF; --map-ink:#161F1E; --mp-late:#D2634F; --mp-ok:#758E4A; --mp-stop:#4F7BB5; --mp-halo-op:.22; }
@@ -2733,7 +2734,7 @@ body.tema-escuro .st-late .pm-mp-ring > span{ background:#3A2620; } body.tema-es
 .pm-mp-pk-bar i.st-ok{ background:var(--mp-ok); } .pm-mp-pk-bar i.st-late{ background:var(--mp-late); } .pm-mp-pk-bar i.st-stop{ background:var(--mp-stop); }
 .pm-mp-pk-bar b{ position:absolute; top:-4px; width:2px; height:20px; background:var(--ink); }
 
-@media (min-width:1024px){
+@media screen and (min-width:1024px){
   .pm-fr .pm-fr-vtog{ display:none; }
   .pm-fr[data-vista] #frentesMapa, .pm-fr[data-vista] #frentesListaWrap{ display:block; }
   .pm-fr .pm-side .pm-cnt, .pm-fr .pm-side .pm-fr-meta{ padding-left:0; padding-right:0; }
@@ -4740,7 +4741,7 @@ function pmCmDados() {
   const contaMes = d => { const e = new Date(d.getFullYear(), d.getMonth() + 1, 0); return pmCmNoPeriodo(d, e).filter(f => f.crit).length; };
   return { meses, st, m0, m1, lista, L, fora, nCrit, zoom, sel, est, lin, svg, seg, nLin, cLin, contaMes };
 }
-function pmDesk() { return window.matchMedia && window.matchMedia('(min-width: 1024px)').matches; }
+function pmDesk() { return window.matchMedia && window.matchMedia('screen and (min-width: 1024px)').matches; }
 // ✅ mapa sempre do tamanho da tela: aparece inteiro sem precisar descer (o que vem depois dele é que rola)
 function pmAjustarMapas() {
   const H = window.innerHeight, desk = pmDesk();
@@ -4786,7 +4787,7 @@ function pmAjustarMapas() {
   if (document.body) ligar(); else document.addEventListener('DOMContentLoaded', ligar);
 })();
 if (window.matchMedia) {
-  window.matchMedia('(min-width: 1024px)').addEventListener('change', () => {
+  window.matchMedia('screen and (min-width: 1024px)').addEventListener('change', () => {
     try { pmCrVisual(); const el = document.getElementById('painelCronoMapa'); if (el) el.innerHTML = htmlCronoMapa(); } catch (e) {}
     // ao imprimir no computador a página "encolhe" para o tamanho do papel e o cronograma é redesenhado
     // no formato do celular — aí os dois mapas lado a lado precisam ser montados de novo
