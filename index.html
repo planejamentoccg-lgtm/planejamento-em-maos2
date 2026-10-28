@@ -2582,8 +2582,8 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-mp.pm-print-oculto{ display:none !important; }
   .pm-print-mapas figure{ margin:0; display:flex; flex-direction:column; gap:2mm; }
   .pm-print-mapas figcaption{ font-family:var(--f-display); font-size:11pt; font-weight:800; color:#161F1E; }
-  .pm-print-fig{ border-radius:4mm; background:#EEF2E4; padding:3mm 0; }
-  .pm-print-mapas .pm-mp-svg{ height:auto !important; max-height:180mm !important; width:100%; }
+  .pm-print-fig{ border-radius:4mm; background:#EEF2E4; padding:3mm 2mm; height:145mm; box-sizing:border-box; }
+  .pm-print-mapas .pm-mp-svg{ height:100% !important; max-height:none !important; width:100%; }
   #cronoVisual, .pm-side, #progHero{ position:static !important; }
 }
 /* ✅ MAPA DAS FRENTES */
@@ -2964,7 +2964,7 @@ function pmPrepararMapasImpressao() {
   const atual = botoes.find(b => b.getAttribute('aria-pressed') === 'true'), outro = botoes.find(b => b !== atual);
   if (!atual || !outro) return;
   const svgs = {}; const nome = b => b.textContent.trim();
-  const pega = () => { const m = visivel(); const sv = m && m.querySelector('svg.pm-mp-svg'); return sv ? sv.outerHTML : ''; };
+  const pega = () => { const m = visivel(); const sv = m && m.querySelector('svg.pm-mp-svg'); return sv ? sv.outerHTML.replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="xMidYMid meet"') : ''; };
   svgs[nome(atual)] = pega();
   const txtAtual = nome(atual), txtOutro = nome(outro);
   outro.click();
