@@ -2609,6 +2609,9 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-print-fig{ border-radius:4mm; background:#EEF2E4; padding:3mm 2mm; height:145mm; box-sizing:border-box; }
   .pm-print-mapas .pm-mp-svg{ height:100% !important; max-height:none !important; width:100%; }
   #cronoVisual, .pm-side, #progHero{ position:static !important; }
+  .pm-mp.pm-fit{ height:auto !important; display:block !important; }
+  .pm-mp.pm-fit > .pm-mp-svg{ height:auto !important; max-height:150mm !important; }
+  .pm-cols{ display:block !important; }
 }
 .pm-dia-obs{ display:grid; grid-template-columns:76px minmax(0, 1fr); gap:6px 8px; align-items:baseline; font-size:12.5px; line-height:1.45; color:var(--ink); }
 .pm-dia-tag{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.6px; text-transform:uppercase; padding:2px 6px; border-radius:5px; white-space:nowrap; justify-self:start; }
@@ -3006,9 +3009,10 @@ function pmPrepararMapasImpressao() {
 }
 // impressão / compartilhar sempre no modo claro (volta ao escuro depois, se estava)
 function pmImpressaoClara() { if (document.body.classList.contains('tema-escuro')) { document.body.classList.remove('tema-escuro'); document.body.dataset.pmVoltaEscuro = '1'; } }
-window.addEventListener('beforeprint', () => { pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (e) {} });
-if (window.matchMedia) { try { window.matchMedia('print').addEventListener('change', e => { if (e.matches) { pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (x) {} } else if (document.body.dataset.pmVoltaEscuro) { document.body.classList.add('tema-escuro'); delete document.body.dataset.pmVoltaEscuro; } }); } catch (e) {} }
+window.addEventListener('beforeprint', () => { window.pmImprimindo = true; pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (e) {} });
+if (window.matchMedia) { try { window.matchMedia('print').addEventListener('change', e => { if (e.matches) { window.pmImprimindo = true; pmImpressaoClara(); try { pmPrepararMapasImpressao(); } catch (x) {} } else if (document.body.dataset.pmVoltaEscuro) { document.body.classList.add('tema-escuro'); delete document.body.dataset.pmVoltaEscuro; } }); } catch (e) {} }
 window.addEventListener('afterprint', () => {
+  window.pmImprimindo = false;
   document.querySelectorAll('.pm-print-mapas').forEach(el => el.remove());
   if (document.body.dataset.pmVoltaEscuro) { document.body.classList.add('tema-escuro'); delete document.body.dataset.pmVoltaEscuro; }
   document.querySelectorAll('.pm-print-oculto').forEach(el => el.classList.remove('pm-print-oculto'));
@@ -3833,7 +3837,10 @@ function pmSerieEtapa(et, d) {
     const dp = pmTemValor(x.DiarioPrevisto) ? Number(x.DiarioPrevisto) * k : 0;
     const dr = pmTemValor(x.DiarioRealizado) ? Number(x.DiarioRealizado) * k : 0;
     x.dp = dp; x.dr = dr;
-    ap += dp; ar += dr;
+    // o acumulado da planilha manda (ex.: dia com "foi demolido 3,50m": diário 8,5 mas acumulado sobe só 5);
+    // sem acumulado no dia, soma o diário ao anterior
+    ap = pmTemValor(x.Previsto) && Number(x.Previsto) * k >= ap - 1e-6 ? Number(x.Previsto) * k : ap + dp;
+    ar = pmTemValor(x.Realizado) ? Number(x.Realizado) * k : ar + dr;
     x.ap = ap; x.ar = ar;
     x.passou = !x.data || x.data <= situacao;
   });
@@ -4781,6 +4788,9 @@ function pmAjustarMapas() {
 if (window.matchMedia) {
   window.matchMedia('(min-width: 1024px)').addEventListener('change', () => {
     try { pmCrVisual(); const el = document.getElementById('painelCronoMapa'); if (el) el.innerHTML = htmlCronoMapa(); } catch (e) {}
+    // ao imprimir no computador a página "encolhe" para o tamanho do papel e o cronograma é redesenhado
+    // no formato do celular — aí os dois mapas lado a lado precisam ser montados de novo
+    if (window.pmImprimindo) { try { pmPrepararMapasImpressao(); } catch (e) {} }
   });
 }
 // parte de cima: meses + título (+ no computador, o painel com os lugares do mês ou o detalhe do lugar)
