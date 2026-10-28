@@ -7133,7 +7133,8 @@ function pmProgLugar(descricao, numero) {
   // marcos, ordem de início, mobilização/projeto e superfície não vão para o mapa
   if (ini('1.4') || tem(/obras de superficie/)) return { chave: 'superficie' };
   if (num && /^1\.(1|2|3)(\.|$)/.test(num)) return null;
-  if (ini('1.7') || tem(/madre jacinta|tunel de servico/)) return { linha: true, chave: 'mj', nome: 'Túnel M. Jacinta', xy: [975, 470], esq: true, area: 'Túnel Madre Jacinta (acesso ao externo)' };
+  // "Trecho SCR - Túnel de Serviço MJ" dentro da Via Permanente (1.5.x) é trecho da via, não o túnel MJ
+  if (ini('1.7') || (!/^1\.5(\.|$)/.test(num) && !tem(/via permanente|\bporoso\b/) && tem(/madre jacinta|tunel de servico/))) return { linha: true, chave: 'mj', nome: 'Túnel M. Jacinta', xy: [975, 470], esq: true, area: 'Túnel Madre Jacinta (acesso ao externo)' };
   if (ini('1.6.5') || tem(/ligacao entre (as )?plataformas/)) return { chave: tem(/\bnorte\b/) ? 'ligN' : 'ligS' };
   const naEstacao = !num || /^1\.6(\.|$)/.test(num);
   // passagens de emergência: "PE 15", "Passagem de Emergência 15", "... PK 8.240 (15)", "em frente SSR 05"
@@ -7260,7 +7261,9 @@ function pmSwDados() {
     (item.tarefas || []).forEach(t => {
       const extras = Object.entries(t).filter(([k, v]) => typeof v === 'string' && !/^(nome|topico|subgrupo|unidade|terminoprevisto|inicioprevisto|data)$/i.test(k)).map(([, v]) => v);
       const texto = [nomeFrente, item.dados.Grupo, item.dados.Area, t.Topico, t.Subgrupo, ...extras, t.Nome].filter(Boolean).join(' - ');
-      const numero = t.Numero || t.NumeroEstrutura || t.Estrutura || t.WBS || item.dados.Numero || '';
+      // coluna A da planilha 6x6 (o script grava em "Topico") = número da estrutura do cronograma
+      const topNum = /^\d+(\.\d+)+$/.test(String(t.Topico || '').trim()) ? String(t.Topico).trim() : '';
+      const numero = t.Numero || topNum || t.NumeroEstrutura || t.Estrutura || t.WBS || item.dados.Numero || '';
       const l = pmProgLugar(texto, numero);
       const boom = normalizarTexto(texto).includes('detona');
       const porSemana = semanas.map(() => ({ qtd: 0, dias: 0 }));
@@ -7273,7 +7276,7 @@ function pmSwDados() {
         porSemana[k].qtd += pmSwNumero(d.Valor);
       });
       if (!porSemana.some(x => x.dias)) return;
-      const tarefa = { nome: formatarTitulo(t.Nome || ''), det: [t.Topico, t.Subgrupo].filter(Boolean).map(formatarTitulo).join(' · '), frente: formatarTitulo(nomeFrente), unidade: t.Unidade || '', boom, porSemana };
+      const tarefa = { nome: formatarTitulo(t.Nome || ''), det: [topNum ? '' : t.Topico, t.Subgrupo].filter(Boolean).map(formatarTitulo).join(' · '), frente: formatarTitulo(nomeFrente), unidade: t.Unidade || '', boom, porSemana };
       if (!l) { sem.push(tarefa); return; }
       const L = lugares[l.chave] || (lugares[l.chave] = { ...l, tarefas: [] });
       L.tarefas.push(tarefa);
