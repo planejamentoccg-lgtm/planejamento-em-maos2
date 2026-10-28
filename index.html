@@ -2570,8 +2570,18 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
 .pm-mp.pm-fit > .pm-mp-svg{ flex:1 1 0; min-height:0; height:auto !important; max-height:none !important; width:100%; }
 @media (min-width:1024px){
   /* computador: a tela inteira cabe na janela; só a coluna da direita rola, e só se tiver mais coisa */
-  #lista, #telaProximasSemanas, #telaCronograma{ padding-bottom:0 !important; min-height:0 !important; }
-  .pm-cols.pm-fr, #telaProximasSemanas .pm-cols, .pm-cols.pm-cr-mapa, .pm-cols.pm-cr-critico, .pm-cols.pm-cr-geral{ padding-bottom:16px !important; }
+  #lista, #telaProximasSemanas, #telaCronograma{ padding-bottom:0 !important; min-height:100vh !important; }
+  /* Cronograma: o quadro escuro fica SEMPRE no mesmo lugar (topo da coluna da direita), em todas as abas */
+  .pm-cols.pm-cr{ grid-template-columns:minmax(0, 1fr) minmax(380px, 440px) !important; column-gap:28px; max-width:1500px; }
+  .pm-cr > *{ grid-column:1 !important; }
+  .pm-cr > .pm-topbar{ grid-column:1 / -1 !important; }
+  .pm-cr > #heroCrono{ grid-column:2 !important; order:-1; margin:0 0 14px !important; padding:16px 18px !important; max-height:none !important; }
+  .pm-cr #heroCrono > .pm-hero-title, .pm-cr #heroCrono > .pm-hero-meta{ display:none !important; }
+  .pm-cr-mapa > #painelCronoMapa, .pm-cr-critico > #buscaCronoCritico, .pm-cr-critico > #painelCronoCritico{ grid-column:2 !important; }
+  .pm-cr-mapa > #cronoVisual, .pm-cr-critico > #cronoVisual{ grid-column:1 !important; }
+  .pm-cr-geral > #heroCrono, .pm-cr-marcos > #heroCrono{ grid-row:2 / span 30 !important; position:sticky !important; align-self:start; }
+  .pm-cr-marcos > #painelCronoMarcos{ max-width:760px; }
+  .pm-cols.pm-fr, #telaProximasSemanas .pm-cols, .pm-cols.pm-cr{ padding-bottom:16px !important; }
   .pm-cols > .pm-topbar{ position:sticky; top:0; z-index:30; background:var(--paper); }
 }
 .pm-print-mapas{ display:none; }
