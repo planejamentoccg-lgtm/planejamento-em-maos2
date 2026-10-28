@@ -2462,6 +2462,9 @@ body.tema-escuro .pm-pg-strip button[aria-selected="true"] em.boom{ color:#B2443
 .pm-cm-painel .pm-pg-strip, .pm-cm-crit .pm-pg-strip{ margin-bottom:10px; }
 .pm-cm-painel .pm-pg-tit{ margin-bottom:10px; }
 .pm-cm-strip strong{ font-size:16px; }
+.pm-pg-strip.pm-cm-strip{ display:flex; overflow-x:auto; scroll-snap-type:x proximity; padding-bottom:4px; scrollbar-width:thin; }
+.pm-pg-strip.pm-cm-strip button{ flex:0 0 58px; scroll-snap-align:start; }
+.pm-pg-strip.pm-cm-strip button.ano{ margin-left:10px; }
 .pm-cm-meses{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); font-family:var(--f-mono); font-size:10px; color:var(--muted); margin-bottom:-6px; }
 .pm-cm-itens{ max-height:38vh; }
 .pm-cm-row{ display:flex !important; flex-direction:column; align-items:stretch !important; gap:4px !important; }
@@ -2495,6 +2498,14 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-cm-prox{ margin-left:0; margin-right:0; max-width:620px; }
   .pm-cm-passos{ padding-left:0; }
 }
+
+.pm-cm-step .pm-mp-dot, .pm-cm-step .pm-mp-halo{ fill:var(--mp-late); }
+.pm-cm-step.feito .pm-mp-dot{ fill:var(--faint); } .pm-cm-step.feito .pm-mp-halo{ fill:transparent; }
+.pm-cm-prox[role="button"]{ cursor:pointer; }
+.pm-cm-navpasso{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; color:var(--muted); }
+.pm-cm-navpasso button{ display:inline-flex; align-items:center; gap:4px; height:36px; padding:0 12px; border-radius:18px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:13px; font-weight:600; }
+.pm-cm-navpasso button:disabled{ opacity:.35; }
+.pm-cm-navpasso svg{ width:14px; height:14px; }
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -4443,14 +4454,15 @@ function pmCmFolhas() {
 }
 function pmCmMeses() {
   const h = pmHoje(), out = [];
-  for (let k = 0; k < 6; k++) out.push(new Date(h.getFullYear(), h.getMonth() + k, 1));
+  const fim = pmCmFolhas().reduce((m, f) => f.pct < 100 && f.fim > m ? f.fim : m, h);
+  for (let d = new Date(h.getFullYear(), h.getMonth(), 1); d <= fim && out.length < 48; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) out.push(new Date(d));
   return out;
 }
 function pmCmNoPeriodo(a, b) { return pmCmFolhas().filter(f => f.pct < 100 && f.ini <= b && f.fim >= a); }
 function pmCmLugares(lista) {
   const L = {}, fora = [];
   lista.forEach(f => {
-    if (!f.lugar) { fora.push(f); return; }
+    if (!f.lugar) { if (!/^1\.(1|2|3)(\.|$)/.test(f.num)) fora.push(f); return; }
     const k = f.lugar.chave;
     (L[k] = L[k] || { ...f.lugar, itens: [] }).itens.push(f);
   });
@@ -4481,8 +4493,8 @@ function htmlCronoMapa() {
       <text x="856" y="278" class="pm-mp-lab big ${cEst ? 'late' : ''}">${nEst} ativ.${cEst ? ` · ${cEst} crít.` : ''} ›</text></g>`;
     lin.forEach(([k, Lg]) => {
       const pk = Lg.pk || (Lg.via !== undefined ? pmProgPkVia(Lg.via || 2) : 8950);
-      const [x, y] = Lg.ssr ? [1250, 470] : pmMapaPontoPK(pk, Lg.via === 1 ? -9 : Lg.via === 2 ? 9 : 0);
-      pins += pmCmPino(x, y, Lg, k, sel, 2.2) + `<text x="${(Lg.ssr ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${Lg.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(Lg.nome)}</text>`;
+      const [x, y] = Lg.xy ? Lg.xy : Lg.ssr ? [1250, 470] : pmMapaPontoPK(pk, Lg.via === 1 ? -9 : Lg.via === 2 ? 9 : 0);
+      pins += pmCmPino(x, y, Lg, k, sel, 2.2) + `<text x="${(Lg.ssr || Lg.esq ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${Lg.ssr || Lg.esq ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(Lg.nome)}</text>`;
     });
     svg = `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Cronograma do mês na linha toda">${g}${pins}</svg>`;
   } else {
@@ -4501,7 +4513,7 @@ function htmlCronoMapa() {
   return `
     <div class="pm-pg-strip pm-cm-strip" role="tablist" aria-label="Meses" style="--n:${meses.length}">${meses.map((d, i) => {
       const c = contaMes(d);
-      return `<button role="tab" aria-selected="${i === st.mesMapa}" class="${i === 0 ? 'is-now' : ''}" onclick="pmCmMes(${i})"><small>${String(d.getFullYear()).slice(2)}</small><strong>${PM_MES_ABREV[d.getMonth()].toUpperCase()}</strong><em class="${c ? 'boom' : ''}">${c ? `${c} crít.` : '—'}</em></button>`;
+      return `<button role="tab" aria-selected="${i === st.mesMapa}" class="${i === 0 ? 'is-now' : ''} ${i > 0 && d.getMonth() === 0 ? 'ano' : ''}" onclick="pmCmMes(${i})"><small>${String(d.getFullYear()).slice(2)}</small><strong>${PM_MES_ABREV[d.getMonth()].toUpperCase()}</strong><em class="${c ? 'boom' : ''}">${c ? `${c} crít.` : '—'}</em></button>`;
     }).join('')}</div>
     <div class="pm-pg-tit"><strong>${PM_MES_NOME[m0.getMonth()]} de ${m0.getFullYear()}</strong>${nCrit ? `<span class="boom">${nCrit} no caminho crítico</span>` : `<span>${lista.length} atividades</span>`}</div>
     <div class="pm-mp pm-pg-mapa pm-cm-mapa ${zoom === 'linha' ? 'linha' : ''}">${svg}
@@ -4536,36 +4548,84 @@ function pmCmSheet(Lg, k, m0) {
     <div class="pm-sw-legenda">barra = tendência${pmCompara() ? ' · traço = pactuado' : ''} · vermelho = caminho crítico</div>
   </div>`;
 }
-// sequência do caminho crítico (próximos passos) desenhada no mapa
+// sequência do caminho crítico do MÊS escolhido (mesma numeração do gráfico do quadro)
 function htmlCritMapa() {
+  const { mes } = pmMesCriticoAtual();
+  if (!mes) return '';
   const hoje = pmHoje();
-  const crit = pmCmFolhas().filter(f => f.crit && f.pct < 100 && f.fim >= hoje).sort((a, b) => a.ini - b.ini).slice(0, 8);
-  if (!crit.length) return '';
-  const usados = {}, totalSlot = {};
-  crit.forEach(f => { if (f.lugar && !f.lugar.linha) totalSlot[f.lugar.chave] = (totalSlot[f.lugar.chave] || 0) + 1; });
-  const passos = crit.map((f, i) => {
-    const k = f.lugar && !f.lugar.linha ? f.lugar.chave : null;
-    const P = k ? PM_PROG_LUGARES[k] : null;
-    let x = null, y = null;
-    if (P) { const r = usados[k] = (usados[k] || 0) + 1; if (P.lado === 'c') { x = P.x - (totalSlot[k] - 1) * 13 + (r - 1) * 26; y = P.y; } else { x = P.x; y = P.y + (r - 1) * 26; } }
-    return { f, i: i + 1, k, P, x, y };
+  const folhaPorId = {}; pmCmFolhas().forEach(f => { folhaPorId[f.id] = f; });
+  const itens = mes.itens.map((x, i) => {
+    const f = folhaPorId[x.t.id];
+    const lugar = f ? f.lugar : pmProgLugar(x.t.nome + ' - ' + (x.t.caminho || []).join(' - '), '');
+    return { x, i: i + 1, lugar, k: lugar && !lugar.linha ? lugar.chave : null };
   });
-  const noMapa = passos.filter(p => p.P);
-  const caminho = noMapa.length > 1 ? `<path d="M${noMapa.map(p => `${p.x} ${p.y}`).join(' L')}" class="pm-cm-path"/>` : '';
+  const total = {}, usados = {};
+  itens.forEach(p => { if (p.k) total[p.k] = (total[p.k] || 0) + 1; });
+  itens.forEach(p => {
+    const P = p.k ? PM_PROG_LUGARES[p.k] : null; p.P = P;
+    if (!P) return;
+    const r = usados[p.k] = (usados[p.k] || 0) + 1;
+    if (P.lado === 'c') { p.px = P.x - (total[p.k] - 1) * 13 + (r - 1) * 26; p.py = P.y; } else { p.px = P.x; p.py = P.y + (r - 1) * 26; }
+  });
+  let sel = window.pmCritSel; if (sel != null && !itens[sel - 1]) sel = window.pmCritSel = null;
+  const noMapa = itens.filter(p => p.P);
+  const caminho = noMapa.length > 1 ? `<path d="M${noMapa.map(p => `${p.px} ${p.py}`).join(' L')}" class="pm-cm-path"/>` : '';
   const vistos = new Set();
-  const labs = noMapa.filter(p => { if (vistos.has(p.k)) return false; vistos.add(p.k); return true; }).map(p => pmMapaTexto(p.P.x + (p.P.lado === 'r' ? 6 : -6), p.P.y, p.P.nome, p.P.lado, '')).join('');
-  const pins = noMapa.slice().reverse().map(p => `<g class="pm-cm-step ${p.i === 1 ? 'first' : ''}"><circle cx="${p.x}" cy="${p.y}" r="17" class="pm-mp-halo"/>${p.i === 1 ? `<circle cx="${p.x}" cy="${p.y}" r="17" class="pm-mp-selring"/>` : ''}<circle cx="${p.x}" cy="${p.y}" r="11" class="pm-mp-dot"/><text x="${p.x}" y="${p.y + 4}" text-anchor="middle" class="pm-pg-num">${p.i}</text></g>`).join('');
-  const prox = passos[0], falta = Math.round((prox.f.ini - hoje) / 86400000);
+  const labs = noMapa.filter(p => { if (vistos.has(p.k)) return false; vistos.add(p.k); return true; })
+    .map(p => pmMapaTexto(p.P.x + (p.P.lado === 'r' ? 6 : p.P.lado === 'c' ? 0 : -6), p.P.y, p.P.nome, p.P.lado, sel && itens[sel - 1].k !== p.k ? 'dim' : '')).join('');
+  const pins = noMapa.slice().reverse().map(p => {
+    const feito = p.x.fim < hoje;
+    return `<g class="pm-mp-pin pm-cm-step ${feito ? 'feito' : ''}${sel === p.i ? ' sel' : ''}${sel && sel !== p.i ? ' dim' : ''}" role="button" tabindex="0" aria-label="${p.i}: ${pmEsc(p.x.t.nome)}" onclick="pmCritSelecionar(${p.i})" onkeydown="if(event.key==='Enter')pmCritSelecionar(${p.i})">
+      <circle cx="${p.px}" cy="${p.py}" r="20" class="pm-mp-hit"/><circle cx="${p.px}" cy="${p.py}" r="17" class="pm-mp-halo"/>${sel === p.i ? `<circle cx="${p.px}" cy="${p.py}" r="17" class="pm-mp-selring"/>` : ''}
+      <circle cx="${p.px}" cy="${p.py}" r="11" class="pm-mp-dot"/><text x="${p.px}" y="${p.py + 4}" text-anchor="middle" class="pm-pg-num">${p.i}</text></g>`;
+  }).join('');
+  const fora = itens.filter(p => !p.P);
+  const titulo = `${PM_MES_NOME[mes.ini.getMonth()]} de ${mes.ini.getFullYear()}`;
+  const prox = itens.find(p => p.x.fim >= hoje) || itens[0];
+  const falta = Math.round((prox.x.ini - hoje) / 86400000);
   return `<div class="pm-cm-crit">
-    <div class="pm-pg-tit"><strong>A ordem do caminho crítico</strong><span>próximos ${passos.length} passos</span></div>
-    <div class="pm-mp pm-pg-mapa pm-cm-mapa" style="padding-top:12px">
-      <svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Sequência do caminho crítico no mapa">${pmMapaBaseEstacao()}${caminho}${pins}${labs}</svg>
+    <div class="pm-pg-tit"><strong>Caminho crítico · ${titulo}</strong><span>${itens.length} ${itens.length === 1 ? 'atividade' : 'atividades'}</span></div>
+    <div class="pm-mp pm-pg-mapa pm-cm-mapa" style="padding-top:12px;padding-bottom:${fora.length ? 60 : 12}px">
+      <svg class="pm-mp-svg" viewBox="20 30 380 640" preserveAspectRatio="xMidYMin meet" aria-label="Caminho crítico do mês no mapa">${pmMapaBaseEstacao()}${caminho}${pins}${labs}</svg>
+      ${fora.length ? `<div class="pm-mp-chips">${fora.map(p => `<button class="pm-mp-chip" onclick="pmCritSelecionar(${p.i})"><i class="st-late"></i>${p.i} · ${pmEsc(p.lugar ? p.lugar.nome || p.lugar.area : pmNomeLegivel(p.x.t.nome))}</button>`).join('')}</div>` : ''}
+      ${sel ? pmCritSheet(itens[sel - 1], itens.length) : ''}
     </div>
-    <div class="pm-cm-prox"><b>${prox.i}</b><span><small>${falta > 0 ? `Próximo do caminho crítico · começa em ${falta} dia${falta === 1 ? '' : 's'}` : 'Em andamento no caminho crítico'}</small><strong>${pmEsc(pmNomeLegivel(prox.f.nome))}</strong><em>${prox.P ? pmEsc(prox.P.area) + ' · ' : ''}${pmFmtDM(prox.f.ini)} → ${pmFmtDM(prox.f.fim)}${pmCompara() && prox.f.iniP ? ` · pactuado ${pmFmtDM(prox.f.iniP)}` : ''}</em></span></div>
-    <div class="pm-cm-passos">${passos.slice(1).map(p => `<span><b>${p.i}</b>${pmEsc(pmNomeLegivel(p.f.nome))}<small>${p.P ? pmEsc(p.P.area) + ' · ' : ''}${pmFmtDM(p.f.ini)}</small></span>`).join('')}</div>
+    ${!sel ? `<div class="pm-cm-prox" role="button" tabindex="0" onclick="pmCritSelecionar(${prox.i})"><b>${prox.i}</b><span><small>${falta > 0 ? `Próximo do caminho crítico · começa em ${falta} dia${falta === 1 ? '' : 's'}` : prox.x.fim >= hoje ? 'Em andamento no caminho crítico' : 'Já passou'}</small><strong>${pmEsc(pmNomeLegivel(prox.x.t.nome))}</strong><em>${prox.P ? pmEsc(prox.P.area) + ' · ' : ''}${pmFmtDM(prox.x.ini)} → ${pmFmtDM(prox.x.fim)}</em></span></div>` : ''}
+    <div class="pm-pg-foot">Mesma numeração do gráfico do mês · toque num número para ver a atividade · use as setas do quadro para trocar o mês</div>
   </div>`;
 }
-function pmCmRedesenhar() { const el = document.getElementById('painelCronoMapa'); if (el) el.innerHTML = htmlCronoMapa(); }
+function pmCritSheet(p, n) {
+  const t = p.x.t, hoje = pmHoje();
+  const pi = parseDataCompleta(t.inicioPact), pf = parseDataCompleta(t.terminoPact);
+  const dur = Math.round((p.x.fim - p.x.ini) / 86400000) + 1;
+  const dv = pmCompara() && pf ? Math.round((p.x.fim - pf) / 86400000) : null;
+  const falta = Math.round((p.x.ini - hoje) / 86400000);
+  const estado = p.x.fim < hoje ? 'já terminou' : falta > 0 ? `começa em ${falta} dia${falta === 1 ? '' : 's'}` : 'em andamento';
+  return `<div class="pm-mp-sheet pm-sw-sheet" role="dialog" aria-label="${pmEsc(t.nome)}">
+    <div class="pm-mp-sheet-top"><span></span><i></i><button onclick="pmCritSelecionar(null)" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="pm-cm-prox" style="margin:0"><b>${p.i}</b><span><small>${p.P ? pmEsc(p.P.area) : (p.lugar ? pmEsc(p.lugar.area || p.lugar.nome) : 'Caminho crítico')} · ${estado}</small><strong>${pmEsc(pmNomeLegivel(t.nome))}</strong><em>${t.pct ? `${t.pct}% concluído · ` : ''}${dur} dia${dur === 1 ? '' : 's'}</em></span></div>
+    <div class="pm-mp-tiles">
+      <span class="pm-mp-tile"><b>${pmFmtDM(p.x.ini)} → ${pmFmtDM(p.x.fim)}</b>${pmCompara() ? 'tendência' : 'previsto'}</span>
+      ${pmCompara() && pi ? `<span class="pm-mp-tile"><b>${pmFmtDM(pi)} → ${pmFmtDM(pf)}</b>pactuado${dv ? ` · ${dv > 0 ? '+' : ''}${dv} dias` : ''}</span>` : `<span class="pm-mp-tile"><b>${p.i} de ${n}</b>no caminho crítico do mês</span>`}
+    </div>
+    ${(t.caminho || []).length ? `<div class="pm-sw-legenda">${t.caminho.slice(0, -1).map(c => pmEsc(pmNomeLegivel(c))).join(' › ')}</div>` : ''}
+    <div class="pm-cm-navpasso">
+      <button ${p.i <= 1 ? 'disabled' : ''} onclick="pmCritSelecionar(${p.i - 1})">${PM_ICON.chevL} ${p.i - 1 >= 1 ? p.i - 1 : ''}</button>
+      <span>${p.i} de ${n}</span>
+      <button ${p.i >= n ? 'disabled' : ''} onclick="pmCritSelecionar(${p.i + 1})">${p.i + 1 <= n ? p.i + 1 : ''} ${PM_ICON.chevR}</button>
+    </div>
+  </div>`;
+}
+function pmCritSelecionar(i) {
+  window.pmCritSel = window.pmCritSel === i ? null : i;
+  const el = document.getElementById('mapaCronoCritico'); if (el) el.innerHTML = htmlCritMapa();
+}
+function pmCmRedesenhar() {
+  const el = document.getElementById('painelCronoMapa'); if (!el) return;
+  const ant = el.querySelector('.pm-cm-strip'); const sl = ant ? ant.scrollLeft : 0;
+  el.innerHTML = htmlCronoMapa();
+  const st = el.querySelector('.pm-cm-strip'); if (st) { st.scrollLeft = sl; const b = st.querySelector('[aria-selected="true"]'); if (b && (b.offsetLeft < st.scrollLeft || b.offsetLeft + b.offsetWidth > st.scrollLeft + st.clientWidth)) st.scrollLeft = b.offsetLeft - 12; }
+}
 function pmCmSelecionar(k) { window.pmCmSel = window.pmCmSel === k ? null : k; pmCmRedesenhar(); }
 function pmCmZoomar(z) { window.pmCmZoom = z; window.pmCmSel = null; pmCmRedesenhar(); }
 function pmCmMes(i) { window.pmCrono.mesMapa = i; pmCmRedesenhar(); }
@@ -4695,6 +4755,9 @@ function pmAtualizarCritico() {
   if (hero && window.pmCrono.aba === 'critico') hero.innerHTML = htmlHeroCronograma();
   const conteudo = document.getElementById('conteudoCronoCritico');
   if (conteudo) conteudo.innerHTML = conteudoDetalheCaminhoCritico();
+  window.pmCritSel = null;
+  const mapaCrit = document.getElementById('mapaCronoCritico');
+  if (mapaCrit) mapaCrit.innerHTML = htmlCritMapa();
   const sub = document.getElementById('subTelaCronograma');
   if (sub && sub.style.display === 'block' && subTelaCronogramaTipo === 'critico') {
     sub.innerHTML = renderizarSubTelaCronograma('critico', subTelaCronogramaParametro);
@@ -6134,7 +6197,8 @@ function pmMapaBaseLinha() {
   const P = (x, y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
   const serv = [[1000,515],[1035,560],[1055,620],[1040,680],[1000,750],[975,800],[960,830],[985,860]];
   let g = `<path d="M${serv.map(p => P(...p)).join(' L')}" class="pm-mp-via serv"/>`;
-  g += `<text x="985" y="505" text-anchor="end" class="pm-mp-mono big">TÚNEL DE SERVIÇO</text>`;
+  g += `<path d="M1000 515 L992 482 L975 460" class="pm-mp-via serv"/><rect x="948" y="430" width="40" height="30" rx="6" transform="rotate(-35 968 445)" class="pm-mp-st thin"/>`;
+  g += `<text x="975" y="800" text-anchor="end" class="pm-mp-mono big halo">TÚNEL DE SERVIÇO</text><text x="990" y="405" text-anchor="end" class="pm-mp-mono big halo">ACESSO AO EXTERNO</text>`;
   const full = pmMapaCaminhoPK(7660, 9133);
   g += `<path d="${full}" class="pm-mp-via linha"/><path d="${full}" class="pm-mp-via meio"/>`;
   const s1 = pmMapaPontoPK(8950); g += `<path d="M${P(...s1)} L1240 466" class="pm-mp-via ramal"/>`;
@@ -6828,6 +6892,9 @@ const PM_PROG_LUGARES = {
   sulU:     { x: 110, y: 220, lado: 'l', nome: ['Sentido', 'Uruguai'], area: 'Estação Sul · Sentido Uruguai' },
   sulG:     { x: 110, y: 520, lado: 'l', nome: ['Sentido', 'Gen. Osório'], area: 'Estação Sul · Sentido General Osório' },
   sul:      { x: 110, y: 290, lado: 'l', nome: ['Estação', 'Sul'], area: 'Estação Sul' },
+  ligN:     { x: 196, y: 145, lado: 'l', nome: ['Ligação', 'plataf. Norte'], area: 'Túnel de ligação entre plataformas · Norte' },
+  ligS:     { x: 196, y: 581, lado: 'l', nome: ['Ligação', 'plataf. Sul'], area: 'Túnel de ligação entre plataformas · Sul' },
+  superficie:{ x: 176, y: 92, lado: 'l', nome: ['Obras de', 'superfície'], area: 'Obras de superfície' },
   tunelVia: { x: 250, y: 652, lado: 'r', nome: ['Túnel de via', '(Rolha)'], area: 'Túnel de via · Rolha (junto à Estação Oeste)' },
   oeste:    { x: 180, y: 470, lado: 'c', nome: ['Est. Oeste', '(toda)'], area: 'Estação Oeste (toda)' },
 };
@@ -6851,7 +6918,10 @@ function pmProgLugar(descricao, numero) {
   const num = String(numero || '').trim();
   const ini = p => num === p || num.startsWith(p + '.');
   // marcos, ordem de início, mobilização/projeto e superfície não vão para o mapa
-  if (num && /^1\.(1|2|3|4)(\.|$)/.test(num)) return null;
+  if (ini('1.4') || tem(/obras de superficie/)) return { chave: 'superficie' };
+  if (num && /^1\.(1|2|3)(\.|$)/.test(num)) return null;
+  if (ini('1.7') || tem(/madre jacinta|tunel de servico/)) return { linha: true, chave: 'mj', nome: 'Túnel M. Jacinta', xy: [975, 470], esq: true, area: 'Túnel Madre Jacinta (acesso ao externo)' };
+  if (ini('1.6.5') || tem(/ligacao entre (as )?plataformas/)) return { chave: tem(/\bnorte\b/) ? 'ligN' : 'ligS' };
   const naEstacao = !num || /^1\.6(\.|$)/.test(num);
   // passagens de emergência: "PE 15", "Passagem de Emergência 15", "... PK 8.240 (15)", "em frente SSR 05"
   const pe = t.match(/\bpe\s*-?\s*(\d{1,2})\b/) || (/passagem de emergencia/.test(t) && t.match(/\((\d{1,2})\)/)) || t.match(/passagem de emergencia\s*(\d{1,2})\b/);
@@ -6927,8 +6997,8 @@ function pmProgMapaHTML(tarefasDia) {
       <text x="856" y="278" class="pm-mp-lab big ${bEst ? 'late' : ''}">${nEst ? `${nEst} ativ.${bEst ? ` · ${bEst} detonaç${bEst > 1 ? 'ões' : 'ão'}` : ''}` : 'sem atividade'} ›</text></g>`;
     lin.forEach(([k, L]) => {
       const pk = L.pk || (L.via !== undefined ? pmProgPkVia(L.via || 2) : 8950);
-      const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
-      pins += pmProgPino(x, y, L, k, sel, 2.2) + `<text x="${(L.ssr ? x - 36 : x + 36).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
+      const [x, y] = L.xy ? L.xy : L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
+      pins += pmProgPino(x, y, L, k, sel, 2.2) + `<text x="${(L.ssr || L.esq ? x - 36 : x + 36).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr || L.esq ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
     });
     svg = `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Atividades do dia na linha toda">${g}${pins}</svg>`;
   } else {
@@ -7035,8 +7105,8 @@ function pmSwMapaHTML(dados, k) {
       <text x="856" y="278" class="pm-mp-lab big">${est.length ? `${est.length} ${est.length === 1 ? 'lugar' : 'lugares'} com programação` : 'sem programação'} ›</text></g>`;
     lin.forEach(([c, L, r]) => {
       const pk = L.pk || (L.via !== undefined ? pmProgPkVia(L.via || 2) : 8950);
-      const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
-      pins += pmSwPino(x, y, L, c, sel, r, 2.2) + `<text x="${(L.ssr ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== c ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
+      const [x, y] = L.xy ? L.xy : L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
+      pins += pmSwPino(x, y, L, c, sel, r, 2.2) + `<text x="${(L.ssr || L.esq ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr || L.esq ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== c ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
     });
     svg = `<svg class="pm-mp-svg" viewBox="470 150 900 1130" preserveAspectRatio="xMidYMin meet" aria-label="Programação da semana na linha toda">${g}${pins}</svg>`;
   } else {
