@@ -6637,22 +6637,42 @@ const PM_PROG_LUGARES = {
   sul:      { x: 110, y: 290, lado: 'l', nome: ['Estação', 'Sul'], area: 'Estação Sul' },
   oeste:    { x: 250, y: 560, lado: 'r', nome: ['Estação', 'Oeste'], area: 'Estação Oeste' },
 };
-function pmProgLugar(descricao) {
-  const t = normalizarTexto(descricao);
+function pmProgLugar(descricao, numero) {
+  // com o Nº da estrutura, junta os nomes do item e dos "pais" no cronograma (ex.: "Vigas e Laje" → "Passagem de Emergência ... (15)")
+  const doCrono = numero ? pmMapaNomesCronograma(numero).join(' - ') : '';
+  const t = normalizarTexto([descricao, doCrono].filter(Boolean).join(' - ')).replace(/\s+/g, ' ');
   const tem = r => r.test(t);
-  const c = tem(/carioca|\bcrc\b/), j = tem(/conrado|jardim oceanico|\bjoc?\b/);
-  const pe = t.match(/\bpe\s*-?\s*(\d{1,2})\b/) || t.match(/passagem de emergencia\s*(\d+)/);
+  let c = tem(/carioca|\bcrc\b/), j = tem(/conrado|jardim oceanico|\bjoc?\b/);
+  // lado pelas seções do rebaixo: Seção A com CA13…CA41 = Carioca; Seção A com A12…A1 e Seção B = São Conrado
+  if (!c && !j && tem(/secao/)) {
+    const cas = [...t.matchAll(/\bca\s?(\d{1,2})\b/g)].map(m => +m[1]);
+    if (cas.some(n => n >= 13)) c = true;
+    else if (tem(/secao b\b/) || (tem(/secao a\b/) && !cas.length && /\ba\s?(\d{1,2})\b/.test(t))) j = true;
+  }
+  const num = String(numero || '').trim();
+  const ini = p => num === p || num.startsWith(p + '.');
+  // passagens de emergência: "PE 15", "Passagem de Emergência 15", "... PK 8.240 (15)", "em frente SSR 05"
+  const pe = t.match(/\bpe\s*-?\s*(\d{1,2})\b/) || (/passagem de emergencia/.test(t) && t.match(/\((\d{1,2})\)/)) || t.match(/passagem de emergencia\s*(\d{1,2})\b/);
   if (pe && PM_MAPA_PASSAGENS[pe[1]]) return { linha: true, chave: 'pe' + pe[1], nome: 'PE ' + pe[1], pk: PM_MAPA_PASSAGENS[pe[1]], area: 'Passagem de Emergência ' + pe[1] };
-  if (tem(/ssr\s*0?4/)) return { linha: true, chave: 'ssr04', nome: 'SSR 04', ssr: true, area: 'SSR 04' };
-  if (tem(/via permanente|\bvia [12]\b/)) { const v = tem(/via 1\b/) ? 1 : 2; return { linha: true, chave: 'via' + v, nome: 'Via ' + v, via: v, area: 'Via permanente · Via ' + v }; }
+  if (tem(/passagem de emergencia/) && tem(/ssr\s*0?5/)) return { linha: true, chave: 'pe16', nome: 'PE 16', pk: PM_MAPA_PASSAGENS[16], area: 'Passagem de Emergência 16 (em frente à SSR 05)' };
+  if (tem(/passagem de emergencia/)) {
+    const m = t.match(/pk\s*([\d.,]+)/); const pk = m ? pmParsePK(m[1]) : null;
+    if (pk && pk > 7600 && pk < 9200) return { linha: true, chave: 'pe' + Math.round(pk), nome: 'PE · PK ' + pmPKFmt(pk), pk, area: 'Passagem de Emergência PK ' + pmPKFmt(pk) };
+  }
+  if (ini('1.5.8') || tem(/ssr\s*0?4\b/)) return { linha: true, chave: 'ssr04', nome: 'SSR 04', ssr: true, area: 'SSR 04' };
+  if (ini('1.5.3') || tem(/via permanente|\bvias?\s*[12]\b|concreto poroso|\bporoso\b/)) {
+    const v = ini('1.5.3.1.3') || tem(/\bvia 1\b/) ? 1 : ini('1.5.3.1.2') || tem(/\bvia 2\b/) ? 2 : 0;
+    return { linha: true, chave: 'via' + v, nome: v ? 'Via ' + v : 'Vias 1 e 2', via: v, area: 'Via permanente' + (v ? ' · Via ' + v : '') };
+  }
   if (tem(/poco sul/)) return { chave: 'pocoSul' };
   if (tem(/poco oeste/)) return { chave: 'pocoOeste' };
-  if (tem(/interligacao/)) return { chave: 'interlig' };
-  if (tem(/rabicho/)) return { chave: 'rabicho' };
-  if (tem(/apendice/)) return { chave: 'apendice' };
-  if (tem(/trapezio|alargamento/)) return { chave: c ? 'trapC' : j ? 'trapJ' : 'trapC' };
-  if (tem(/estacao sul/)) return { chave: tem(/osorio/) ? 'sulG' : tem(/uruguai/) ? 'sulU' : 'sul' };
-  if (tem(/estacao oeste|rebaixo|sentido/)) return { chave: c ? 'oesteC' : j ? 'oesteJ' : 'oeste' };
+  if (ini('1.6.4') || tem(/interligacao/)) return { chave: 'interlig' };
+  if (ini('1.6.3.1.6') || tem(/rabicho/)) return { chave: 'rabicho' };
+  if (ini('1.6.3.1.4.5') || tem(/trapezio|alargamento lado|lado (joc|crc)/)) return { chave: ini('1.6.3.1.4.5.2') || c ? 'trapC' : ini('1.6.3.1.4.5.1') || j ? 'trapJ' : 'trapC' };
+  if (ini('1.6.3.1.4') || tem(/apendice|calota/)) return { chave: 'apendice' };
+  if (tem(/alargamento/)) return { chave: c ? 'trapC' : j ? 'trapJ' : 'trapC' };
+  if (ini('1.6.2') || tem(/estacao sul/)) return { chave: tem(/osorio/) ? 'sulG' : tem(/uruguai/) ? 'sulU' : 'sul' };
+  if (ini('1.6.3') || tem(/estacao oeste|rebaixo|sentido/)) return { chave: c ? 'oesteC' : j ? 'oesteJ' : 'oeste' };
   return null;
 }
 function pmProgPkVia(v) {
@@ -6701,7 +6721,7 @@ function pmProgMapaHTML(tarefasDia) {
       <text x="856" y="240" class="pm-mp-tit big">Estação Gávea</text>
       <text x="856" y="278" class="pm-mp-lab big ${bEst ? 'late' : ''}">${nEst ? `${nEst} ativ.${bEst ? ` · ${bEst} detonaç${bEst > 1 ? 'ões' : 'ão'}` : ''}` : 'sem atividade'} ›</text></g>`;
     lin.forEach(([k, L]) => {
-      const pk = L.pk || (L.via ? pmProgPkVia(L.via) : 8950);
+      const pk = L.pk || (L.via !== undefined ? pmProgPkVia(L.via || 2) : 8950);
       const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
       pins += pmProgPino(x, y, L, k, sel, 2.2) + `<text x="${(L.ssr ? x - 36 : x + 36).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== k ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
     });
@@ -6750,8 +6770,10 @@ function pmSwDados() {
   (W.frentes || []).forEach(item => {
     const nomeFrente = item.dados.Nome || '';
     (item.tarefas || []).forEach(t => {
-      const texto = [nomeFrente, t.Nome, t.Topico, t.Subgrupo].filter(Boolean).join(' - ');
-      const l = pmProgLugar(texto);
+      const extras = Object.entries(t).filter(([k, v]) => typeof v === 'string' && !/^(nome|topico|subgrupo|unidade|terminoprevisto|inicioprevisto|data)$/i.test(k)).map(([, v]) => v);
+      const texto = [nomeFrente, item.dados.Grupo, item.dados.Area, t.Topico, t.Subgrupo, ...extras, t.Nome].filter(Boolean).join(' - ');
+      const numero = t.Numero || t.NumeroEstrutura || t.Estrutura || t.WBS || item.dados.Numero || '';
+      const l = pmProgLugar(texto, numero);
       const boom = normalizarTexto(texto).includes('detona');
       const porSemana = semanas.map(() => ({ qtd: 0, dias: 0 }));
       (t.Diario || []).forEach(d => {
@@ -6807,7 +6829,7 @@ function pmSwMapaHTML(dados, k) {
       <text x="856" y="240" class="pm-mp-tit big">Estação Gávea</text>
       <text x="856" y="278" class="pm-mp-lab big">${est.length ? `${est.length} ${est.length === 1 ? 'lugar' : 'lugares'} com programação` : 'sem programação'} ›</text></g>`;
     lin.forEach(([c, L, r]) => {
-      const pk = L.pk || (L.via ? pmProgPkVia(L.via) : 8950);
+      const pk = L.pk || (L.via !== undefined ? pmProgPkVia(L.via || 2) : 8950);
       const [x, y] = L.ssr ? [1250, 470] : pmMapaPontoPK(pk, L.via === 1 ? -9 : L.via === 2 ? 9 : 0);
       pins += pmSwPino(x, y, L, c, sel, r, 2.2) + `<text x="${(L.ssr ? x - 60 : x + 60).toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="${L.ssr ? 'end' : 'start'}" class="pm-mp-lab big halo${sel && sel !== c ? ' dim' : ''}">${pmEsc(L.nome)}</text>`;
     });
