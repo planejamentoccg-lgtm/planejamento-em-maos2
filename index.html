@@ -2610,6 +2610,10 @@ body.tema-escuro .pm-cm-prox{ background:#3A2620; }
   .pm-print-mapas .pm-mp-svg{ height:100% !important; max-height:none !important; width:100%; }
   #cronoVisual, .pm-side, #progHero{ position:static !important; }
 }
+.pm-dia-obs{ display:grid; grid-template-columns:76px minmax(0, 1fr); gap:6px 8px; align-items:baseline; font-size:12.5px; line-height:1.45; color:var(--ink); }
+.pm-dia-tag{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.6px; text-transform:uppercase; padding:2px 6px; border-radius:5px; white-space:nowrap; justify-self:start; }
+.pm-dia-tag.prev{ border:1px solid var(--line); color:var(--muted); }
+.pm-dia-tag.real{ background:var(--olive-tint); color:var(--olive-ink); border:1px solid transparent; }
 /* ✅ MAPA DAS FRENTES */
 :root{
   --map-bg:#EEF2E4; --map-grid:#DCE3CF; --map-st:#FFFFFF; --map-stb:#BFCAAA; --map-zone:#E3EAD3; --map-lab:#5C7338;
@@ -3790,12 +3794,19 @@ function pmSerieEtapa(et, d) {
   const etapaIrma = pmEtapaIrma(d, et.Etapa);
   const situacao = (etapaIrma && pmParseSituacao(etapaIrma.Situacao)) || pmHoje();
   const todos = et.Dias || [];
-  const i0 = todos.findIndex(x => (Number(x.Previsto) > 0) || (Number(x.Realizado) > 0) || (Number(x.DiarioPrevisto) > 0) || (Number(x.DiarioRealizado) > 0));
+  const i0 = todos.findIndex(x => (Number(x.Previsto) > 0) || (Number(x.Realizado) > 0) || (Number(x.DiarioPrevisto) > 0) || (Number(x.DiarioRealizado) > 0) || String(x.Observacoes || '').trim() || String(x.ObservacoesPrevisto || '').trim());
   const dias = (i0 >= 0 ? todos.slice(i0) : todos).map(x => ({ ...x, data: parseDiaMesComAncora(x.Data, situacao) || parseDiaMes(x.Data) }));
+  const unidadesFrente = (d.Etapas || []).map(e => e.Unidade).filter(u => u && u !== '-');
+  const comum = unidadesFrente.length && unidadesFrente.every(u => u === unidadesFrente[0]) ? unidadesFrente[0] : null;
+  const unidade = etapaIrma && etapaIrma.Unidade && etapaIrma.Unidade !== '-' ? etapaIrma.Unidade : (comum || et.Unidade || 'm');
+  // etapa em % vem da planilha como fração (0,25 = 25%)
+  const maxBruto = Math.max(0, ...dias.map(x => Math.max(Number(x.Previsto) || 0, Number(x.Realizado) || 0)));
+  const somaDp = dias.reduce((a, x) => a + (pmTemValor(x.DiarioPrevisto) ? Number(x.DiarioPrevisto) : 0), 0);
+  const k = unidade === '%' && maxBruto <= 1.0001 && somaDp <= 1.0001 ? 100 : 1;
   let ap = 0, ar = 0;
   dias.forEach(x => {
-    const dp = pmTemValor(x.DiarioPrevisto) ? Number(x.DiarioPrevisto) : 0;
-    const dr = pmTemValor(x.DiarioRealizado) ? Number(x.DiarioRealizado) : 0;
+    const dp = pmTemValor(x.DiarioPrevisto) ? Number(x.DiarioPrevisto) * k : 0;
+    const dr = pmTemValor(x.DiarioRealizado) ? Number(x.DiarioRealizado) * k : 0;
     x.dp = dp; x.dr = dr;
     ap += dp; ar += dr;
     x.ap = ap; x.ar = ar;
@@ -3804,7 +3815,6 @@ function pmSerieEtapa(et, d) {
   let iCorte = -1;
   dias.forEach((x, i) => { if (x.passou) iCorte = i; });
   // a unidade certa é a da planilha principal (o gráfico às vezes vem com "m" por padrão)
-  const unidade = etapaIrma && etapaIrma.Unidade && etapaIrma.Unidade !== '-' ? etapaIrma.Unidade : (et.Unidade || 'm');
   return { dias, situacao, iCorte, unidade, etapaIrma };
 }
 
@@ -3940,7 +3950,7 @@ function renderizarDesempenho() {
   }
 
   // dia a dia (mais recente primeiro)
-  const comConteudo = dias.filter(x => x.passou && (x.dp || x.dr || x.PkInicial || x.PkFinal || x.Observacoes)).reverse();
+  const comConteudo = dias.filter(x => x.passou && (x.dp || x.dr || x.PkInicial || x.PkFinal || String(x.Observacoes || '').trim() || String(x.ObservacoesPrevisto || '').trim())).reverse();
   const visiveis = st.todos ? comConteudo : comConteudo.slice(0, 4);
 
   el.innerHTML = `
@@ -3965,9 +3975,13 @@ function renderizarDesempenho() {
         const pk = x.PkInicial || x.PkFinal ? (x.PkInicial && x.PkFinal && x.PkInicial !== x.PkFinal ? `PK ${pmEsc(x.PkInicial)} a ${pmEsc(x.PkFinal)}` : `PK ${pmEsc(x.PkInicial || x.PkFinal)}`) : '';
         return `<div class="pm-dia" ${i ? '' : 'style="border-top:none"'}>
           <span class="pm-mono-sm" style="width:40px;flex-shrink:0;padding-top:1px">${pmEsc(String(x.Data).slice(0, 5))}</span>
-          <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
-            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px"><span style="color:var(--muted)">previsto ${u(x.dp)}</span><b style="font-weight:600;color:${cor}">realizado ${u(x.dr)}</b></div>
-            ${pk ? `<span class="pm-mono-sm">${pk}</span>` : ''}${x.Observacoes ? `<span style="font-size:12px;color:var(--muted);line-height:1.45">${pmEsc(x.Observacoes)}</span>` : ''}
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
+            ${x.dp || x.dr ? `<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px"><span style="color:var(--muted)">previsto ${u(x.dp)}</span><b style="font-weight:600;color:${cor}">realizado ${u(x.dr)}</b></div>` : ''}
+            ${pk ? `<span class="pm-mono-sm">${pk}</span>` : ''}
+            ${String(x.ObservacoesPrevisto || '').trim() || String(x.Observacoes || '').trim() ? `<div class="pm-dia-obs">
+              ${String(x.ObservacoesPrevisto || '').trim() ? `<span class="pm-dia-tag prev">Previsto</span><span>${pmEsc(String(x.ObservacoesPrevisto).trim())}</span>` : ''}
+              ${String(x.Observacoes || '').trim() ? `<span class="pm-dia-tag real">Realizado</span><span>${pmEsc(String(x.Observacoes).trim())}</span>` : ''}
+            </div>` : ''}
           </div></div>`;
       }).join('')}
       ${!st.todos && comConteudo.length > visiveis.length ? `<button class="pm-link" style="width:100%;height:44px;border-top:1px solid var(--line-soft)" onclick="pmDesTodos()">Ver todos os ${comConteudo.length} dias</button>` : ''}
