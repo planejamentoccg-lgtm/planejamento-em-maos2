@@ -2126,6 +2126,20 @@ body.tema-escuro .pm-month-gantt .t{ background:#17221E; }
 .pm #botoes{ max-width:none; margin:0; padding:0; }
 
 /* ---------- detalhe da frente / concluídas / six week ---------- */
+.pm-meta{ gap:14px; }
+.pm-meta-nota{ font-size:12px; color:var(--muted); line-height:1.5; }
+.pm-meta-et{ display:flex; flex-direction:column; gap:6px; padding-top:12px; border-top:1px solid var(--line-soft); }
+.pm-meta-trilho{ position:relative; height:12px; border-radius:6px; background:var(--track); }
+.pm-meta-bar{ position:absolute; top:0; bottom:0; border-radius:6px; background:var(--olive-tint); overflow:visible; }
+.pm-meta-bar > i{ position:absolute; left:0; top:0; bottom:0; border-radius:6px; background:var(--olive); }
+.pm-meta-bar > b{ position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:var(--ink); border-radius:1px; }
+.pm-meta-hoje{ position:absolute; top:-5px; bottom:-5px; width:0; border-left:2px dashed var(--accent); }
+.pm-meta-num{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-family:var(--f-mono); font-size:11px; color:var(--muted); }
+.pm-meta-num b{ color:var(--ink); font-weight:600; }
+.pm-meta-obs{ font-size:12px; color:var(--text-soft); line-height:1.5; }
+.pm-meta-leg{ display:flex; gap:14px; font-family:var(--f-mono); font-size:10px; color:var(--muted); }
+.pm-meta-leg i{ display:inline-block; width:10px; height:8px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+.pm-meta-leg i.f{ background:var(--olive); } .pm-meta-leg i.p{ width:2px; background:var(--ink); } .pm-meta-leg i.h{ width:0; height:10px; border-left:2px dashed var(--accent); }
 .pm-tag{ flex-shrink:0; font-family:var(--f-mono); font-size:11px; font-weight:500; padding:3px 8px; border-radius:8px; white-space:nowrap; }
 .pm-tag.ok{ background:var(--olive-tint); color:var(--olive-ink); }
 .pm-tag.late{ background:var(--boom-bg); color:var(--boom-ink); }
@@ -4080,7 +4094,55 @@ function pmAlternarNoFrente(id) {
   document.getElementById('cronogramaFrente').innerHTML = conteudoCronogramaFrente(window.frenteAtual);
 }
 
+// ✅ prazo interno (Metas 2026): aparece em cima do cronograma do cliente.
+// A quantidade da meta é o que FALTAVA quando ela começou (não o total da frente).
+function pmMetaInternaHTML(d) {
+  const m = d && d.MetaInterna;
+  if (!m || !(m.Etapas || []).length) return '';
+  const hoje = pmHoje();
+  const etapas = m.Etapas.filter(e => e.Inicio || e.Termino);
+  const datas = etapas.flatMap(e => [parseDataCompleta(e.Inicio), parseDataCompleta(e.Termino)]).filter(Boolean);
+  if (!datas.length) return '';
+  let A = new Date(Math.min(...datas, hoje)), B = new Date(Math.max(...datas, hoje));
+  A = new Date(A.getFullYear(), A.getMonth(), A.getDate() - 2); B = new Date(B.getFullYear(), B.getMonth(), B.getDate() + 3);
+  const pos = dt => Math.max(0, Math.min(100, (dt - A) / (B - A) * 100));
+  const fmtQ = (v, u) => u === '%' ? `${(Math.round((Number(v) || 0) * 10) / 10).toLocaleString('pt-BR')}%` : `${(Math.round((Number(v) || 0) * 100) / 100).toLocaleString('pt-BR')} ${u || ''}`.trim();
+  const linhas = etapas.map(e => {
+    const ini = parseDataCompleta(e.Inicio), fim = parseDataCompleta(e.Termino);
+    const meta = Number(e.Meta) || 0, prev = Number(e.PrevistoHoje) || 0, real = Number(e.Realizado) || 0;
+    const concl = meta > 0 && real >= meta - 0.0001;
+    let tag = 'A INICIAR', cls = 'neutral';
+    if (concl) { tag = 'CONCLUÍDA'; cls = 'ok'; }
+    else if (fim && hoje > fim) { tag = 'PRAZO VENCIDO'; cls = 'late'; }
+    else if (real > 0 || prev > 0) {
+      const dif = real - prev, tol = Math.max(0.01, meta * 0.005);
+      tag = dif < -tol ? 'ATRÁS DA META' : dif > tol ? 'À FRENTE' : 'NA META'; cls = dif < -tol ? 'late' : 'ok';
+    } else if (ini && hoje >= ini) { tag = 'DEVIA TER COMEÇADO'; cls = 'late'; }
+    const l = ini ? pos(ini) : 0, r = fim ? pos(new Date(fim.getFullYear(), fim.getMonth(), fim.getDate() + 1)) : l;
+    const w = Math.max(1.5, r - l), feito = meta > 0 ? Math.min(1, real / meta) : 0, prevF = meta > 0 ? Math.min(1, prev / meta) : 0;
+    return `<div class="pm-meta-et">
+      <div class="pm-card-head"><strong>${pmEsc(e.Etapa || 'Etapa')}</strong><span class="pm-tag ${cls}">${tag}</span></div>
+      <div class="pm-meta-trilho"><span class="pm-meta-bar" style="left:${l}%;width:${w}%"><i style="width:${feito * 100}%"></i>${prev > 0 && !concl ? `<b style="left:${prevF * 100}%" title="previsto até hoje"></b>` : ''}</span><span class="pm-meta-hoje" style="left:${pos(hoje)}%"></span></div>
+      <div class="pm-meta-num"><span>${pmEsc(e.Inicio ? e.Inicio.slice(0, 5) : '-')} → ${pmEsc(e.Termino ? e.Termino.slice(0, 5) : '-')}</span><span>feito <b>${fmtQ(real, e.Unidade)}</b> de ${fmtQ(meta, e.Unidade)}${prev > 0 && !concl ? ` · meta p/ hoje ${fmtQ(prev, e.Unidade)}` : ''}</span></div>
+      ${e.Obs ? `<span class="pm-meta-obs">${pmEsc(e.Obs)}</span>` : ''}
+    </div>`;
+  }).join('');
+  const sub = [m.Inicio && m.Termino ? `${m.Inicio.slice(0, 5)} → ${m.Termino.slice(0, 5)}` : '', m.Situacao ? `situação em ${m.Situacao}` : ''].filter(Boolean).join(' · ');
+  return pmSec('Meta interna', sub) + `<div class="pm-card pm-meta">
+    <span class="pm-meta-nota">Prazo interno das Metas 2026. A quantidade é o que faltava quando a meta começou, não o total da frente.</span>
+    ${linhas}
+    <div class="pm-meta-leg"><span><i class="f"></i>feito</span><span><i class="p"></i>meta p/ hoje</span><span><i class="h"></i>hoje</span></div>
+  </div>`;
+}
+
 function conteudoCronogramaFrente(d) {
+  const meta = pmMetaInternaHTML(d);
+  if (!meta) return conteudoCronogramaCliente(d);
+  const cli = d.NumeroCronograma ? conteudoCronogramaCliente(d) : '';
+  return meta + (cli ? pmSec('Cronograma do cliente', '') + cli : '');
+}
+
+function conteudoCronogramaCliente(d) {
   const numero = d.NumeroCronograma;
   if (!numero) return `<div class="pm-empty" style="margin-top:18px">Essa frente ainda não tem o número do cronograma cadastrado (coluna "Nº no cronograma" na aba "Nome das Frentes").</div>`;
   const itens = acharItensCronogramaPorNumero(numero).sort((a, b) => a[0] - b[0]);
