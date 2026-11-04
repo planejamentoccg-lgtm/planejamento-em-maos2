@@ -6448,7 +6448,10 @@ function pmMapaPKAtual(data, faixa) {
   if (!usar.length) return null;
   const media = k => usar.reduce((s, e) => s + (Number(e[k]) || 0), 0) / usar.length;
   const [ini, fim] = faixa, dir = fim >= ini ? 1 : -1, tam = Math.abs(fim - ini);
-  const real = Math.min(tam, media('RealizadoNum')), prev = Math.min(tam, media('PrevistoNum'));
+  // com as Metas 2026 o realizado da etapa conta só a partir do início da meta; "RealizadoTotalNum" soma o que já estava feito antes
+  const mediaReal = usar.reduce((a, e) => a + (Number(e.RealizadoTotalNum ?? e.RealizadoNum) || 0), 0) / usar.length;
+  const mediaPrev = usar.reduce((a, e) => a + (Number(e.PrevistoTotalNum ?? e.PrevistoNum) || 0), 0) / usar.length;
+  const real = Math.min(tam, mediaReal), prev = Math.min(tam, mediaPrev);
   return { atual: ini + dir * real, previsto: ini + dir * prev, feito: real, total: tam };
 }
 
@@ -7273,7 +7276,10 @@ const PM_PROG_LUGARES = {
 function pmProgLugar(descricao, numero) {
   // com o Nº da estrutura, junta os nomes do item e dos "pais" no cronograma (ex.: "Vigas e Laje" → "Passagem de Emergência ... (15)")
   const doCrono = numero ? pmMapaNomesCronograma(numero).join(' - ') : '';
-  const t = normalizarTexto([descricao, doCrono].filter(Boolean).join(' - ')).replace(/\s+/g, ' ');
+  // abreviações da programação como ela vem: "S.S.C." = Sentido São Conrado, "S.C." = Sentido Carioca
+  const t = normalizarTexto([descricao, doCrono].filter(Boolean).join(' - ')).replace(/\s+/g, ' ')
+    .replace(/(^|[\s\-(])s\.\s?s\.\s?c\.?(?=[\s\-),]|$)/g, '$1sentido sao conrado')
+    .replace(/(^|[\s\-(])s\.\s?c\.(?=[\s\-),]|$)/g, '$1sentido carioca');
   const tem = r => r.test(t);
   let c = tem(/carioca|\bcrc\b/), j = tem(/conrado|jardim oceanico|\bjoc?\b/);
   // lado pelas seções do rebaixo: Seção A com CA13…CA41 = Carioca; Seção A com A12…A1 e Seção B = São Conrado
