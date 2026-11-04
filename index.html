@@ -6199,7 +6199,9 @@ async function carregarFrentes() {
   const snap = await db.collection("Frentes").get();
   const todasFrentesBrutas = [];
   snap.forEach(doc => todasFrentesBrutas.push(doc.data()));
-  window.todasFrentesAtivas = deduplicarFrentesPorNome(todasFrentesBrutas);
+  // ✅ com as Metas 2026, só aparecem nas ativas as frentes das Metas (e as que o script deixa
+  // de fora de propósito, ex.: Estação Sul). As concluídas seguem em "Frentes concluídas".
+  window.todasFrentesAtivas = deduplicarFrentesPorNome(todasFrentesBrutas).filter(d => d.ForaDasMetas !== true || frenteEstaConcluida(d));
 
   // ✅ o filtro de Tipo (Todas/Escavação/Civil) é uma única variável
   // global compartilhada com a tela de Frentes concluídas — assim ele
