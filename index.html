@@ -2712,6 +2712,13 @@ body.tema-escuro .pm-cnt button{ box-shadow:none; }
 .pm-mp-pin.st-late .pm-mp-dot, .pm-mp-pin.st-late .pm-mp-halo{ fill:var(--mp-late); }
 .pm-mp-pin.st-ok .pm-mp-dot{ fill:var(--mp-ok); }
 .pm-mp-pin.st-stop .pm-mp-dot, .pm-mp-pin.st-stop .pm-mp-halo{ fill:var(--mp-stop); }
+.pm-mp-pin.st-wait .pm-mp-dot, .pm-mp-pin.st-wait .pm-mp-halo{ fill:var(--mp-wait, #C08A1E); }
+.pm-mp-trecho.st-wait, .pm-mp-feito.st-wait{ stroke:var(--mp-wait, #C08A1E); }
+.pm-mp-chip i.st-wait{ background:var(--mp-wait, #C08A1E); }
+.pm-mp-card-f.st-wait{ background:#B07E1A; } body.tema-escuro .pm-mp-card-f.st-wait{ background:#3A3220; }
+body.tema-escuro .st-wait .pm-mp-ring{ background:conic-gradient(var(--mp-wait, #DCB866) var(--deg), rgba(255,255,255,.12) 0); }
+.st-wait .pm-mp-ring > span{ background:#B07E1A; } body.tema-escuro .st-wait .pm-mp-ring > span{ background:#3A3220; }
+body.tema-escuro{ --mp-wait:#DCB866; }
 .pm-mp-halo{ opacity:var(--mp-halo-op); }
 .pm-mp-pause{ fill:#FFFFFF; }
 .pm-mp-selring{ fill:none; stroke:var(--map-ink); stroke-width:2.5; }
@@ -6687,7 +6694,7 @@ function pmMapaPinoGrande(x, y, f, i, sel) {
 // ---------- estado + desenho
 function pmMapaItens(frentes) {
   return frentes.map((f, i) => ({ f, i, loc: pmMapaLocal(f.data) }))
-    .filter(it => it.f.status === 'ok' || it.f.status === 'late' || it.f.status === 'stop');
+    .filter(it => it.f.status === 'ok' || it.f.status === 'late' || it.f.status === 'stop' || it.f.status === 'wait');
 }
 function pmMapaRender() {
   const box = document.getElementById('frentesMapa');
@@ -7061,7 +7068,7 @@ async function montarRespostaUltimaDetonacaoConcluida(termoOriginal) {
   let melhorData = null;
   eventos.forEach(e => {
     if (descricaoBateComVariantes(e.Descricao || '', variantes)) {
-      const d = parseDiaMes(e.Data);
+      const d = pmDataEv(e);
       if (d && (!melhorData || d > melhorData)) melhorData = d;
     }
   });
@@ -7071,7 +7078,7 @@ async function montarRespostaUltimaDetonacaoConcluida(termoOriginal) {
   }
 
   const melhorDataStr = formatarDataCurta(melhorData);
-  const fogosDoDia = eventos.filter(e => e.Data === melhorDataStr && descricaoBateComVariantes(e.Descricao || '', variantes));
+  const fogosDoDia = eventos.filter(e => pmEvNoDia(e, melhorData) && descricaoBateComVariantes(e.Descricao || '', variantes));
 
   let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorDataStr}</b></div>`;
   fogosDoDia.forEach(e => {
@@ -9021,7 +9028,7 @@ async function montarRespostaDetonacoes(data, rotulo) {
     const doc = await db.collection('Config').doc('Detonacoes').get();
     if (doc.exists) {
       const eventos = doc.data().Eventos || [];
-      detonacoesDoDia = eventos.filter(e => e.Data === dataStr);
+      detonacoesDoDia = eventos.filter(e => pmEvNoDia(e, data));
     }
   } catch (e) { /* sem detonações cadastradas ainda */ }
 
@@ -9058,7 +9065,7 @@ async function montarRespostaDetonacoes(data, rotulo) {
   if (avancosDoDia.length > 0) {
     html += `<div style="font-size:12px; color:var(--text-soft); margin:12px 0 8px;">Avanço registrado nesse dia:</div>`;
     avancosDoDia.forEach(a => {
-      html += `<div class="subtitulo2">${a.frente} — ${a.etapa}: PK ${a.pkInicial || '-'} a ${a.pkFinal || '-'}, avanço <b>${a.avanco}${a.unidade}</b>${a.observacao ? ' · ' + a.observacao : ''}</div>`;
+      html += `<div class="subtitulo2">${a.frente} — ${a.etapa}${a.pkInicial || a.pkFinal ? `: PK ${a.pkInicial || '-'} a ${a.pkFinal || '-'}` : ''}, avanço <b>${a.avanco}${a.unidade}</b>${a.observacao ? ' · ' + a.observacao : ''}</div>`;
     });
   }
 
@@ -9070,7 +9077,7 @@ async function buscarFogosNaData(dataStr) {
   try {
     const doc = await db.collection('Config').doc('Detonacoes').get();
     if (!doc.exists) return [];
-    return (doc.data().Eventos || []).filter(e => e.Data === dataStr);
+    return (doc.data().Eventos || []).filter(e => pmEvNoDia(e, parseDiaMesComAncora(dataStr, pmHoje()) || parseDiaMes(dataStr)));
   } catch (e) {
     return [];
   }
@@ -9114,10 +9121,23 @@ function descricaoBateComVariantes(descricaoEvento, variantes) {
 // ✅ acha a data mais recente preenchida na sismografia — usado pra
 // avisar até quando os dados estão atualizados, já que a planilha pode
 // ainda não ter os dias mais recentes lançados
+// ✅ data de um evento de detonação COM ANO (a sismografia tem eventos de anos anteriores;
+// só "dd/MM" fazia 31/12 do ano passado parecer o mais recente). Sem DataCompleta,
+// usa a data mais próxima de hoje.
+function pmDataEv(e) {
+  if (!e) return null;
+  if (e.DataCompleta) return parseDataCompleta(e.DataCompleta);
+  return parseDiaMesComAncora(e.Data, pmHoje()) || parseDiaMes(e.Data);
+}
+function pmEvNoDia(e, dia) {
+  const d = pmDataEv(e);
+  return !!(d && dia && d.getFullYear() === dia.getFullYear() && d.getMonth() === dia.getMonth() && d.getDate() === dia.getDate());
+}
+
 function ultimaDataPreenchidaDetonacoes(eventos) {
   let maisRecente = null;
   eventos.forEach(e => {
-    const d = parseDiaMes(e.Data);
+    const d = pmDataEv(e);
     if (d && (!maisRecente || d > maisRecente)) maisRecente = d;
   });
   return maisRecente ? formatarDataCurta(maisRecente) : null;
@@ -9130,13 +9150,13 @@ async function montarRespostaContagemDetonacoes(periodo) {
     if (doc.exists) eventos = doc.data().Eventos || [];
   } catch (e) { /* sem detonações cadastradas ainda */ }
 
-  function noPeriodo(diaStr) {
-    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
-    const d = parseDiaMes(diaStr);
+  function noPeriodo(e) {
+    if (periodo.tipo === 'dia') return pmEvNoDia(e, periodo.data);
+    const d = pmDataEv(e);
     return d && d >= periodo.inicio && d <= periodo.fim;
   }
 
-  const noIntervalo = eventos.filter(e => noPeriodo(e.Data));
+  const noIntervalo = eventos.filter(e => noPeriodo(e));
   const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
   const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
 
@@ -9202,14 +9222,14 @@ async function montarRespostaContagemDetonacoesFrentePeriodo(termo, periodo) {
     return `<p style="font-size:13px; color:var(--text-soft); text-align:left; margin-top:10px;">Ainda não encontrei correlação de nome cadastrada pra ${formatarTitulo(frente.Nome)} — confira a aba "Correlações - Frentes x Det." na planilha.</p>`;
   }
 
-  function noPeriodo(diaStr) {
+  function noPeriodo(e) {
     if (!periodo) return true;
-    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
-    const d = parseDiaMes(diaStr);
+    if (periodo.tipo === 'dia') return pmEvNoDia(e, periodo.data);
+    const d = pmDataEv(e);
     return d && d >= periodo.inicio && d <= periodo.fim;
   }
 
-  const filtrados = eventos.filter(e => descricaoBateComVariantes(e.Descricao || '', variantes) && noPeriodo(e.Data));
+  const filtrados = eventos.filter(e => descricaoBateComVariantes(e.Descricao || '', variantes) && noPeriodo(e));
   const rotuloPeriodo = periodo ? periodo.rotulo : 'ao todo';
   const ultimaData = ultimaDataPreenchidaDetonacoes(eventos);
   const notaData = ultimaData ? `<div style="font-size:11px; color:var(--text-soft); margin-top:8px;">(sismografia preenchida até ${ultimaData})</div>` : '';
@@ -9412,9 +9432,9 @@ async function montarRespostaDiasSemAvanco(termo, periodo) {
   const inicio = periodo.tipo === 'dia' ? periodo.data : periodo.inicio;
   const fim = periodo.tipo === 'dia' ? periodo.data : periodo.fim;
 
-  function noPeriodo(diaStr) {
-    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
-    const d = parseDiaMes(diaStr);
+  function noPeriodo(e) {
+    if (periodo.tipo === 'dia') return pmEvNoDia(e, periodo.data);
+    const d = pmDataEv(e);
     return d && d >= periodo.inicio && d <= periodo.fim;
   }
 
@@ -9561,9 +9581,9 @@ async function montarRespostaAtraso(termo) {
 async function montarRespostaTotalAvancoPeriodo(termo, periodo) {
   const frente = await acharFrentePorNome(termo);
 
-  function noPeriodo(diaStr) {
-    if (periodo.tipo === 'dia') return diaStr === formatarDataCurta(periodo.data);
-    const d = parseDiaMes(diaStr);
+  function noPeriodo(e) {
+    if (periodo.tipo === 'dia') return pmEvNoDia(e, periodo.data);
+    const d = pmDataEv(e);
     return d && d >= periodo.inicio && d <= periodo.fim;
   }
 
@@ -9716,12 +9736,12 @@ async function montarRespostaUltimaDetonacao(termo) {
 
     let melhorDataGeral = null;
     eventos.forEach(e => {
-      const d = parseDiaMes(e.Data);
+      const d = pmDataEv(e);
       if (d && (!melhorDataGeral || d > melhorDataGeral)) melhorDataGeral = d;
     });
 
     const melhorDataGeralStr = formatarDataCurta(melhorDataGeral);
-    const fogosDoDiaGeral = eventos.filter(e => e.Data === melhorDataGeralStr);
+    const fogosDoDiaGeral = eventos.filter(e => pmEvNoDia(e, melhorDataGeral));
 
     let htmlGeral = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação registrada: <b>${melhorDataGeralStr}</b></div>`;
     fogosDoDiaGeral.forEach(e => {
@@ -9750,7 +9770,7 @@ async function montarRespostaUltimaDetonacao(termo) {
   let melhorData = null;
   eventos.forEach(e => {
     if (descricaoBateComVariantes(e.Descricao || '', variantes)) {
-      const d = parseDiaMes(e.Data);
+      const d = pmDataEv(e);
       if (d && (!melhorData || d > melhorData)) melhorData = d;
     }
   });
@@ -9765,7 +9785,7 @@ async function montarRespostaUltimaDetonacao(termo) {
   // ...e junta TODOS os fogos daquele dia (pode ter tido mais de um)
   const melhorDataStr = formatarDataCurta(melhorData);
   const fogosDoDia = eventos.filter(e =>
-    e.Data === melhorDataStr && descricaoBateComVariantes(e.Descricao || '', variantes)
+    pmEvNoDia(e, melhorData) && descricaoBateComVariantes(e.Descricao || '', variantes)
   );
 
   let html = `<div style="font-size:13px; color:var(--ink); font-weight:600; margin:10px 0 8px; text-align:left;">Última detonação em ${formatarTitulo(frente.Nome)}: <b>${melhorDataStr}</b></div>`;
