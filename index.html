@@ -6182,7 +6182,6 @@ async function carregarFrentes() {
         <div id="frentesHero"><div class="pm-fr-meta"><span>Carregando frentes…</span></div></div>
         <div id="frentesMapa"></div>
       </div>
-      <div id="cardFrentesPendentes"></div>
       <div id="frentesListaWrap">
         <div id="botoes"></div>
         <button class="pm-cta-soft" onclick="mostrarTelaFrentesConcluidas()">
@@ -6194,7 +6193,7 @@ async function carregarFrentes() {
 
   atualizarIconeTema();
 
-  carregarFrentesPendentes(); // ✅ card "previstas e ainda não iniciadas" — não trava o resto
+  // card "previstas e ainda não iniciadas" desligado (nov/2026) — para voltar, chame carregarFrentesPendentes() aqui
 
   const snap = await db.collection("Frentes").get();
   const todasFrentesBrutas = [];
