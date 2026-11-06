@@ -2419,6 +2419,46 @@ body.tema-escuro{ --pact:#9DB7D6; --dv-late-bg:#3A2A24; --dv-late:#F3B3A3; --dv-
   .pm-top-data{ display:none !important; }
 }
 
+/* ✅ METAS 2026 (slides) */
+.pm-metas{ display:flex; flex-direction:column; gap:12px; padding-bottom:24px; }
+.pm-metas-cab{ padding:4px 16px 0; display:flex; flex-direction:column; gap:4px; }
+.pm-metas-tit{ font-family:var(--f-display); font-size:26px; font-weight:800; color:var(--ink); margin:0; letter-spacing:-.01em; }
+.pm-metas-palco{ position:relative; margin:0 12px; }
+.pm-metas-trilho{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:18px; background:#FFFFFF; border:1px solid var(--line); }
+.pm-metas-trilho::-webkit-scrollbar{ display:none; }
+.pm-metas-slide{ flex:0 0 100%; margin:0; scroll-snap-align:start; aspect-ratio:16/9; cursor:zoom-in; }
+.pm-metas-slide img{ width:100%; height:100%; object-fit:contain; display:block; user-select:none; }
+.pm-metas-seta{ position:absolute; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:21px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; box-shadow:0 4px 14px rgba(0,0,0,.14); z-index:2; cursor:pointer; }
+.pm-metas-seta.esq{ left:-6px; } .pm-metas-seta.dir{ right:-6px; }
+.pm-metas-seta:disabled{ opacity:0; pointer-events:none; }
+.pm-metas-info{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:0 16px; }
+.pm-metas-info strong{ font-size:15px; color:var(--ink); font-weight:700; }
+.pm-metas-info span{ font-family:var(--f-mono); font-size:11.5px; color:var(--muted); flex-shrink:0; }
+.pm-metas-thumbs{ display:flex; gap:10px; overflow-x:auto; padding:2px 12px 4px; scrollbar-width:thin; }
+.pm-metas-thumbs button{ flex:0 0 132px; width:132px; min-width:0; display:flex; flex-direction:column; gap:6px; padding:0; border:none; background:none; text-align:left; cursor:pointer; color:var(--muted); }
+.pm-metas-thumbs img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:10px; border:2px solid transparent; background:#FFFFFF; display:block; }
+.pm-metas-thumbs span{ font-size:11.5px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pm-metas-thumbs button[aria-selected="true"] img{ border-color:var(--olive); }
+.pm-metas-thumbs button[aria-selected="true"] span{ color:var(--ink); font-weight:600; }
+.pm-metas-dica{ padding:0 16px; font-size:12px; color:var(--muted); }
+.pm-metas-full{ position:fixed; inset:0; z-index:200; background:rgba(10,14,13,.97); display:flex; flex-direction:column; }
+.pm-metas-full-top{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top, 0px)); color:#FFFFFF; font-weight:600; font-size:14px; }
+.pm-metas-full-top button{ width:40px; height:40px; border-radius:20px; border:none; background:rgba(255,255,255,.14); color:#FFFFFF; font-size:16px; cursor:pointer; }
+.pm-metas-full-area{ flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; touch-action:pinch-zoom pan-x pan-y; }
+.pm-metas-full-area img{ max-width:100%; max-height:100%; object-fit:contain; background:#FFFFFF; cursor:zoom-in; }
+.pm-metas-full.zoom .pm-metas-full-area{ align-items:flex-start; justify-content:flex-start; }
+.pm-metas-full.zoom .pm-metas-full-area img{ max-width:none; max-height:none; width:2400px; cursor:zoom-out; }
+@media screen and (min-width:1024px){
+  .pm-metas{ max-width:1180px; }
+  .pm-metas-cab{ padding-top:8px; }
+  .pm-metas-palco{ margin:0 24px; }
+  .pm-metas-seta.esq{ left:-20px; } .pm-metas-seta.dir{ right:-20px; }
+  .pm-metas-info, .pm-metas-dica{ padding:0 24px; }
+  .pm-metas-thumbs{ padding:2px 24px 4px; }
+  .pm-metas-thumbs button{ flex-basis:150px; width:150px; }
+  .pm-metas-palco{ width:min(calc(100% - 48px), calc((100vh - 300px) * 16 / 9)); }
+}
+
 /* ✅ PROGRAMAÇÃO — mapa do dia */
 .pm-pg-side{ display:flex; flex-direction:column; gap:10px; }
 .pm-pg-seg{ display:flex; padding:3px; margin:0 12px; border-radius:20px; background:var(--surface); border:1px solid var(--line); }
@@ -2884,8 +2924,8 @@ body.tema-escuro .st-late .pm-mp-ring > span{ background:#3A2620; } body.tema-es
       <span>Cronograma</span>
     </div>
     <div class="navItem" id="navItemCineminha" onclick="mostrarTelaCineminha()">
-      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="8.5" width="16" height="11" rx="1.5"/><path d="M4 8.5l1-4 15 0-1 4M9 4.5l-1 4M14 4.5l-1 4"/></svg>
-      <span>Cineminha</span>
+      <svg class="navIcone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+      <span>Metas 2026</span>
     </div>
   </div>
 
@@ -3033,7 +3073,7 @@ document.querySelectorAll('img[data-logo-ccg]').forEach(img => { img.src = PM_LO
 // (detalhe do cronograma ou análise), imprime só ela
 window.addEventListener('beforeprint', () => {
   const agora = new Date();
-  const tela = { frentes: 'Frentes', semanas: 'Programação', cronograma: 'Cronograma', cineminha: 'Cineminha' }[typeof telaAtual !== 'undefined' ? telaAtual : ''] || '';
+  const tela = { frentes: 'Frentes', semanas: 'Programação', cronograma: 'Cronograma', cineminha: 'Metas 2026' }[typeof telaAtual !== 'undefined' ? telaAtual : ''] || '';
   document.body.setAttribute('data-impresso', `Planejamento em Mãos · CCG${tela ? ' · ' + tela : ''} · impresso em ${pmFmtDM(agora)}/${agora.getFullYear()} às ${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`);
   ['subTelaCronograma', 'subTelaAnalise'].forEach(id => {
     const el = document.getElementById(id);
@@ -3493,10 +3533,19 @@ function mostrarTelaCronograma() {
   carregarContadorNotif(); // ✅ sincroniza o sino toda vez que essa tela abre
 }
 
-// ✅ aba "Cineminha" — mostra um vídeo. O arquivo de vídeo (ex:
-// cineminha (Video_Cineminha_-_Slides_RV_04.mp4) precisa estar na MESMA pasta do index.html no
-// repositório, com esse nome exato (ou troque o "src" abaixo pelo nome
-// que você usar).
+// ✅ aba "Metas 2026" (antiga Cineminha) — slides fixos das metas até o fim do ano.
+// As imagens ficam na pasta "metas-2026" do repositório, junto do index.html.
+// Para trocar: substitua as imagens (mesmo nome) ou edite a lista abaixo.
+const PM_METAS_SLIDES = [
+  { img: 'metas-2026/slide-1.jpg', titulo: 'Metas para o final de 2026' },
+  { img: 'metas-2026/slide-2.jpg', titulo: 'Escavação' },
+  { img: 'metas-2026/slide-3.jpg', titulo: 'Salas técnicas' },
+  { img: 'metas-2026/slide-4.jpg', titulo: 'Passagem de Emergência 15' },
+  { img: 'metas-2026/slide-5.jpg', titulo: 'Passagem de Emergência 16' },
+  { img: 'metas-2026/slide-6.jpg', titulo: 'Via Permanente' },
+];
+window.pmMetasIdx = 0;
+
 function mostrarTelaCineminha() {
   document.getElementById("lista").style.display = "none";
   document.getElementById("telaProximasSemanas").style.display = "none";
@@ -3506,27 +3555,87 @@ function mostrarTelaCineminha() {
   telaAtual = 'cineminha';
 
   const container = document.getElementById("telaCineminha");
-  if (!container.innerHTML) {
+  if (!container.querySelector('.pm-metas')) {
     container.innerHTML = `
-      <div class="pm pm-cine">
+      <div class="pm pm-metas">
         ${htmlTopoNovo()}
-        <div class="pm-hero">
-          <div class="pm-hero-top"><span class="pm-eyebrow">Planejamento em mãos</span></div>
-          <h1 class="pm-hero-title">Cineminha</h1>
+        <div class="pm-metas-cab">
+          <span class="pm-eyebrow">Estação Gávea · até 22/12/2026</span>
+          <h1 class="pm-metas-tit">Metas 2026</h1>
         </div>
-        <div style="padding:14px 12px 0;">
-          <video controls playsinline style="width:100%; border-radius:16px; background:#000; display:block;">
-            <source src="Video_Cineminha_-_Slides_RV_04.mp4" type="video/mp4">
-            Seu navegador não suporta vídeo.
-          </video>
+        <div class="pm-metas-palco" id="pmMetasPalco">
+          <button class="pm-metas-seta esq" onclick="pmMetasIr(-1)" aria-label="Slide anterior"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="pm-metas-trilho" id="pmMetasTrilho">
+            ${PM_METAS_SLIDES.map((s, i) => `<figure class="pm-metas-slide" onclick="pmMetasAbrir(${i})"><img src="${s.img}" alt="${pmEsc(s.titulo)}" ${i > 1 ? 'loading="lazy"' : ''} draggable="false"></figure>`).join('')}
+          </div>
+          <button class="pm-metas-seta dir" onclick="pmMetasIr(1)" aria-label="Próximo slide"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
+        <div class="pm-metas-info"><strong id="pmMetasNome"></strong><span id="pmMetasNum"></span></div>
+        <div class="pm-metas-thumbs" role="tablist" aria-label="Slides">
+          ${PM_METAS_SLIDES.map((s, i) => `<button role="tab" onclick="pmMetasIr(${i}, true)" aria-label="${pmEsc(s.titulo)}"><img src="${s.img}" alt="" loading="lazy" draggable="false"><span>${pmEsc(i === 0 ? 'Capa' : s.titulo)}</span></button>`).join('')}
+        </div>
+        <div class="pm-metas-dica">Toque no slide para ver em tela cheia e dar zoom.</div>
       </div>
     `;
+    const tr = document.getElementById('pmMetasTrilho');
+    let t0 = null;
+    tr.addEventListener('scroll', () => {
+      clearTimeout(t0);
+      t0 = setTimeout(() => { const i = Math.round(tr.scrollLeft / tr.clientWidth); if (i !== window.pmMetasIdx) { window.pmMetasIdx = i; pmMetasMarcar(); } }, 60);
+    }, { passive: true });
     atualizarIconeTema();
   }
+  pmMetasIr(window.pmMetasIdx, true, true);
   carregarContadorNotif();
 }
 
+function pmMetasMarcar() {
+  const i = window.pmMetasIdx, s = PM_METAS_SLIDES[i];
+  const nome = document.getElementById('pmMetasNome'), num = document.getElementById('pmMetasNum');
+  if (nome) nome.textContent = s.titulo;
+  if (num) num.textContent = `${i + 1} de ${PM_METAS_SLIDES.length}`;
+  document.querySelectorAll('.pm-metas-thumbs button').forEach((b, j) => {
+    b.setAttribute('aria-selected', j === i);
+    if (j === i) b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+  document.querySelectorAll('.pm-metas-seta').forEach(b => {
+    b.disabled = b.classList.contains('esq') ? i === 0 : i === PM_METAS_SLIDES.length - 1;
+  });
+}
+
+// passo = -1/+1 (setas) ou índice absoluto (miniaturas)
+function pmMetasIr(v, absoluto, semAnimacao) {
+  const n = PM_METAS_SLIDES.length;
+  const i = Math.max(0, Math.min(n - 1, absoluto ? v : window.pmMetasIdx + v));
+  window.pmMetasIdx = i;
+  const tr = document.getElementById('pmMetasTrilho');
+  if (tr) tr.scrollTo({ left: i * tr.clientWidth, behavior: semAnimacao ? 'auto' : 'smooth' });
+  pmMetasMarcar();
+}
+
+// tela cheia: a imagem no tamanho da tela, com zoom (pinça no celular / clique no computador)
+function pmMetasAbrir(i) {
+  const s = PM_METAS_SLIDES[i];
+  const ov = document.createElement('div');
+  ov.className = 'pm-metas-full';
+  ov.innerHTML = `<div class="pm-metas-full-top"><span>${pmEsc(s.titulo)}</span><button aria-label="Fechar">✕</button></div>
+    <div class="pm-metas-full-area"><img src="${s.img}" alt="${pmEsc(s.titulo)}"></div>`;
+  const fechar = () => { ov.remove(); document.removeEventListener('keydown', tecla); };
+  const tecla = e => { if (e.key === 'Escape') fechar(); };
+  ov.querySelector('button').onclick = fechar;
+  const img = ov.querySelector('img');
+  img.onclick = e => { e.stopPropagation(); ov.classList.toggle('zoom'); };
+  ov.querySelector('.pm-metas-full-area').onclick = e => { if (e.target === e.currentTarget && !ov.classList.contains('zoom')) fechar(); };
+  document.addEventListener('keydown', tecla);
+  document.body.appendChild(ov);
+}
+
+document.addEventListener('keydown', e => {
+  if (typeof telaAtual === 'undefined' || telaAtual !== 'cineminha' || document.querySelector('.pm-metas-full')) return;
+  if (/input|textarea/i.test((e.target && e.target.tagName) || '')) return;
+  if (e.key === 'ArrowRight') pmMetasIr(1);
+  else if (e.key === 'ArrowLeft') pmMetasIr(-1);
+});
 
 // ---------------------------------------------------------------------
 // CRONOGRAMA GERAL — dados extraídos manualmente do PDF de replanejamento
