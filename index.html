@@ -7180,7 +7180,11 @@ async function carregarProgramacaoSemanal(docPreCarregado) {
       .filter(d => d.data)
       .sort((a, b) => a.data - b.data);
 
-    window.pmEstaSemana = { ...(window.pmEstaSemana || {}), carregado: true, existe: !!(doc && doc.exists), tarefas, dias };
+    const ua = doc && doc.exists ? doc.data().UltimaAtualizacao : null;
+    const uaD = ua && ua.toDate ? ua.toDate() : (ua ? new Date(ua) : null);
+    const atualizacao = uaD && !isNaN(uaD) ? pmFmtDM(uaD) : '';
+    const fonte = doc && doc.exists ? (doc.data().Fonte || '') : '';
+    window.pmEstaSemana = { ...(window.pmEstaSemana || {}), carregado: true, existe: !!(doc && doc.exists), tarefas, dias, atualizacao, fonte };
   } catch (e) {
     console.log('Não consegui carregar a Programação Semanal:', e);
     window.pmEstaSemana = { ...(window.pmEstaSemana || {}), carregado: true, erro: true, tarefas: [], dias: [] };
@@ -7410,7 +7414,7 @@ function pmProgLugaresDoDia(tarefasDia) {
   const lug = {};
   const sem = [];
   tarefasDia.forEach(t => {
-    const l = pmProgLugar(t.Descricao);
+    const l = pmProgLugar(t.Descricao, t.Numero || '');
     const boom = normalizarTexto(t.Descricao).includes('detona');
     if (!l) { sem.push(t); return; }
     const k = l.chave;
@@ -7647,6 +7651,9 @@ function renderizarProgramacao() {
     tarefasDia.forEach(t => {
       const p = pmSepararDescricao(t.Descricao);
       p.desc = t.Descricao;
+      // ✅ quantidade programada para ESTE dia (vem da Six Week, que é dia a dia)
+      const doDia = (t.PorDia || []).find(x => x.Data === dia.str);
+      if (doDia && doDia.Texto && /\d/.test(doDia.Texto)) p.qtd = doDia.Texto;
       p.detonacao = normalizarTexto(t.Descricao).includes('detona');
       if (p.detonacao) detonacoes++;
       if (!porFrente[p.frente]) { porFrente[p.frente] = []; ordem.push(p.frente); }
@@ -7674,7 +7681,7 @@ function renderizarProgramacao() {
       }).join('')}</div>` : ''}
       ${dia ? `<div class="pm-pg-tit"><strong>${ehHoje ? 'Hoje, ' : ''}${PM_DIA_NOME[dia.data.getDay()].toLowerCase()}${ehHoje ? '' : `, ${pmFmtDM(dia.data)}`}</strong>${detonacoes ? `<span class="boom">${star}${detonacoes} ${detonacoes === 1 ? 'detonação' : 'detonações'}</span>` : `<span>${n} ${n === 1 ? 'atividade' : 'atividades'}</span>`}</div>` : `<div class="pm-pg-tit"><strong>${titulo}</strong></div>`}
       ${dia ? pmProgMapaHTML(tarefasDia) : ''}
-      <div class="pm-pg-foot">${S.atualizacao ? `Atualizado em <b>${S.atualizacao}</b> · semanal` : 'Atualizado semanalmente'}</div>`;
+      <div class="pm-pg-foot">${S.fonte === 'Six Week' ? `Programado na Six Week${S.atualizacao ? ` · atualizada em <b>${S.atualizacao}</b>` : ''}` : (S.atualizacao ? `Atualizado em <b>${S.atualizacao}</b> · semanal` : 'Atualizado semanalmente')}</div>`;
 
     if (!dia) {
       corpo.innerHTML = `<div class="pm-empty" style="margin-top:18px">Ainda não tem dados sincronizados da programação desta semana.</div>`;
