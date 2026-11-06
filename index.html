@@ -3545,6 +3545,14 @@ const PM_METAS_SLIDES = [
   { img: 'metas-2026/slide-6.jpg', titulo: 'Via Permanente' },
 ];
 window.pmMetasIdx = 0;
+// se a imagem não estiver em "metas-2026/", tenta "metas-2026/metas-2026/" (pasta duplicada no upload) e a raiz
+function pmMetasImgErro(img) {
+  const tent = +(img.dataset.tent || 0);
+  const base = (img.dataset.orig || img.getAttribute('src')).split('/').pop();
+  if (!img.dataset.orig) img.dataset.orig = img.getAttribute('src');
+  const alternativas = ['metas-2026/metas-2026/' + base, base];
+  if (tent < alternativas.length) { img.dataset.tent = tent + 1; img.src = alternativas[tent]; }
+}
 
 function mostrarTelaCineminha() {
   document.getElementById("lista").style.display = "none";
@@ -3566,13 +3574,13 @@ function mostrarTelaCineminha() {
         <div class="pm-metas-palco" id="pmMetasPalco">
           <button class="pm-metas-seta esq" onclick="pmMetasIr(-1)" aria-label="Slide anterior"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="pm-metas-trilho" id="pmMetasTrilho">
-            ${PM_METAS_SLIDES.map((s, i) => `<figure class="pm-metas-slide" onclick="pmMetasAbrir(${i})"><img src="${s.img}" alt="${pmEsc(s.titulo)}" ${i > 1 ? 'loading="lazy"' : ''} draggable="false"></figure>`).join('')}
+            ${PM_METAS_SLIDES.map((s, i) => `<figure class="pm-metas-slide" onclick="pmMetasAbrir(${i})"><img src="${s.img}" alt="${pmEsc(s.titulo)}" ${i > 1 ? 'loading="lazy"' : ''} draggable="false" onerror="pmMetasImgErro(this)"></figure>`).join('')}
           </div>
           <button class="pm-metas-seta dir" onclick="pmMetasIr(1)" aria-label="Próximo slide"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
         <div class="pm-metas-info"><strong id="pmMetasNome"></strong><span id="pmMetasNum"></span></div>
         <div class="pm-metas-thumbs" role="tablist" aria-label="Slides">
-          ${PM_METAS_SLIDES.map((s, i) => `<button role="tab" onclick="pmMetasIr(${i}, true)" aria-label="${pmEsc(s.titulo)}"><img src="${s.img}" alt="" loading="lazy" draggable="false"><span>${pmEsc(i === 0 ? 'Capa' : s.titulo)}</span></button>`).join('')}
+          ${PM_METAS_SLIDES.map((s, i) => `<button role="tab" onclick="pmMetasIr(${i}, true)" aria-label="${pmEsc(s.titulo)}"><img src="${s.img}" alt="" loading="lazy" draggable="false" onerror="pmMetasImgErro(this)"><span>${pmEsc(i === 0 ? 'Capa' : s.titulo)}</span></button>`).join('')}
         </div>
         <div class="pm-metas-dica">Toque no slide para ver em tela cheia e dar zoom.</div>
       </div>
@@ -3619,7 +3627,7 @@ function pmMetasAbrir(i) {
   const ov = document.createElement('div');
   ov.className = 'pm-metas-full';
   ov.innerHTML = `<div class="pm-metas-full-top"><span>${pmEsc(s.titulo)}</span><button aria-label="Fechar">✕</button></div>
-    <div class="pm-metas-full-area"><img src="${s.img}" alt="${pmEsc(s.titulo)}"></div>`;
+    <div class="pm-metas-full-area"><img src="${(document.querySelectorAll('.pm-metas-slide img')[i] || {}).src || s.img}" alt="${pmEsc(s.titulo)}" onerror="pmMetasImgErro(this)"></div>`;
   const fechar = () => { ov.remove(); document.removeEventListener('keydown', tecla); };
   const tecla = e => { if (e.key === 'Escape') fechar(); };
   ov.querySelector('button').onclick = fechar;
