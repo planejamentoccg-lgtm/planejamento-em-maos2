@@ -7284,9 +7284,18 @@ function pmSepararDescricao(descricaoBruta) {
 
 // ✅ "Esta semana" — só organiza os dados (a busca no Firestore continua
 // sendo feita uma única vez em carregarProximasSemanas)
+// ✅ "Esta semana" vem da Six Week (Config/EstaSemana); a antiga Config/ProgramacaoSemanal só se a nova não existir
+async function pmDocEstaSemana() {
+  try {
+    const nova = await db.collection('Config').doc('EstaSemana').get();
+    if (nova && nova.exists) return nova;
+  } catch (e) { console.log('Config/EstaSemana indisponível, uso a ProgramacaoSemanal:', e); }
+  return db.collection('Config').doc('ProgramacaoSemanal').get();
+}
+
 async function carregarProgramacaoSemanal(docPreCarregado) {
   try {
-    const doc = docPreCarregado || await db.collection('Config').doc('ProgramacaoSemanal').get();
+    const doc = docPreCarregado || await pmDocEstaSemana();
     const tarefas = doc && doc.exists ? (doc.data().Tarefas || []) : [];
 
     const diasSet = new Set();
@@ -7328,7 +7337,7 @@ async function carregarProximasSemanas() {
   // ✅ as duas buscas de configuração rodam em PARALELO
   const [resultadoSixWeek, resultadoEstaSemana] = await Promise.all([
     db.collection("Config").doc("SixWeek").get().catch(e => { console.log('Não consegui carregar a configuração da Six Week:', e); return null; }),
-    db.collection("Config").doc("ProgramacaoSemanal").get().catch(e => { console.log('Não consegui carregar a configuração da Esta Semana:', e); return null; }),
+    pmDocEstaSemana().catch(e => { console.log('Não consegui carregar a configuração da Esta Semana:', e); return null; }),
   ]);
 
   let atualizacaoSix = '', periodoInicio = null, periodoFim = null, atualizacaoSemana = '';
